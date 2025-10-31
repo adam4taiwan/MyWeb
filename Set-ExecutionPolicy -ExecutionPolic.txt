@@ -1,0 +1,2 @@
+Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope CurrentUser
+npm install cross-env --save-dev
