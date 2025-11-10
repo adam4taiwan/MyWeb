@@ -1,7 +1,10 @@
+// next.config.js
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  //output: "export",
+  // 新增這行：啟用 Standalone 模式，優化 Docker 映像
+  output: "standalone", 
+  
   images: {
     unoptimized: true,
   },
@@ -9,7 +12,8 @@ const nextConfig: NextConfig = {
     // ignoreBuildErrors: true,
   },
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+    // 您的後端 API 地址
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL, 
   },
 };
 
