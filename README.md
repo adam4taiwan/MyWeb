@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
@@ -102,3 +103,7 @@ docker run -d --name myweb-next-container -p 3010:3000 myweb-next-app
 如果你之前因為埠衝突而使用了不同的主機埠（例如 3011），請確保在這裡也使用相同的埠。
 
 完成這些步驟後，你的網頁應用程式將會更新到你最新修改的內容。
+=======
+# MyWeb
+Adam 個人網站
+>>>>>>> 601a33a9773e88e3e030ac1193187032b3c9ea0a
