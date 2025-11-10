@@ -11,10 +11,10 @@ const nextConfig: NextConfig = {
   typescript: {
     // ignoreBuildErrors: true,
   },
-  env: {
-    // 您的後端 API 地址
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL, 
-  },
+  // env: {
+  //   // 您的後端 API 地址
+  //   NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL, 
+  // },
 };
 
 export default nextConfig;
