@@ -72,8 +72,8 @@ export default function DiskPage() {
     const requestBody = buildRequestBody();
     
     try {
-        const url = process.env.NEXT_PUBLIC_API_URL + '/api/Astrology/export';
-        
+        // const url = process.env.NEXT_PUBLIC_API_URL + '/api/Astrology/export';
+        const url = 'https://ecanapi.fly.dev' + '/api/Astrology/export';       
         const response = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
