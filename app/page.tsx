@@ -1,42 +1,57 @@
-
 'use client';
 
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import Link from 'next/link';
+// 【關鍵修改】：引入 useAuth
+import { useAuth } from '@/components/AuthContext'; 
 
 export default function Home() {
+  const { isAuthenticated } = useAuth(); // 取得認證狀態
+  
+  // 如果還在驗證中，則返回 null，讓 AuthProvider 的 UI (會員狀態驗證中) 顯示
+  if (typeof isAuthenticated === 'undefined') {
+    return null;
+  }
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex flex-col">
       <Header />
       
       {/* Hero Section */}
       <section 
         className="relative min-h-screen flex items-center bg-cover bg-center bg-black/50"
         style={{
-          //backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://readdy.ai/api/search-image?query=ancient%20chinese%20scholar%20studying%20traditional%20books%20with%20golden%20light%20rays%20illuminating%20old%20manuscripts%20and%20calligraphy%20brushes%20in%20a%20serene%20traditional%20library%20setting%20with%20warm%20golden%20lighting%20creating%20peaceful%20academic%20atmosphere&width=1920&height=1080&seq=hero-main&orientation=landscape')`
-        backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('/image/hero-main.jpg')`
+          // 使用您原有的圖片路徑
+          backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('/image/hero-main.jpg')`
         }}
       >
         <div className="container mx-auto px-4 w-full">
-          <div className="max-w-3xl text-white">
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
-              流傳千年智慧
-              <br />
-              <span className="text-amber-400">指引人生方向</span>
+          <div className="max-w-4xl text-white">
+            <h1 className="text-5xl md:text-7xl font-extrabold leading-tight mb-4 text-amber-300 drop-shadow-lg">
+              探索命運的藍圖
             </h1>
-            <p className="text-xl md:text-2xl mb-8 text-gray-200 leading-relaxed">
-              傳承古典命理學精華，結合現代生活應用，為年輕世代提供專業的人生規劃建議與命理指導服務。
+            <p className="text-xl md:text-2xl mb-8 font-light drop-shadow-md">
+              我們將傳統命理學與現代科技結合，提供最精準的八字、紫微斗數分析。
             </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Link href="/consultation">
-                <button className="bg-amber-600 hover:bg-amber-700 text-white px-8 py-4 rounded-full text-lg font-semibold transition-all duration-300 whitespace-nowrap cursor-pointer transform hover:scale-105">
-                  立即預約諮詢
-                </button>
-              </Link>
+            <div className="space-x-4">
+              {/* 根據認證狀態動態顯示按鈕 */}
+              {isAuthenticated ? (
+                <Link href="/disk">
+                  <button className="bg-amber-600 hover:bg-amber-700 text-white px-8 py-4 rounded-full text-lg font-semibold transition-transform duration-300 transform hover:scale-105">
+                    開始排盤分析
+                  </button>
+                </Link>
+              ) : (
+                <Link href="/login">
+                  <button className="bg-amber-600 hover:bg-amber-700 text-white px-8 py-4 rounded-full text-lg font-semibold transition-transform duration-300 transform hover:scale-105">
+                    立即加入會員
+                  </button>
+                </Link>
+              )}
               <Link href="/heritage">
-                <button className="border-2 border-white text-white hover:bg-white hover:text-gray-900 px-8 py-4 rounded-full text-lg font-semibold transition-all duration-300 whitespace-nowrap cursor-pointer">
-                  了解課程內容
+                <button className="bg-white hover:bg-gray-100 text-amber-600 px-8 py-4 rounded-full text-lg font-semibold transition-transform duration-300 transform hover:scale-105">
+                  了解易經文化
                 </button>
               </Link>
             </div>
@@ -44,127 +59,56 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Services Overview */}
-      <section className="py-20 bg-gradient-to-b from-white to-amber-50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-800 mb-4">專業服務項目</h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              結合傳統命理智慧與現代諮詢技術，提供全方位的命理學習與諮詢服務
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <Link href="/books">
-              <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-2">
-                <div className="w-16 h-16 bg-gradient-to-br from-amber-500 to-orange-500 rounded-full flex items-center justify-center mb-6">
-                  <i className="ri-book-3-line text-white text-2xl"></i>
-                </div>
-                <h3 className="text-2xl font-bold text-gray-800 mb-4">古書介紹</h3>
-                <p className="text-gray-600 mb-4">
-                  依年代及山醫命卜相分類介紹珍貴古籍，包含絕版線裝書籍及大師作品收藏。
-                </p>
-                <div className="text-amber-600 font-semibold flex items-center">
-                  探索古籍典藏 <i className="ri-arrow-right-line ml-2"></i>
-                </div>
-              </div>
-            </Link>
-
-            <Link href="/heritage">
-              <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-2">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center mb-6">
-                  <i className="ri-graduation-cap-line text-white text-2xl"></i>
-                </div>
-                <h3 className="text-2xl font-bold text-gray-800 mb-4">命學傳承</h3>
-                <p className="text-gray-600 mb-4">
-                  提供一對一、一對多、應用班、職業班等多種教學模式，含圖形化創新教學方法。
-                </p>
-                <div className="text-blue-600 font-semibold flex items-center">
-                  查看課程規劃 <i className="ri-arrow-right-line ml-2"></i>
-                </div>
-              </div>
-            </Link>
-            <Link href="/disk">
-              <button className="bg-amber-700 text-white hover:bg-amber-800 px-8 py-4 rounded-full text-lg font-semibold transition-all duration-300 whitespace-nowrap cursor-pointer">
-                線上排盤
-              </button>
-            </Link>
-            <Link href="/consultation">
-              <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-2">
-                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-teal-500 rounded-full flex items-center justify-center mb-6">
-                  <i className="ri-customer-service-line text-white text-2xl"></i>
-                </div>
-                <h3 className="text-2xl font-bold text-gray-800 mb-4">諮詢服務</h3>
-                <p className="text-gray-600 mb-4">
-                  提供遠距服務、預約服務、到府服務及專業指導，滿足不同需求的諮詢方式。
-                </p>
-                <div className="text-green-600 font-semibold flex items-center">
-                  預約諮詢服務 <i className="ri-arrow-right-line ml-2"></i>
-                </div>
-              </div>
-            </Link>
-
-            <Link href="/bookstore">
-              <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-2">
-                <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-pink-500 rounded-full flex items-center justify-center mb-6">
-                  <i className="ri-shopping-cart-line text-white text-2xl"></i>
-                </div>
-                <h3 className="text-2xl font-bold text-gray-800 mb-4">二手書買賣</h3>
-                <p className="text-gray-600 mb-4">
-                  經營奇摩、露天拍賣姜軍府老書店，提供珍貴命理古籍的買賣交易服務。
-                </p>
-                <div className="text-red-600 font-semibold flex items-center">
-                  瀏覽書店商品 <i className="ri-arrow-right-line ml-2"></i>
-                </div>
-              </div>
-            </Link>
-
-            <div className="bg-white rounded-2xl shadow-lg p-8">
-              <div className="w-16 h-16 bg-gradient-to-br from-gray-500 to-gray-600 rounded-full flex items-center justify-center mb-6">
-                <i className="ri-phone-line text-white text-2xl"></i>
-              </div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-4">聯絡我們</h3>
-              <p className="text-gray-600 mb-4">
-                歡迎來電洽詢各項服務內容，我們將竭誠為您提供專業的命理諮詢建議。
-              </p>
-              <div className="text-gray-600 font-semibold">
-                0910-032-057
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* About Master */}
+      {/* Feature Section 1 */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-4xl font-bold text-gray-800 mb-6">專業實務經驗</h2>
-              <p className="text-lg text-gray-600 mb-6 leading-relaxed">
-                古學堂深耕命學領域三十餘年，科技顧問背景以實事求是之精神，全心投入將古典命理智慧與現代生活相結合，為當代人提供實用的人生指導。
+          <h2 className="text-4xl font-bold text-center text-gray-800 mb-16">我們的核心功能</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+            {/* Feature Card 1 */}
+            <div className="text-center p-8 bg-amber-50 rounded-2xl shadow-lg transition-shadow hover:shadow-xl">
+              <span className="text-6xl text-amber-600 mb-4 inline-block">??</span>
+              <h3 className="text-2xl font-semibold text-gray-800 mb-3">精準排盤</h3>
+              <p className="text-gray-600">
+                結合天文曆法與現代計算，提供毫秒級精準的八字、紫微斗數命盤。
               </p>
-              <div className="grid grid-cols-2 gap-6 mb-8">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-amber-600 mb-2">30+</div>
-                  <div className="text-gray-600">年專業經驗</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-amber-600 mb-2">5000+</div>
-                  <div className="text-gray-600">諮詢案例</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-amber-600 mb-2">500+</div>
-                  <div className="text-gray-600">古籍收藏</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-amber-600 mb-2">100+</div>
-                  <div className="text-gray-600">傳承學員</div>
-                </div>
-              </div>
-              <Link href="/consultation">
-                <button className="bg-amber-600 hover:bg-amber-700 text-white px-8 py-3 rounded-full font-semibold transition-colors whitespace-nowrap cursor-pointer">
-                  預約面談諮詢
+            </div>
+            {/* Feature Card 2 */}
+            <div className="text-center p-8 bg-amber-50 rounded-2xl shadow-lg transition-shadow hover:shadow-xl">
+              <span className="text-6xl text-amber-600 mb-4 inline-block">??</span>
+              <h3 className="text-2xl font-semibold text-gray-800 mb-3">深度分析報告</h3>
+              <p className="text-gray-600">
+                基於數十年的命理經驗，生成包含格局、運勢、大運流年的詳細報告。
+              </p>
+            </div>
+            {/* Feature Card 3 */}
+            <div className="text-center p-8 bg-amber-50 rounded-2xl shadow-lg transition-shadow hover:shadow-xl">
+              <span className="text-6xl text-amber-600 mb-4 inline-block">??</span>
+              <h3 className="text-2xl font-semibold text-gray-800 mb-3">系統化學習</h3>
+              <p className="text-gray-600">
+                從基礎知識到高級實戰，提供結構清晰、循序漸進的線上學習課程。
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* About Section - 圖片與文字並排 */}
+      <section className="py-20 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div className="space-y-6">
+              <h2 className="text-4xl font-bold text-gray-800">我們的願景：傳承與創新</h2>
+              <p className="text-lg text-gray-600">
+                傳統命理學是中華文化的瑰寶。我們致力於使用現代軟體工程和數據庫技術，將這些複雜的知識系統化、數位化，使其更易於學習和應用。
+              </p>
+              <ul className="list-disc list-inside text-gray-600 space-y-2">
+                <li>數據驅動：減少人為錯誤，提升排盤精確度。</li>
+                <li>易於理解：將複雜概念視覺化，降低學習門檻。</li>
+                <li>雲端存儲：隨時隨地存取您的排盤記錄和學習進度。</li>
+              </ul>
+              <Link href="/about">
+                <button className="mt-4 bg-amber-600 text-white px-6 py-3 rounded-full hover:bg-amber-700 transition-colors font-semibold">
+                  深入了解我們
                 </button>
               </Link>
             </div>
@@ -188,15 +132,18 @@ export default function Home() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/heritage">
-              <button className="bg-white text-amber-600 hover:bg-gray-100 px-8 py-4 rounded-full text-lg font-semibold transition-colors whitespace-nowrap cursor-pointer">
+              <button className="bg-white text-amber-600 hover:bg-gray-100 px-8 py-4 rounded-full text-lg font-semibold transition-colors whitespace-nowrap cursor-pointer transform hover:scale-105">
                 查看課程方案
               </button>
             </Link>
-            <Link href="/consultation">
-              <button className="border-2 border-white text-white hover:bg-white hover:text-amber-600 px-8 py-4 rounded-full text-lg font-semibold transition-all duration-300 whitespace-nowrap cursor-pointer">
-                免費諮詢評估
-              </button>
-            </Link>
+            {/* 如果未登入，顯示註冊按鈕 */}
+            {!isAuthenticated && (
+                <Link href="/login">
+                    <button className="bg-amber-800 text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-amber-900 transition-colors whitespace-nowrap cursor-pointer transform hover:scale-105">
+                        註冊免費帳號
+                    </button>
+                </Link>
+            )}
           </div>
         </div>
       </section>
