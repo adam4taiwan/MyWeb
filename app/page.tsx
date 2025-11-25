@@ -66,7 +66,7 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
             {/* Feature Card 1 */}
             <div className="text-center p-8 bg-amber-50 rounded-2xl shadow-lg transition-shadow hover:shadow-xl">
-              <span className="text-6xl text-amber-600 mb-4 inline-block">??</span>
+            <i className="ri-calendar-check-line text-6xl text-amber-600 mb-4 inline-block"></i>
               <h3 className="text-2xl font-semibold text-gray-800 mb-3">精準排盤</h3>
               <p className="text-gray-600">
                 結合天文曆法與現代計算，提供毫秒級精準的八字、紫微斗數命盤。
@@ -74,7 +74,7 @@ export default function Home() {
             </div>
             {/* Feature Card 2 */}
             <div className="text-center p-8 bg-amber-50 rounded-2xl shadow-lg transition-shadow hover:shadow-xl">
-              <span className="text-6xl text-amber-600 mb-4 inline-block">??</span>
+             <i className="ri-file-text-line text-6xl text-amber-600 mb-4 inline-block"></i>
               <h3 className="text-2xl font-semibold text-gray-800 mb-3">深度分析報告</h3>
               <p className="text-gray-600">
                 基於數十年的命理經驗，生成包含格局、運勢、大運流年的詳細報告。
@@ -82,7 +82,7 @@ export default function Home() {
             </div>
             {/* Feature Card 3 */}
             <div className="text-center p-8 bg-amber-50 rounded-2xl shadow-lg transition-shadow hover:shadow-xl">
-              <span className="text-6xl text-amber-600 mb-4 inline-block">??</span>
+              <i className="ri-book-3-line text-6xl text-amber-600 mb-4 inline-block"></i>
               <h3 className="text-2xl font-semibold text-gray-800 mb-3">系統化學習</h3>
               <p className="text-gray-600">
                 從基礎知識到高級實戰，提供結構清晰、循序漸進的線上學習課程。

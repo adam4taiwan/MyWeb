@@ -1,0 +1,24 @@
+佈署NextJs
+# 1. 切換到您的 Next.js 專案目錄
+cd D:\MyWeb
+
+# 2. 加入所有檔案到 Git 追蹤
+git add .
+
+# 3. 提交本地變更 (請使用有意義的訊息)
+git commit -m "Next.js frontend initial deployment setup"
+
+# 4. 推送到 GitHub (假設您的主分支是 main 或 master)
+# 請根據您的倉庫設置，選擇正確的分支名稱
+git push origin main
+# 如果主分支是 master，請使用：git push origin master
+
+git commit -m "Final check before push" --allow-empty
+# 警告: 這會重寫您本地的 Git 歷史記錄
+git filter-branch --index-filter 'git rm -r --cached --ignore-unmatch node_modules' --prune-empty --tag-name-filter cat -- --all
+
+fly launch
+
+COPY public.calendar ('西元年','陽月','陽日','年干支','月干支','日干支','日天干','節氣','陰曆月','陰曆日','星期','季節') 
+FROM 'D:\net8\ecanapi\calendar.csv' 
+WITH (FORMAT csv, HEADER true, ENCODING 'UTF8');
