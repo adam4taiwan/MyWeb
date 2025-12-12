@@ -31,13 +31,13 @@ const minutes = Array.from({ length: 60 }, (_, i) => i);
 export default function DiskPage() {
   const [formData, setFormData] = useState({
     dateType: 'solar',
-    year: 1983, 
+    year: 1973, 
     month: 10,   
     day: 18,     
     hour: 15,   
     minute: 56, 
     gender: '1',
-    name: '黃鎮科',
+    name: '吉祥名',
   });
   const [result, setResult] = useState('');
   const [loading, setLoading] = useState(false);
