@@ -21,7 +21,7 @@ export default function Header() {
           
           <nav className="hidden md:flex items-center space-x-8">
             <Link href="/" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">首頁</Link>
-            <Link href="/books" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">古書介紹</Link>
+            {/* <Link href="/books" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">古書介紹</Link> */}
             <Link href="/heritage" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">命學傳承</Link>
             <Link href="/bookstore" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">二手書店</Link>
             {/* 只有登入後才顯示排盤工具 */}
@@ -70,7 +70,7 @@ export default function Header() {
           <div className="md:hidden mt-4 pb-4 border-t border-amber-200">
             <nav className="flex flex-col space-y-4 mt-4">
               <Link href="/" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>首頁</Link>
-              <Link href="/books" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>古書介紹</Link>
+              {/*<Link href="/books" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>古書介紹</Link>*/}
               <Link href="/heritage" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>命學傳承</Link>
               <Link href="/bookstore" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>二手書店</Link>
               <Link href="/consultation" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>諮詢服務</Link>
