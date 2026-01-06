@@ -13,7 +13,8 @@ const generateYears = () => {
   }
   return years;
 };
-
+// 新增
+const ENABLE_GENERATE_CHART = false;
 // 生成月份選項
 const months = Array.from({ length: 12 }, (_, i) => i + 1);
 
@@ -244,7 +245,7 @@ export default function DiskPage() {
             className="border p-2 rounded w-full"
             disabled // 暫時禁用，因為後端模型只處理西曆
           >
-            <option value="solar">西曆 (暫時鎖定)</option>
+            <option value="solar">西曆</option>
             <option value="lunar">農曆</option>
           </select>
         </div>
@@ -321,6 +322,7 @@ export default function DiskPage() {
         
         {/* 雙按鈕：生成命盤 和 下載命盤 */}
         <div className="grid grid-cols-2 gap-2">
+          {ENABLE_GENERATE_CHART && (
             <button
                 type="submit"
                 className="bg-amber-600 text-white p-2 rounded w-full disabled:bg-gray-400"
@@ -328,7 +330,7 @@ export default function DiskPage() {
             >
                 {loading ? '生成中...' : '生成命盤'}
             </button>
-            
+            )}
             <button
                 type="button" 
                 onClick={handleDownload} // 新增的下載功能
