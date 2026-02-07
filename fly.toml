@@ -9,6 +9,9 @@ primary_region = 'sin'
 [build]
   args = {NEXT_PUBLIC_API_URL="https://ecanapi.fly.dev"}
 
+[env]
+  NEXT_PUBLIC_API_URL = "https://ecanapi.fly.dev/api"
+
 [http_service]
   internal_port = 3000
   force_https = true
