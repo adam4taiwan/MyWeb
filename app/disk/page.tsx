@@ -131,7 +131,14 @@ export default function DiskPage() {
     setPurchaseLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const userEmail = localStorage.getItem('email') || "Guest";
+      // const userEmail = localStorage.getItem('email') || "Guest";
+      // 🚩 改成優先抓取 localStorage，若無則提示重新登入
+      const userEmail = localStorage.getItem('email'); 
+      if (!userEmail || userEmail === "Guest") {
+          alert("請先登入，系統才能同步您的帳號資訊進行儲值。");
+          setPurchaseLoading(false);
+          return;
+      }
       const res = await fetch(`${API_URL}/Payment/create-checkout-session`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
