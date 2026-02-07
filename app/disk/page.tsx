@@ -15,7 +15,11 @@ const hours = Array.from({ length: 24 }, (_, i) => i);
 const minutes = Array.from({ length: 60 }, (_, i) => i);
 
 export default function DiskPage() {
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://localhost:32801/api';
+  const API_URL = process.env.NEXT_PUBLIC_API_URL 
+  ? process.env.NEXT_PUBLIC_API_URL 
+  : (typeof window !== 'undefined' && window.location.hostname === 'localhost')
+    ? 'https://localhost:32801/api'  // 本地端測試網址
+    : 'https://ecanapi.fly.dev/api'; // 雲端正式 API 網址
 
   const [formData, setFormData] = useState({
     dateType: 'solar', name: '吉祥名', gender: '1',

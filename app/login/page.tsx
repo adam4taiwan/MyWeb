@@ -7,9 +7,12 @@ import Link from 'next/link';
 export default function LoginPage() {
   // *** 請將此處的網址替換為您部署在 Fly.io 上的實際後端網址！ *** 
   //const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://localhost:32801/api';
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL 
-    ? `${process.env.NEXT_PUBLIC_API_URL}/auth` 
-    : 'https://localhost:32801/api/auth';
+  // 修改後的邏輯：優先使用環境變數，若無則依序判斷
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL 
+  ? `${process.env.NEXT_PUBLIC_API_URL}/auth` 
+  : (typeof window !== 'undefined' && window.location.hostname === 'localhost')
+    ? 'https://localhost:32801/api/auth'  // 本地開發
+    : 'https://ecanapi.fly.dev/api/Account'; // 🚩 雲端預設 (並修正為您後端的 AccountController)
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isRegister, setIsRegister] = useState(false);
