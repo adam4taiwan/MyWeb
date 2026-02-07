@@ -1,350 +1,241 @@
-// app/disk/page.tsx
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import html2canvas from 'html2canvas'; 
+import jsPDF from 'jspdf';
+import Header from '@/components/Header'; 
 
-// --- Helper Functions and Data (輔助函數和數據) ---
-
-// 生成年份選項 (從當前年往前推 100 年)
+// 時間選單生成器
 const generateYears = () => {
   const currentYear = new Date().getFullYear();
-  const years = [];
-  for (let i = currentYear; i >= currentYear - 100; i--) {
-    years.push(i);
-  }
-  return years;
+  return Array.from({ length: 121 }, (_, i) => currentYear - i);
 };
-// 新增
-const ENABLE_GENERATE_CHART = false;
-// 生成月份選項
 const months = Array.from({ length: 12 }, (_, i) => i + 1);
-
-// 生成日期選項 (最大 31 天)
 const days = Array.from({ length: 31 }, (_, i) => i + 1);
-
-// 生成小時選項 (0 到 23)
 const hours = Array.from({ length: 24 }, (_, i) => i);
-
-// 生成分鐘選項 (0 到 59，以便精確輸入)
-const minutes = Array.from({ length: 60 }, (_, i) => i); 
-
-// --- 主元件 ---
+const minutes = Array.from({ length: 60 }, (_, i) => i);
 
 export default function DiskPage() {
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://localhost:32801/api';
+
   const [formData, setFormData] = useState({
-    dateType: 'solar',
-    year: 1973, 
-    month: 10,   
-    day: 18,     
-    hour: 15,   
-    minute: 56, 
-    gender: '1',
-    name: '吉祥名',
+    dateType: 'solar', name: '吉祥名', gender: '1',
+    year: 2026, month: 1, day: 1, hour: 1, minute: 0
   });
-  const [result, setResult] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [downloading, setDownloading] = useState(false); // 下載狀態
 
-  // 輔助函數：構造後端所需的 AstrologyRequest 請求體
-  const buildRequestBody = () => {
-    // 構造後端期望的請求體
-    return {
-      year: formData.year,
-      month: formData.month,
-      day: formData.day,
-      hour: formData.hour,
-      minute: formData.minute,
-      gender: parseInt(formData.gender, 10),
-      name: formData.name || '命盤',
-      // dateType (solar/lunar) 目前未在後端 AstrologyRequest 中，故不傳遞。
-    };
-  };
+  const [report, setReport] = useState('');
+  const [remainingPoints, setRemainingPoints] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(false); 
+  const [loadingText, setLoadingText] = useState('命理鑑定計算中...');
+  const [purchaseLoading, setPurchaseLoading] = useState(false);
 
-  // --- 【新增下載函數】handleDownload ---
-  const handleDownload = async () => {
-    setError('');
-    
-    if (!formData.name || !formData.year || !formData.month || !formData.day) {
-        setError('請先輸入完整的姓名和生日資訊。');
-        return;
-    }
-
-    setDownloading(true);
-    const requestBody = buildRequestBody();
-    
+  const syncPoints = async () => {
     try {
-        // const url = process.env.NEXT_PUBLIC_API_URL + '/api/Astrology/export';
-        const url = 'https://ecanapi.fly.dev' + '/api/Astrology/export';       
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(requestBody), 
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`API 檔案匯出錯誤 (${response.status}): ${errorText.substring(0, 100)}...`);
-        }
-
-        const blob = await response.blob();
-        
-        // 嘗試從 Content-Disposition 獲取檔名，並處理中文編碼
-        let filename = `${requestBody.name}_AstrologyChart.xls`; 
-        const contentDisposition = response.headers.get('Content-Disposition');
-        if (contentDisposition) {
-            const match = contentDisposition.match(/filename\*?=\"?([^;"]+)\"?/i);
-            if (match) {
-                // 嘗試解碼 RFC 5987 格式的檔名，否則直接使用
-                filename = match[1].startsWith('utf-8') ? decodeURIComponent(match[1].split("'").pop() as string) : match[1];
-            }
-        }
-
-        const urlBlob = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = urlBlob;
-        a.download = filename;
-        
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        window.URL.revokeObjectURL(urlBlob);
-        
-        // 可選擇顯示一個成功訊息
-        // alert(`命盤已成功下載為 ${filename}`);
-
-    } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : '未知下載錯誤';
-        setError(`下載命盤失敗: ${errorMessage}`);
-    } finally {
-        setDownloading(false);
-    }
-  };
-
-
-  // --- 排盤計算函數 handleSubmit ---
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    setResult('');
-
-    if (!formData.name || !formData.year || !formData.month || !formData.day) {
-        setError('請先輸入完整的姓名和生日資訊。');
-        setLoading(false);
-        return;
-    }
-
-    const requestBody = buildRequestBody();
-
-    try {
-      const url = process.env.NEXT_PUBLIC_API_URL + '/api/Astrology/calculate';
-      
-      const response = await fetch(url, {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      const res = await fetch(`${API_URL}/Consultation/analyze`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody), // 發送轉換後的 requestBody
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ type: '同步查詢', chartRequest: formData })
       });
-      
-      // 增強錯誤處理：檢查 HTTP 狀態碼
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`API 錯誤 (${response.status} ${response.statusText}): ${errorText.substring(0, 100)}...`);
+      if (res.ok) {
+        const data = await res.json();
+        setRemainingPoints(data.remainingPoints ?? data.points ?? 0);
       }
+    } catch (err) { console.error("同步失敗", err); }
+  };
 
-      const data = await response.json();
-      
-      if (data.error) {
-        setError(data.error);
-      } else {
-        // --- 輸出符合 Ecanapi 格式的詳細數據 (包含六神修正) ---
-        
-        const bazi = data.bazi;
-        // 檢查八字數據是否存在，並使用正確的 timePillar 屬性
-        const isBaziComplete = bazi && bazi.yearPillar && bazi.monthPillar && bazi.dayPillar && bazi.timePillar; 
-        
-        const mainInfo = `
-          <p><strong>姓名:</strong> ${requestBody.name} &nbsp;&nbsp;|&nbsp;&nbsp; 
-          <strong>生日:</strong> ${requestBody.year}-${String(requestBody.month).padStart(2, '0')}-${String(requestBody.day).padStart(2, '0')} ${String(requestBody.hour).padStart(2, '0')}:${String(requestBody.minute).padStart(2, '0')}
-          </p>
-          <p><strong>五行局:</strong> ${data.wuXingJuText} &nbsp;&nbsp;|&nbsp;&nbsp; 
-          <strong>命主:</strong> ${data.mingZhu} &nbsp;&nbsp;|&nbsp;&nbsp; 
-          <strong>身主:</strong> ${data.shenZhu}
-          </p>
-        `;
+  useEffect(() => { syncPoints(); }, []);
 
-        const baziPillars = isBaziComplete
-          ? `
-            <p><strong>日主:</strong> ${bazi.dayMaster}</p>
-            <table class="w-full text-left border-collapse mt-2">
-              <thead>
-                <tr>
-                  <th class="border p-2"></th>
-                  <th class="border p-2">年柱</th>
-                  <th class="border p-2">月柱</th>
-                  <th class="border p-2">日柱</th>
-                  <th class="border p-2">時柱</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="border p-2">天干 (六神)</td>
-                  <td class="border p-2">${bazi.yearPillar.heavenlyStem} (${bazi.yearPillar.heavenlyStemLiuShen})</td>
-                  <td class="border p-2">${bazi.monthPillar.heavenlyStem} (${bazi.monthPillar.heavenlyStemLiuShen})</td>
-                  <td class="border p-2">${bazi.dayPillar.heavenlyStem} (日主)</td>
-                  <td class="border p-2">${bazi.timePillar.heavenlyStem} (${bazi.timePillar.heavenlyStemLiuShen})</td>
-                </tr>
-                <tr>
-                  <td class="border p-2">地支 (藏干六神)</td>
-                  <td class="border p-2">${bazi.yearPillar.earthlyBranch} (${bazi.yearPillar.hiddenStemLiuShen.join('/')})</td>
-                  <td class="border p-2">${bazi.monthPillar.earthlyBranch} (${bazi.monthPillar.hiddenStemLiuShen.join('/')})</td>
-                  <td class="border p-2">${bazi.dayPillar.earthlyBranch} (${bazi.dayPillar.hiddenStemLiuShen.join('/')})</td>
-                  <td class="border p-2">${bazi.timePillar.earthlyBranch} (${bazi.timePillar.hiddenStemLiuShen.join('/')})</td>
-                </tr>
-                <tr>
-                  <td class="border p-2">納音</td>
-                  <td class="border p-2">${bazi.yearPillar.naYin}</td>
-                  <td class="border p-2">${bazi.monthPillar.naYin}</td>
-                  <td class="border p-2">${bazi.dayPillar.naYin}</td>
-                  <td class="border p-2">${bazi.timePillar.naYin}</td>
-                </tr>
-              </tbody>
-            </table>
-          ` : '<p><strong>八字數據缺失。</strong></p>';
+  // 過濾特殊符號
+  const cleanReport = (text: string) => {
+    return text.replace(/[#*]/g, '').replace(/\n\s*\n/g, '\n');
+  };
 
-        setResult(mainInfo + baziPillars); // 組合主要資訊和八字表
+  const handleAnalysis = async () => {
+    if (remainingPoints !== null && remainingPoints < 10) return alert("點數不足");
+    setLoadingText('命理鑑定計算中...');
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/Consultation/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ type: '綜合鑑定', chartRequest: formData })
+      });
+      const data = await res.json();
+      if (res.ok) { 
+        setReport(cleanReport(data.result || data.analysis || '')); 
+        setRemainingPoints(data.remainingPoints); 
       }
+    } catch (err) { alert('鑑定失敗'); } finally { setIsLoading(false); }
+  };
+
+  // 🚩 優化後的 PDF 生成邏輯：解決亂碼與截斷
+  const generatePDF = async () => {
+    const element = document.getElementById('report-paper');
+    if (!element) return;
+    
+    setLoadingText('正在生成 PDF 鑑定書...'); // 明確提示，避免誤會是重新鑑定
+    setIsLoading(true);
+    
+    try {
+      // 使用更高精度的渲染配置
+      const canvas = await html2canvas(element, { 
+        scale: 2,           // 2倍清晰度
+        useCORS: true,      // 跨域支持
+        logging: false,     // 減少負擔
+        backgroundColor: '#F9F3E9' // 確保背景色一致
+      });
+
+      const imgData = canvas.toDataURL('image/jpeg', 0.8); // 使用 JPEG 壓縮減少檔案大小
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      // 如果鑑定書太長，自動分頁處理（或調整比例）
+      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`${formData.name}_命理鑑定書.pdf`);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : '未知錯誤';
-      setError(`排盤請求失敗: ${errorMessage}`);
+      alert("PDF 儲存失敗，請嘗試手動截圖");
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
+  const handleExportXLS = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return alert("請先登入");
+    setLoadingText('正在導出命盤資料...');
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/Astrology/Export`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(formData)
+      });
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `${formData.name}_命盤.xls`;
+        document.body.appendChild(a); a.click(); a.remove();
+      }
+    } catch (err) { alert("下載失敗"); } finally { setIsLoading(false); }
+  };
+
+  const handlePurchase = async () => {
+    setPurchaseLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const userEmail = localStorage.getItem('email') || "Guest";
+      const res = await fetch(`${API_URL}/Payment/create-checkout-session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ points: 50, price: 500, userName: userEmail })
+      });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+    } catch (err) { alert("支付跳轉失敗"); } finally { setPurchaseLoading(false); }
+  };
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-4">線上排盤</h1>
-      <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
-        <div>
-          <label className="block">姓名</label>
-          <input
-            type="text"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            className="border p-2 rounded w-full"
-            placeholder="請輸入姓名"
-            required
-          />
-        </div>
-        <div>
-          <label className="block">日期類型</label>
-          <select
-            value={formData.dateType}
-            onChange={(e) => setFormData({ ...formData, dateType: e.target.value })}
-            className="border p-2 rounded w-full"
-            disabled // 暫時禁用，因為後端模型只處理西曆
-          >
-            <option value="solar">西曆</option>
-            <option value="lunar">農曆</option>
-          </select>
-        </div>
-        
-        {/* 日期下拉選單 */}
-        <div className="grid grid-cols-3 gap-2">
-          <div>
-            <label className="block">年</label>
-            <select
-              value={formData.year}
-              onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value, 10) })}
-              className="border p-2 rounded w-full"
-            >
-              {generateYears().map(y => <option key={y} value={y}>{y}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="block">月</label>
-            <select
-              value={formData.month}
-              onChange={(e) => setFormData({ ...formData, month: parseInt(e.target.value, 10) })}
-              className="border p-2 rounded w-full"
-            >
-              {months.map(m => <option key={m} value={m}>{m}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="block">日</label>
-            <select
-              value={formData.day}
-              onChange={(e) => setFormData({ ...formData, day: parseInt(e.target.value, 10) })}
-              className="border p-2 rounded w-full"
-            >
-              {days.map(d => <option key={d} value={d}>{d}</option>)}
-            </select>
-          </div>
-        </div>
+    <div className="min-h-screen bg-[#FDFBF7] flex flex-col relative">
+      <div className="fixed top-0 left-0 right-0 z-[100] bg-white shadow-md"><Header /></div>
 
-        {/* 時間下拉選單 */}
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className="block">時 (HH)</label>
-            <select
-              value={formData.hour}
-              onChange={(e) => setFormData({ ...formData, hour: parseInt(e.target.value, 10) })}
-              className="border p-2 rounded w-full"
-            >
-              {hours.map(h => <option key={h} value={h}>{String(h).padStart(2, '0')}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="block">分 (MM)</label>
-            <select
-              value={formData.minute}
-              onChange={(e) => setFormData({ ...formData, minute: parseInt(e.target.value, 10) })}
-              className="border p-2 rounded w-full"
-            >
-              {minutes.map(m => <option key={m} value={m}>{String(m).padStart(2, '0')}</option>)}
-            </select>
+      {isLoading && (
+        <div className="fixed inset-0 bg-black/30 z-[9999] flex items-center justify-center backdrop-blur-sm">
+          <div className="bg-white p-8 rounded-3xl shadow-2xl flex flex-col items-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-amber-700 mb-4"></div>
+            <p className="text-amber-900 font-bold text-xl tracking-widest text-center">{loadingText}</p>
           </div>
         </div>
-        
-        <div>
-          <label className="block">性別</label>
-          <select
-            value={formData.gender}
-            onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-            className="border p-2 rounded w-full"
-          >
-            <option value="1">男</option>
-            <option value="2">女</option>
-          </select>
-        </div>
-        
-        {/* 雙按鈕：生成命盤 和 下載命盤 */}
-        <div className="grid grid-cols-2 gap-2">
-          {ENABLE_GENERATE_CHART && (
-            <button
-                type="submit"
-                className="bg-amber-600 text-white p-2 rounded w-full disabled:bg-gray-400"
-                disabled={loading || downloading}
-            >
-                {loading ? '生成中...' : '生成命盤'}
-            </button>
+      )}
+
+      <main className="flex-1 pt-24 px-4 pb-8 overflow-y-auto">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+          
+          <div className="md:col-span-4 bg-white p-5 rounded-3xl shadow-sm border border-orange-100 text-sm">
+            <h2 className="text-lg font-bold text-amber-950 mb-4">命主資料</h2>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-gray-600 mb-1 font-bold text-xs">姓名</label>
+                <input type="text" value={formData.name} onChange={(e)=>setFormData({...formData, name: e.target.value})} className="w-full px-3 py-1.5 rounded-xl border border-gray-200 outline-none focus:border-amber-500" />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-2 items-end">
+                <div>
+                  <label className="block text-gray-600 mb-1 font-bold text-xs">性別</label>
+                  <select value={formData.gender} onChange={(e)=>setFormData({...formData, gender: e.target.value})} className="w-full px-3 py-1.5 rounded-xl border border-gray-200">
+                    <option value="1">乾造 (男)</option><option value="0">坤造 (女)</option>
+                  </select>
+                </div>
+                <div className="text-amber-700 font-bold bg-amber-50 px-3 py-1.5 rounded-xl text-center text-xs border border-amber-100">
+                  餘額：{remainingPoints !== null ? remainingPoints : '--'} 點
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <div><label className="text-[10px] text-gray-400">西元年</label><select value={formData.year} onChange={(e)=>setFormData({...formData, year: parseInt(e.target.value)})} className="w-full border rounded p-1 text-xs">{generateYears().map(y => <option key={y} value={y}>{y}年</option>)}</select></div>
+                <div><label className="text-[10px] text-gray-400">月</label><select value={formData.month} onChange={(e)=>setFormData({...formData, month: parseInt(e.target.value)})} className="w-full border rounded p-1 text-xs">{months.map(m => <option key={m} value={m}>{m}月</option>)}</select></div>
+                <div><label className="text-[10px] text-gray-400">日</label><select value={formData.day} onChange={(e)=>setFormData({...formData, day: parseInt(e.target.value)})} className="w-full border rounded p-1 text-xs">{days.map(d => <option key={d} value={d}>{d}日</option>)}</select></div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div><label className="text-[10px] text-gray-400">小時</label><select value={formData.hour} onChange={(e)=>setFormData({...formData, hour: parseInt(e.target.value)})} className="w-full border rounded p-1 text-xs">{hours.map(h => <option key={h} value={h}>{h}時</option>)}</select></div>
+                <div><label className="text-[10px] text-gray-400">分鐘</label><select value={formData.minute} onChange={(e)=>setFormData({...formData, minute: parseInt(e.target.value)})} className="w-full border rounded p-1 text-xs">{minutes.map(m => <option key={m} value={m}>{m}分</option>)}</select></div>
+              </div>
+
+              <div className="pt-2 space-y-2">
+                <button onClick={handleExportXLS} className="w-full bg-emerald-700 text-white font-bold py-2 rounded-xl text-xs shadow-md">📥 下載數位命盤 (XLS)</button>
+                <button onClick={handleAnalysis} className="w-full bg-amber-800 text-white font-bold py-3 rounded-2xl text-sm shadow-md">✨ 啟動深度鑑定 (10點)</button>
+              </div>
+            </div>
+          </div>
+
+          <div className="md:col-span-8">
+            <div className="mb-4 bg-gradient-to-r from-amber-800 to-amber-950 p-4 rounded-[2rem] text-white flex justify-between items-center shadow-lg">
+              <div><p className="text-xs opacity-70">PREMIUM CREDITS</p><p className="font-bold">NT$ 500 / 50 點</p></div>
+              <button onClick={handlePurchase} disabled={purchaseLoading} className="bg-white text-amber-900 px-6 py-2 rounded-full font-bold text-sm shadow-sm active:scale-95 transition-all">{purchaseLoading ? "處理中..." : "立即儲值"}</button>
+            </div>
+
+            {report ? (
+              <div className="space-y-4">
+                <div className="flex justify-end">
+                  <button onClick={generatePDF} className="bg-amber-100 text-amber-900 border border-amber-300 px-5 py-2 rounded-full text-xs font-bold hover:bg-amber-200 transition-all shadow-sm flex items-center gap-2">
+                    💾 儲存 PDF 鑑定書
+                  </button>
+                </div>
+                <div className="bg-white p-1 shadow-2xl border border-red-50 rounded-sm overflow-hidden">
+                  <div 
+                    id="report-paper" 
+                    className="p-12 relative bg-[#F9F3E9]"
+                    style={{
+                      backgroundImage: 'linear-gradient(rgba(255, 0, 0, 0.15) 1px, transparent 1px)',
+                      backgroundSize: '100% 40px',
+                      border: '18px double #4a3721',
+                      lineHeight: '40px'
+                    }}
+                  >
+                    <h2 className="text-3xl font-bold text-center text-amber-950 mb-8 border-b-2 border-red-800 pb-4 tracking-[1em]">命理鑑定書</h2>
+                    <div 
+                      className="whitespace-pre-wrap text-xl text-gray-800 text-justify tracking-[0.1em]"
+                      style={{ 
+                        fontFamily: '"標楷體", "Kaiti", "BiauKai", "DFKai-SB", "STKaiti", serif',
+                        paddingTop: '2px'
+                      }}
+                    >
+                      {report}
+                    </div>
+                    <div className="mt-20 text-right text-amber-900/40 italic text-sm font-serif">玉洞子 謹誌</div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="h-[500px] border-2 border-dashed border-amber-100 rounded-[3rem] flex items-center justify-center bg-white/40 font-bold text-amber-200 text-xl italic tracking-widest">請輸入資料後開啟深度鑑定</div>
             )}
-            <button
-                type="button" 
-                onClick={handleDownload} // 新增的下載功能
-                className="bg-green-600 text-white p-2 rounded w-full disabled:bg-gray-400"
-                disabled={downloading || loading}
-            >
-                {downloading ? '下載中...' : '下載命盤 (XLS)'}
-            </button>
+          </div>
         </div>
-
-        {error && <div className="text-red-500 mt-2">{error}</div>}
-        {/* 使用 dangerouslySetInnerHTML 渲染 HTML 格式的結果 */}
-        {result && <div className="mt-4 p-4 bg-gray-100 rounded" dangerouslySetInnerHTML={{ __html: result }} />}
-      </form>
+      </main>
     </div>
   );
 }

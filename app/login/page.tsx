@@ -5,9 +5,11 @@ import { useAuth } from '@/components/AuthContext';
 import Link from 'next/link';
 
 export default function LoginPage() {
-  // *** 請將此處的網址替換為您部署在 Fly.io 上的實際後端網址！ ***
-  const API_BASE_URL = 'https://ecanapi.fly.dev/api/auth'; 
-  
+  // *** 請將此處的網址替換為您部署在 Fly.io 上的實際後端網址！ *** 
+  //const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://localhost:32801/api';
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL 
+    ? `${process.env.NEXT_PUBLIC_API_URL}/auth` 
+    : 'https://localhost:32801/api/auth';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isRegister, setIsRegister] = useState(false);
@@ -42,7 +44,14 @@ export default function LoginPage() {
           setName(''); 
           setPassword('');
         } else if (data.token) {
-          login(data.token); 
+          // 🚩 1. 存入 Token (維持原樣)
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('email', email); // ✅ 新增這行，把登入用的 email 存起來
+          // 🚩 2. 關鍵新增：存入 UserId，解決分析與點數同步時的字典錯誤
+          // 這裡使用 data.id 是因為您後端現在回傳 return Ok(new { id = session.Id, url = session.Url })
+          const uid = data.userId || data.id || "user_standard";
+          localStorage.setItem('userId', uid);
+          login(data.token);
         }
       } else {
         setError(data.message || '操作失敗，請檢查資料。');
