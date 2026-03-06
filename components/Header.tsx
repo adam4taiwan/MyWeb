@@ -21,38 +21,40 @@ export default function Header() {
           
           <nav className="hidden md:flex items-center space-x-8">
             <Link href="/" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">首頁</Link>
-            {/* <Link href="/books" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">古書介紹</Link> */}
             <Link href="/heritage" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">命學傳承</Link>
             <Link href="/bookstore" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">二手書店</Link>
-            {/* 只有登入後才顯示排盤工具 */}
             {isAuthenticated && (
-                <Link href="/disk" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">排盤工具</Link>
+              <Link href="/disk" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">排盤工具</Link>
             )}
           </nav>
 
-          {/* 右側按鈕區域：保留諮詢並整合認證按鈕 */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden md:flex items-center space-x-3">
             <Link href="/consultation">
-                <button 
-                  className="bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 transition-colors whitespace-nowrap cursor-pointer font-semibold"
-                >
-                    線上諮詢 {/* 保持您的線上諮詢按鈕 */}
-                </button>
+              <button className="bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 transition-colors whitespace-nowrap cursor-pointer font-semibold">
+                線上諮詢
+              </button>
             </Link>
-            
+
             {isAuthenticated ? (
-                <button 
-                    onClick={logout}
-                    className="px-4 py-2 text-white bg-red-500 rounded-full hover:bg-red-600 transition-colors font-semibold whitespace-nowrap"
-                >
-                    登出
-                </button>
-            ) : (
-                <Link href="/login">
-                    <button className="px-4 py-2 text-white bg-amber-600 rounded-full hover:bg-amber-700 transition-colors font-semibold whitespace-nowrap">
-                        登入/註冊
-                    </button>
+              <div className="flex items-center space-x-2">
+                <Link href="/member">
+                  <button className="px-4 py-2 text-amber-700 border border-amber-300 rounded-full hover:bg-amber-50 transition-colors font-semibold whitespace-nowrap">
+                    會員中心
+                  </button>
                 </Link>
+                <button
+                  onClick={logout}
+                  className="px-4 py-2 text-white bg-red-500 rounded-full hover:bg-red-600 transition-colors font-semibold whitespace-nowrap"
+                >
+                  登出
+                </button>
+              </div>
+            ) : (
+              <Link href="/login">
+                <button className="px-4 py-2 text-white bg-amber-600 rounded-full hover:bg-amber-700 transition-colors font-semibold whitespace-nowrap">
+                  登入/註冊
+                </button>
+              </Link>
             )}
           </div>
 
@@ -75,22 +77,24 @@ export default function Header() {
               <Link href="/bookstore" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>二手書店</Link>
               <Link href="/consultation" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>諮詢服務</Link>
               {isAuthenticated && (
-                  <Link href="/disk" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>排盤工具</Link>
+                <Link href="/disk" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>排盤工具</Link>
               )}
-              {/* 行動裝置下的登入/登出按鈕 */}
+              {isAuthenticated && (
+                <Link href="/member" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>會員中心</Link>
+              )}
               {isAuthenticated ? (
-                  <button 
-                      onClick={() => { logout(); setIsMenuOpen(false); }}
-                      className="bg-red-500 text-white px-4 py-2 rounded-full hover:bg-red-600 transition-colors font-semibold"
-                  >
-                      登出
-                  </button>
+                <button
+                  onClick={() => { logout(); setIsMenuOpen(false); }}
+                  className="bg-red-500 text-white px-4 py-2 rounded-full hover:bg-red-600 transition-colors font-semibold"
+                >
+                  登出
+                </button>
               ) : (
-                  <Link href="/login">
-                      <button className="bg-amber-600 text-white px-4 py-2 rounded-full hover:bg-amber-700 transition-colors font-semibold" onClick={() => setIsMenuOpen(false)}>
-                          登入/註冊
-                      </button>
-                  </Link>
+                <Link href="/login">
+                  <button className="bg-amber-600 text-white px-4 py-2 rounded-full hover:bg-amber-700 transition-colors font-semibold" onClick={() => setIsMenuOpen(false)}>
+                    登入/註冊
+                  </button>
+                </Link>
               )}
             </nav>
           </div>

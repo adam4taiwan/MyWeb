@@ -27,31 +27,62 @@ export default function EmailModal({ isOpen, onClose, service }: EmailModalProps
     attachments: [] as File[]
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Email諮詢申請:', { service, ...formData });
-    setIsSubmitted(true);
-    setTimeout(() => {
-      setIsSubmitted(false);
-      onClose();
-      setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        birthDate: '',
-        birthTime: '',
-        birthPlace: '',
-        gender: '',
-        maritalStatus: '',
-        occupation: '',
-        subject: '',
-        priority: 'normal',
-        consultationType: 'detailed',
-        questions: '',
-        attachments: []
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // 调用后端 API
+      const response = await fetch('/api/consultation/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          service,
+          ...formData,
+        }),
       });
-    }, 3000);
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || '邮件发送失败，请重试');
+      }
+
+      // 成功
+      setIsSubmitted(true);
+      setTimeout(() => {
+        setIsSubmitted(false);
+        onClose();
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          birthDate: '',
+          birthTime: '',
+          birthPlace: '',
+          gender: '',
+          maritalStatus: '',
+          occupation: '',
+          subject: '',
+          priority: 'normal',
+          consultationType: 'detailed',
+          questions: '',
+          attachments: []
+        });
+      }, 3000);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : '发送失败，请稍后重试';
+      setError(errorMessage);
+      console.error('邮件发送错误:', err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -88,6 +119,18 @@ export default function EmailModal({ isOpen, onClose, service }: EmailModalProps
             </button>
           </div>
         </div>
+
+        {error && (
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg m-6">
+            <div className="flex items-start space-x-3">
+              <i className="ri-error-warning-line text-red-600 text-xl mt-1"></i>
+              <div>
+                <h5 className="font-semibold text-red-800">发送失败</h5>
+                <p className="text-red-700 text-sm mt-1">{error}</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {isSubmitted ? (
           <div className="p-8 text-center">
@@ -303,7 +346,10 @@ export default function EmailModal({ isOpen, onClose, service }: EmailModalProps
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">附件上傳</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        <i className="ri-yin-yang-2-line text-amber-600 mr-2"></i>
+                        附件上傳
+                      </label>
                       <input
                         type="file"
                         onChange={handleFileChange}
@@ -312,7 +358,8 @@ export default function EmailModal({ isOpen, onClose, service }: EmailModalProps
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
                       />
                       <p className="text-xs text-gray-500 mt-1">
-                        可上傳相關資料（如手相照片、風水平面圖等），支援PDF、圖片、文檔格式
+                        <i className="ri-book-2-line text-amber-600 mr-1"></i>
+                        可上傳相關資料（如手相照片、八字圖表、風水平面圖等），支援PDF、圖片、文檔格式
                       </p>
                     </div>
                   </div>
@@ -334,15 +381,24 @@ export default function EmailModal({ isOpen, onClose, service }: EmailModalProps
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 transition-colors whitespace-nowrap cursor-pointer"
+                disabled={isLoading}
+                className="flex-1 bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 transition-colors whitespace-nowrap cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 取消
               </button>
               <button
                 type="submit"
-                className="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap cursor-pointer"
+                disabled={isLoading}
+                className="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                發送諮詢郵件
+                {isLoading ? (
+                  <>
+                    <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                    發送中...
+                  </>
+                ) : (
+                  '發送諮詢郵件'
+                )}
               </button>
             </div>
           </form>

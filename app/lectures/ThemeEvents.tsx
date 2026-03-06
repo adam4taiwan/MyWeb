@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 
 export default function ThemeEvents() {
   const [selectedEvent, setSelectedEvent] = useState(0);
@@ -104,9 +105,11 @@ export default function ThemeEvents() {
           <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
             <div className="grid lg:grid-cols-2 gap-0">
               <div className="h-64 lg:h-auto">
-                <img 
+                <Image
                   src={`https://readdy.ai/api/search-image?query=$%7Bevents%5BselectedEvent%5D.image%7D&width=600&height=400&seq=theme-event-${selectedEvent}&orientation=landscape`}
                   alt={events[selectedEvent].title}
+                  width={600}
+                  height={400}
                   className="w-full h-full object-cover object-top"
                 />
               </div>

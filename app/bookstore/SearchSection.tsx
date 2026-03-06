@@ -1,12 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 
 export default function SearchSection() {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleSearch = (platform: string) => {
     if (!searchTerm.trim()) return;
     
@@ -131,9 +133,11 @@ export default function SearchSection() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {searchResults.map((book) => (
                   <div key={book.id} className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
-                    <img 
-                      src={book.image} 
+                    <Image
+                      src={book.image}
                       alt={book.title}
+                      width={400}
+                      height={192}
                       className="w-full h-48 object-cover object-top"
                     />
                     <div className="p-4">

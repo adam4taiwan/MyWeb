@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
-import Link from 'next/link';
 
 export default function Heritage() {
   const [activeTab, setActiveTab] = useState('life');
@@ -183,9 +183,11 @@ export default function Heritage() {
               </div>
               
               <div className="relative">
-                <img 
+                <Image
                   src="https://readdy.ai/api/search-image?query=modern%20students%20learning%20traditional%20chinese%20metaphysics%20in%20bright%20classroom%20with%20ancient%20books%20feng%20shui%20compass%20personal%20development%20study%20materials%20warm%20natural%20lighting%20contemporary%20learning%20environment&width=600&height=700&seq=life-class&orientation=portrait"
                   alt="個人生活應用班"
+                  width={600}
+                  height={500}
                   className="rounded-2xl shadow-2xl object-cover object-top w-full h-96 lg:h-[500px]"
                 />
               </div>
@@ -196,9 +198,11 @@ export default function Heritage() {
           {activeTab === 'professional' && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               <div className="order-2 lg:order-1 relative">
-                <img 
+                <Image
                   src="https://readdy.ai/api/search-image?query=professional%20chinese%20metaphysics%20master%20teaching%20advanced%20students%20with%20ancient%20texts%20divination%20tools%20traditional%20ceremony%20formal%20academic%20setting%20scholarly%20atmosphere%20wooden%20furniture&width=600&height=700&seq=professional-class&orientation=portrait"
                   alt="職業傳承弟子班"
+                  width={600}
+                  height={500}
                   className="rounded-2xl shadow-2xl object-cover object-top w-full h-96 lg:h-[500px]"
                 />
               </div>

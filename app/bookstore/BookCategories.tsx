@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 
 type CategoryKey = 'calligraphy' | 'literature' | 'art' | 'philosophy';
 
@@ -200,9 +201,11 @@ function BookCategories() {
             {categories[activeCategory].books.map((book, index) => (
               <div key={index} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
                 <div className="relative">
-                  <img 
-                    src={book.image} 
+                  <Image
+                    src={book.image}
                     alt={book.title}
+                    width={600}
+                    height={256}
                     className="w-full h-64 object-cover object-top"
                   />
                   <div className="absolute top-4 right-4">

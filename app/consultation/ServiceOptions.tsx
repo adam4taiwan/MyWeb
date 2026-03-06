@@ -86,27 +86,20 @@ export default function ServiceOptions({ onServiceSelect }: ServiceOptionsProps)
                 </ul>
                 
                 <div className="grid grid-cols-1 gap-3">
-                  <button 
-                    onClick={() => onServiceSelect(service.title, 'video')}
-                    className="bg-amber-600 text-white px-4 py-3 rounded-lg hover:bg-amber-700 transition-colors whitespace-nowrap cursor-pointer flex items-center justify-center"
-                  >
-                    <i className="ri-video-line mr-2"></i>
-                    視訊諮詢
-                  </button>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button 
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
                       onClick={() => onServiceSelect(service.title, 'message')}
-                      className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap cursor-pointer flex items-center justify-center text-sm"
+                      className="bg-blue-600 text-white px-3 py-3 rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap cursor-pointer flex items-center justify-center"
                     >
-                      <i className="ri-message-line mr-1"></i>
-                      對話
+                      <i className="ri-message-line mr-2"></i>
+                      對話諮詢
                     </button>
-                    <button 
+                    <button
                       onClick={() => onServiceSelect(service.title, 'email')}
-                      className="bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap cursor-pointer flex items-center justify-center text-sm"
+                      className="bg-green-600 text-white px-3 py-3 rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap cursor-pointer flex items-center justify-center"
                     >
-                      <i className="ri-mail-line mr-1"></i>
-                      郵件
+                      <i className="ri-mail-line mr-2"></i>
+                      郵件諮詢
                     </button>
                   </div>
                 </div>

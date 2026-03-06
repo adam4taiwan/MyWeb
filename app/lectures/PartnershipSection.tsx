@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 
 export default function PartnershipSection() {
   const [showContactModal, setShowContactModal] = useState(false);
@@ -76,9 +77,11 @@ export default function PartnershipSection() {
           {partnerships.map((partnership, index) => (
             <div key={index} className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-3xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
               <div className="h-48 overflow-hidden">
-                <img 
+                <Image
                   src={`https://readdy.ai/api/search-image?query=$%7Bpartnership.image%7D&width=600&height=300&seq=partnership-${index}&orientation=landscape`}
                   alt={partnership.title}
+                  width={600}
+                  height={300}
                   className="w-full h-full object-cover object-top hover:scale-105 transition-transform duration-300"
                 />
               </div>

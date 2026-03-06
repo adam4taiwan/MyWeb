@@ -1,8 +1,9 @@
 "use client";
 import { useState, useEffect } from 'react';
-import html2canvas from 'html2canvas'; 
+import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import Header from '@/components/Header'; 
+import Header from '@/components/Header';
+import { useAuth } from '@/components/AuthContext';
 
 // 時間選單生成器
 const generateYears = () => {
@@ -15,11 +16,12 @@ const hours = Array.from({ length: 24 }, (_, i) => i);
 const minutes = Array.from({ length: 60 }, (_, i) => i);
 
 export default function DiskPage() {
-  const API_URL = process.env.NEXT_PUBLIC_API_URL 
-    ? process.env.NEXT_PUBLIC_API_URL 
+  const { token } = useAuth();
+  const API_URL = process.env.NEXT_PUBLIC_API_URL
+    ? process.env.NEXT_PUBLIC_API_URL
     : (typeof window !== 'undefined' && window.location.hostname === 'localhost')
-      ? 'https://localhost:32801/api'  // 本地端測試
-      : 'https://ecanapi.fly.dev/api'; // 雲端正式預設 (不再讓它連 localhost)
+      ? 'http://localhost:5013/api'
+      : 'https://ecanapi.fly.dev/api';
 
   const [formData, setFormData] = useState({
     dateType: 'solar', name: '吉祥名', gender: '1',
@@ -34,7 +36,6 @@ export default function DiskPage() {
 
   const syncPoints = async () => {
     try {
-      const token = localStorage.getItem('token');
       if (!token) return;
       const res = await fetch(`${API_URL}/Consultation/analyze`, {
         method: 'POST',
@@ -48,7 +49,8 @@ export default function DiskPage() {
     } catch (err) { console.error("同步失敗", err); }
   };
 
-  useEffect(() => { syncPoints(); }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (token) syncPoints(); }, [token]);
 
   // 過濾特殊符號
   const cleanReport = (text: string) => {
@@ -60,7 +62,6 @@ export default function DiskPage() {
     setLoadingText('命理鑑定計算中...');
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('token');
       const res = await fetch(`${API_URL}/Consultation/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -71,7 +72,7 @@ export default function DiskPage() {
         setReport(cleanReport(data.result || data.analysis || '')); 
         setRemainingPoints(data.remainingPoints); 
       }
-    } catch (err) { alert('鑑定失敗'); } finally { setIsLoading(false); }
+    } catch { alert('鑑定失敗'); } finally { setIsLoading(false); }
   };
 
   // 🚩 優化後的 PDF 生成邏輯：解決亂碼與截斷
@@ -99,7 +100,7 @@ export default function DiskPage() {
       // 如果鑑定書太長，自動分頁處理（或調整比例）
       pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
       pdf.save(`${formData.name}_命理鑑定書.pdf`);
-    } catch (err) {
+    } catch {
       alert("PDF 儲存失敗，請嘗試手動截圖");
     } finally {
       setIsLoading(false);
@@ -107,7 +108,6 @@ export default function DiskPage() {
   };
 
   const handleExportXLS = async () => {
-    const token = localStorage.getItem('token');
     if (!token) return alert("請先登入");
     setLoadingText('正在導出命盤資料...');
     setIsLoading(true);
@@ -124,20 +124,17 @@ export default function DiskPage() {
         a.href = url; a.download = `${formData.name}_命盤.xls`;
         document.body.appendChild(a); a.click(); a.remove();
       }
-    } catch (err) { alert("下載失敗"); } finally { setIsLoading(false); }
+    } catch { alert("下載失敗"); } finally { setIsLoading(false); }
   };
 
   const handlePurchase = async () => {
     setPurchaseLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      // const userEmail = localStorage.getItem('email') || "Guest";
-      // 🚩 改成優先抓取 localStorage，若無則提示重新登入
-      const userEmail = localStorage.getItem('email'); 
-      if (!userEmail || userEmail === "Guest") {
-          alert("請先登入，系統才能同步您的帳號資訊進行儲值。");
-          setPurchaseLoading(false);
-          return;
+      const userEmail = localStorage.getItem('email');
+      if (!userEmail) {
+        alert("請先登入，系統才能同步您的帳號資訊進行儲值。");
+        setPurchaseLoading(false);
+        return;
       }
       const res = await fetch(`${API_URL}/Payment/create-checkout-session`, {
         method: 'POST',
@@ -146,7 +143,7 @@ export default function DiskPage() {
       });
       const data = await res.json();
       if (data.url) window.location.href = data.url;
-    } catch (err) { alert("支付跳轉失敗"); } finally { setPurchaseLoading(false); }
+    } catch { alert("支付跳轉失敗"); } finally { setPurchaseLoading(false); }
   };
 
   return (

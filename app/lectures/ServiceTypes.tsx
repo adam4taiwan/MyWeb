@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 
 export default function ServiceTypes() {
   type ServiceKey = keyof typeof services;
@@ -109,9 +110,11 @@ export default function ServiceTypes() {
               </div>
 
               <div className="h-80 rounded-2xl overflow-hidden">
-                <img 
+                <Image
                   src={`https://readdy.ai/api/search-image?query=Professional%20$%7BselectedService%7D%20lecture%20and%20consultation%20service%20scene%2C%20modern%20business%20environment%20with%20traditional%20Chinese%20wisdom%20elements%2C%20elegant%20presentation%20setup%2C%20warm%20professional%20atmosphere%2C%20contemporary%20interior%20design%20with%20cultural%20accents&width=600&height=400&seq=service-${selectedService}&orientation=landscape`}
                   alt={services[selectedService].title}
+                  width={600}
+                  height={400}
                   className="w-full h-full object-cover object-top"
                 />
               </div>

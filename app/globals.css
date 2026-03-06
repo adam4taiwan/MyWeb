@@ -1,4 +1,79 @@
 @import url('https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.5.0/remixicon.min.css');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Professional brand colors and typography system */
+:root {
+  --font-playfair: 'Playfair Display', Georgia, serif;
+
+  /* Brand colors */
+  --color-brand-gold: #D4A574;
+  --color-brand-dark: #8B6F47;
+  --color-brand-deep: #3d2d1a;
+
+  /* Background colors */
+  --color-bg-dark: #1a1a1a;
+  --color-bg-card: #2d2d2d;
+  --color-bg-border: #3d3d3d;
+
+  /* Text colors */
+  --color-text-light: #f5f5f5;
+  --color-text-secondary: #b0b0b0;
+}
+
+/* Enhanced typography for professional look */
+@layer base {
+  h1 {
+    @apply font-serif font-bold tracking-tight;
+  }
+
+  h2 {
+    @apply font-serif font-bold tracking-tight;
+  }
+
+  h3 {
+    @apply font-serif font-semibold;
+  }
+
+  p {
+    @apply leading-relaxed text-gray-700;
+  }
+}
+
+/* Reusable component utilities */
+@layer components {
+  .btn-primary {
+    @apply inline-block px-8 py-3 bg-brand-300 text-brand-900 font-semibold rounded-lg hover:bg-brand-400 transition-colors duration-250 transform hover:scale-105;
+  }
+
+  .btn-secondary {
+    @apply inline-block px-8 py-3 border-2 border-brand-300 text-brand-300 font-semibold rounded-lg hover:bg-brand-300/10 transition-colors duration-250;
+  }
+
+  .btn-light {
+    @apply inline-block px-8 py-3 bg-white text-brand-900 font-semibold rounded-lg hover:bg-gray-100 transition-colors duration-250;
+  }
+
+  .section-container {
+    @apply py-20 px-4;
+  }
+
+  .hero-title {
+    @apply text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-brand-300 leading-tight;
+  }
+
+  .section-title {
+    @apply text-3xl md:text-4xl font-serif font-bold text-gray-900 mb-6;
+  }
+
+  .card-base {
+    @apply p-8 rounded-brand bg-white border border-gray-200 shadow-lg transition-shadow hover:shadow-xl;
+  }
+
+  .card-dark {
+    @apply p-8 rounded-brand bg-dark-card border border-dark-border shadow-lg transition-shadow hover:shadow-xl;
+  }
+}

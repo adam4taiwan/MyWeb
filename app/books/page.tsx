@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import Link from 'next/link';
@@ -214,9 +215,11 @@ export default function BooksPage() {
             {filteredBooks.map(book => (
               <div key={book.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
                 <div className="relative">
-                  <img 
-                    src={book.image} 
+                  <Image
+                    src={book.image}
                     alt={book.title}
+                    width={600}
+                    height={256}
                     className="w-full h-64 object-cover object-top"
                   />
                   <div className="absolute top-4 right-4">
