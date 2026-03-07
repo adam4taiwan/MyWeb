@@ -5,7 +5,6 @@ import jsPDF from 'jspdf';
 import Header from '@/components/Header';
 import { useAuth } from '@/components/AuthContext';
 
-// 時間選單生成器
 const generateYears = () => {
   const currentYear = new Date().getFullYear();
   return Array.from({ length: 121 }, (_, i) => currentYear - i);
@@ -15,6 +14,25 @@ const days = Array.from({ length: 31 }, (_, i) => i + 1);
 const hours = Array.from({ length: 24 }, (_, i) => i);
 const minutes = Array.from({ length: 60 }, (_, i) => i);
 
+const REPORT_TYPES = [
+  { key: '綜合性命書', label: '綜合命書', cost: 50, desc: '八字紫微全面鑑定' },
+  { key: '大運命書', label: '大運命書', cost: 30, desc: '逐月吉凶大運推演' },
+  { key: '流年命書', label: '流年命書', cost: 20, desc: '指定年份運勢推演' },
+  { key: '問事', label: '問事鑑定', cost: 10, desc: '針對特定事項剖析' },
+] as const;
+
+const FORTUNE_DURATIONS = [
+  { value: 5, label: '5年大運', cost: 30 },
+  { value: 10, label: '10年大運', cost: 50 },
+  { value: 20, label: '20年大運', cost: 80 },
+  { value: 30, label: '30年大運', cost: 120 },
+  { value: 0, label: '終身命書', cost: 200 },
+];
+
+const TOPICS = ['事業', '婚姻', '財運', '子女', '學業', '買房', '投資', '住宅風水', '合夥', '出國', '開店'];
+
+type ReportTypeKey = typeof REPORT_TYPES[number]['key'];
+
 export default function DiskPage() {
   const { token } = useAuth();
   const API_URL = process.env.NEXT_PUBLIC_API_URL
@@ -23,16 +41,77 @@ export default function DiskPage() {
       ? 'http://localhost:5013/api'
       : 'https://ecanapi.fly.dev/api';
 
+  const currentYear = new Date().getFullYear();
+
   const [formData, setFormData] = useState({
     dateType: 'solar', name: '吉祥名', gender: '1',
-    year: 2026, month: 1, day: 1, hour: 1, minute: 0
+    year: 2000, month: 1, day: 1, hour: 1, minute: 0
   });
+  const [profileLoaded, setProfileLoaded] = useState(false);
+
+  const [reportType, setReportType] = useState<ReportTypeKey>('綜合性命書');
+  const [targetYear, setTargetYear] = useState(currentYear);
+  const [topic, setTopic] = useState('事業');
+  const [fortuneDuration, setFortuneDuration] = useState(5);
 
   const [report, setReport] = useState('');
+  const [reportTitle, setReportTitle] = useState('命理鑑定書');
   const [remainingPoints, setRemainingPoints] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(false); 
+  const [isLoading, setIsLoading] = useState(false);
   const [loadingText, setLoadingText] = useState('命理鑑定計算中...');
   const [purchaseLoading, setPurchaseLoading] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
+
+  // 登入後自動載入會員生辰資料
+  const loadProfile = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_URL}/Auth/profile`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.hasBirthData) {
+          setFormData({
+            dateType: data.dateType ?? 'solar',
+            name: data.chartName ?? data.name ?? '吉祥名',
+            gender: String(data.birthGender ?? 1),
+            year: data.birthYear,
+            month: data.birthMonth,
+            day: data.birthDay,
+            hour: data.birthHour,
+            minute: data.birthMinute ?? 0,
+          });
+        }
+        setRemainingPoints(data.points ?? 0);
+        setProfileLoaded(true);
+      }
+    } catch (err) { console.error("載入生辰失敗", err); }
+  };
+
+  // 儲存生辰至會員資料
+  const saveProfile = async () => {
+    if (!token) return;
+    setProfileSaving(true);
+    try {
+      const res = await fetch(`${API_URL}/Auth/profile`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({
+          chartName: formData.name,
+          birthYear: formData.year,
+          birthMonth: formData.month,
+          birthDay: formData.day,
+          birthHour: formData.hour,
+          birthMinute: formData.minute,
+          birthGender: parseInt(formData.gender),
+          dateType: formData.dateType,
+        })
+      });
+      if (res.ok) alert('生辰資料已儲存至會員帳號');
+      else alert('儲存失敗');
+    } catch { alert('儲存失敗'); } finally { setProfileSaving(false); }
+  };
 
   const syncPoints = async () => {
     try {
@@ -50,61 +129,79 @@ export default function DiskPage() {
   };
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { if (token) syncPoints(); }, [token]);
+  useEffect(() => { if (token) loadProfile(); }, [token]);
 
-  // 過濾特殊符號
   const cleanReport = (text: string) => {
     return text.replace(/[#*]/g, '').replace(/\n\s*\n/g, '\n');
   };
 
+  const getSelectedType = () => {
+    const base = REPORT_TYPES.find(t => t.key === reportType)!;
+    if (reportType === '大運命書') {
+      const dur = FORTUNE_DURATIONS.find(d => d.value === fortuneDuration)!;
+      return { ...base, cost: dur.cost, label: dur.label };
+    }
+    return base;
+  };
+
   const handleAnalysis = async () => {
-    if (remainingPoints !== null && remainingPoints < 10) return alert("點數不足");
+    const selected = getSelectedType();
+    if (remainingPoints !== null && remainingPoints < selected.cost) {
+      return alert(`點數不足，此功能需要 ${selected.cost} 點`);
+    }
     setLoadingText('命理鑑定計算中...');
     setIsLoading(true);
     try {
+      const body: Record<string, unknown> = {
+        type: reportType,
+        chartRequest: formData,
+      };
+      if (reportType === '流年命書') body.targetYear = targetYear;
+      if (reportType === '問事') body.topic = topic;
+      if (reportType === '大運命書') body.fortuneDuration = fortuneDuration;
+
       const res = await fetch(`${API_URL}/Consultation/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ type: '綜合鑑定', chartRequest: formData })
+        body: JSON.stringify(body)
       });
       const data = await res.json();
-      if (res.ok) { 
-        setReport(cleanReport(data.result || data.analysis || '')); 
-        setRemainingPoints(data.remainingPoints); 
+      if (res.ok) {
+        setReport(cleanReport(data.result || data.analysis || ''));
+        setRemainingPoints(data.remainingPoints);
+        // 設定報告標題
+        const durLabel = FORTUNE_DURATIONS.find(d => d.value === fortuneDuration)?.label ?? '大運';
+        const titles: Record<ReportTypeKey, string> = {
+          '綜合性命書': '綜合命理鑑定書',
+          '大運命書': `${durLabel}鑑定書`,
+          '流年命書': `${targetYear} 年流年鑑定書`,
+          '問事': `${topic} 問事鑑定書`,
+        };
+        setReportTitle(titles[reportType]);
+      } else {
+        alert(data.error || '鑑定失敗');
       }
     } catch { alert('鑑定失敗'); } finally { setIsLoading(false); }
   };
 
-  // 🚩 優化後的 PDF 生成邏輯：解決亂碼與截斷
   const generatePDF = async () => {
     const element = document.getElementById('report-paper');
     if (!element) return;
-    
-    setLoadingText('正在生成 PDF 鑑定書...'); // 明確提示，避免誤會是重新鑑定
+    setLoadingText('正在生成 PDF 鑑定書...');
     setIsLoading(true);
-    
     try {
-      // 使用更高精度的渲染配置
-      const canvas = await html2canvas(element, { 
-        scale: 2,           // 2倍清晰度
-        useCORS: true,      // 跨域支持
-        logging: false,     // 減少負擔
-        backgroundColor: '#F9F3E9' // 確保背景色一致
+      const canvas = await html2canvas(element, {
+        scale: 2, useCORS: true, logging: false, backgroundColor: '#F9F3E9'
       });
-
-      const imgData = canvas.toDataURL('image/jpeg', 0.8); // 使用 JPEG 壓縮減少檔案大小
+      const imgData = canvas.toDataURL('image/jpeg', 0.8);
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      
-      // 如果鑑定書太長，自動分頁處理（或調整比例）
       pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`${formData.name}_命理鑑定書.pdf`);
+      pdf.save(`${formData.name}_${reportTitle}.pdf`);
     } catch {
       alert("PDF 儲存失敗，請嘗試手動截圖");
-    } finally {
-      setIsLoading(false);
-    }
+    } finally { setIsLoading(false); }
   };
 
   const handleExportXLS = async () => {
@@ -146,6 +243,8 @@ export default function DiskPage() {
     } catch { alert("支付跳轉失敗"); } finally { setPurchaseLoading(false); }
   };
 
+  const selected = getSelectedType();
+
   return (
     <div className="min-h-screen bg-[#FDFBF7] flex flex-col relative">
       <div className="fixed top-0 left-0 right-0 z-[100] bg-white shadow-md"><Header /></div>
@@ -161,45 +260,145 @@ export default function DiskPage() {
 
       <main className="flex-1 pt-24 px-4 pb-8 overflow-y-auto">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-          
-          <div className="md:col-span-4 bg-white p-5 rounded-3xl shadow-sm border border-orange-100 text-sm">
-            <h2 className="text-lg font-bold text-amber-950 mb-4">命主資料</h2>
-            <div className="space-y-3">
-              <div>
-                <label className="block text-gray-600 mb-1 font-bold text-xs">姓名</label>
-                <input type="text" value={formData.name} onChange={(e)=>setFormData({...formData, name: e.target.value})} className="w-full px-3 py-1.5 rounded-xl border border-gray-200 outline-none focus:border-amber-500" />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-2 items-end">
+
+          {/* 左側：命主資料 */}
+          <div className="md:col-span-4 space-y-4">
+            <div className="bg-white p-5 rounded-3xl shadow-sm border border-orange-100 text-sm">
+              <h2 className="text-lg font-bold text-amber-950 mb-4">命主資料</h2>
+              <div className="space-y-3">
                 <div>
-                  <label className="block text-gray-600 mb-1 font-bold text-xs">性別</label>
-                  <select value={formData.gender} onChange={(e)=>setFormData({...formData, gender: e.target.value})} className="w-full px-3 py-1.5 rounded-xl border border-gray-200">
-                    <option value="1">乾造 (男)</option><option value="0">坤造 (女)</option>
+                  <label className="block text-gray-600 mb-1 font-bold text-xs">姓名</label>
+                  <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-3 py-1.5 rounded-xl border border-gray-200 outline-none focus:border-amber-500" />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 items-end">
+                  <div>
+                    <label className="block text-gray-600 mb-1 font-bold text-xs">性別</label>
+                    <select value={formData.gender} onChange={(e) => setFormData({ ...formData, gender: e.target.value })} className="w-full px-3 py-1.5 rounded-xl border border-gray-200">
+                      <option value="1">乾造 (男)</option><option value="0">坤造 (女)</option>
+                    </select>
+                  </div>
+                  <div className="text-amber-700 font-bold bg-amber-50 px-3 py-1.5 rounded-xl text-center text-xs border border-amber-100">
+                    餘額：{remainingPoints !== null ? remainingPoints : '--'} 點
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  <div><label className="text-[10px] text-gray-400">西元年</label><select value={formData.year} onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })} className="w-full border rounded p-1 text-xs">{generateYears().map(y => <option key={y} value={y}>{y}年</option>)}</select></div>
+                  <div><label className="text-[10px] text-gray-400">月</label><select value={formData.month} onChange={(e) => setFormData({ ...formData, month: parseInt(e.target.value) })} className="w-full border rounded p-1 text-xs">{months.map(m => <option key={m} value={m}>{m}月</option>)}</select></div>
+                  <div><label className="text-[10px] text-gray-400">日</label><select value={formData.day} onChange={(e) => setFormData({ ...formData, day: parseInt(e.target.value) })} className="w-full border rounded p-1 text-xs">{days.map(d => <option key={d} value={d}>{d}日</option>)}</select></div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div><label className="text-[10px] text-gray-400">小時</label><select value={formData.hour} onChange={(e) => setFormData({ ...formData, hour: parseInt(e.target.value) })} className="w-full border rounded p-1 text-xs">{hours.map(h => <option key={h} value={h}>{h}時</option>)}</select></div>
+                  <div><label className="text-[10px] text-gray-400">分鐘</label><select value={formData.minute} onChange={(e) => setFormData({ ...formData, minute: parseInt(e.target.value) })} className="w-full border rounded p-1 text-xs">{minutes.map(m => <option key={m} value={m}>{m}分</option>)}</select></div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <button onClick={handleExportXLS} className="w-full bg-emerald-700 text-white font-bold py-2 rounded-xl text-xs shadow-md">下載命盤 XLS</button>
+                  <button
+                    onClick={saveProfile}
+                    disabled={profileSaving}
+                    className="w-full bg-sky-700 text-white font-bold py-2 rounded-xl text-xs shadow-md disabled:opacity-60"
+                  >
+                    {profileSaving ? '儲存中...' : (profileLoaded ? '更新生辰' : '儲存生辰')}
+                  </button>
+                </div>
+                {profileLoaded && (
+                  <p className="text-[10px] text-green-600 text-center">已載入會員生辰資料</p>
+                )}
+              </div>
+            </div>
+
+            {/* 命書類型選擇 */}
+            <div className="bg-white p-5 rounded-3xl shadow-sm border border-orange-100 text-sm">
+              <h2 className="text-lg font-bold text-amber-950 mb-3">命書類型</h2>
+              <div className="space-y-2">
+                {REPORT_TYPES.map(rt => (
+                  <button
+                    key={rt.key}
+                    onClick={() => setReportType(rt.key)}
+                    className={`w-full text-left px-4 py-3 rounded-2xl border transition-all ${reportType === rt.key
+                      ? 'bg-amber-800 text-white border-amber-800 shadow-md'
+                      : 'bg-white text-gray-700 border-gray-200 hover:border-amber-300'
+                      }`}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <div className="font-bold text-sm">{rt.label}</div>
+                        <div className={`text-xs mt-0.5 ${reportType === rt.key ? 'text-amber-200' : 'text-gray-400'}`}>{rt.desc}</div>
+                      </div>
+                      <span className={`text-xs font-bold px-2 py-1 rounded-full ${reportType === rt.key ? 'bg-amber-600 text-white' : 'bg-amber-50 text-amber-700'}`}>
+                        {rt.cost} 點
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              {/* 大運命書：年數選擇 */}
+              {reportType === '大運命書' && (
+                <div className="mt-3 pt-3 border-t border-gray-100">
+                  <label className="block text-gray-600 mb-2 font-bold text-xs">鑑定年限（以目前年齡起算）</label>
+                  <div className="grid grid-cols-1 gap-1.5">
+                    {FORTUNE_DURATIONS.map(d => (
+                      <button
+                        key={d.value}
+                        onClick={() => setFortuneDuration(d.value)}
+                        className={`flex justify-between items-center px-3 py-2 rounded-xl border text-xs font-bold transition-all ${fortuneDuration === d.value
+                          ? 'bg-amber-700 text-white border-amber-700'
+                          : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-amber-300'
+                          }`}
+                      >
+                        <span>{d.label}</span>
+                        <span className={`px-2 py-0.5 rounded-full ${fortuneDuration === d.value ? 'bg-amber-500 text-white' : 'bg-amber-50 text-amber-600'}`}>{d.cost} 點</span>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-gray-400 mt-2">逐月依干支合沖刑害破、神煞、六神、紫微四化分析</p>
+                </div>
+              )}
+
+              {/* 流年命書：年份選擇 */}
+              {reportType === '流年命書' && (
+                <div className="mt-3 pt-3 border-t border-gray-100">
+                  <label className="block text-gray-600 mb-1 font-bold text-xs">指定年份</label>
+                  <select
+                    value={targetYear}
+                    onChange={(e) => setTargetYear(parseInt(e.target.value))}
+                    className="w-full px-3 py-1.5 rounded-xl border border-gray-200 text-sm"
+                  >
+                    {Array.from({ length: 21 }, (_, i) => currentYear - 5 + i).map(y => (
+                      <option key={y} value={y}>{y} 年{y === currentYear ? '（今年）' : ''}</option>
+                    ))}
                   </select>
                 </div>
-                <div className="text-amber-700 font-bold bg-amber-50 px-3 py-1.5 rounded-xl text-center text-xs border border-amber-100">
-                  餘額：{remainingPoints !== null ? remainingPoints : '--'} 點
+              )}
+
+              {/* 問事：主題選擇 */}
+              {reportType === '問事' && (
+                <div className="mt-3 pt-3 border-t border-gray-100">
+                  <label className="block text-gray-600 mb-1 font-bold text-xs">問事主題</label>
+                  <select
+                    value={topic}
+                    onChange={(e) => setTopic(e.target.value)}
+                    className="w-full px-3 py-1.5 rounded-xl border border-gray-200 text-sm"
+                  >
+                    {TOPICS.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
                 </div>
-              </div>
+              )}
 
-              <div className="grid grid-cols-3 gap-2">
-                <div><label className="text-[10px] text-gray-400">西元年</label><select value={formData.year} onChange={(e)=>setFormData({...formData, year: parseInt(e.target.value)})} className="w-full border rounded p-1 text-xs">{generateYears().map(y => <option key={y} value={y}>{y}年</option>)}</select></div>
-                <div><label className="text-[10px] text-gray-400">月</label><select value={formData.month} onChange={(e)=>setFormData({...formData, month: parseInt(e.target.value)})} className="w-full border rounded p-1 text-xs">{months.map(m => <option key={m} value={m}>{m}月</option>)}</select></div>
-                <div><label className="text-[10px] text-gray-400">日</label><select value={formData.day} onChange={(e)=>setFormData({...formData, day: parseInt(e.target.value)})} className="w-full border rounded p-1 text-xs">{days.map(d => <option key={d} value={d}>{d}日</option>)}</select></div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div><label className="text-[10px] text-gray-400">小時</label><select value={formData.hour} onChange={(e)=>setFormData({...formData, hour: parseInt(e.target.value)})} className="w-full border rounded p-1 text-xs">{hours.map(h => <option key={h} value={h}>{h}時</option>)}</select></div>
-                <div><label className="text-[10px] text-gray-400">分鐘</label><select value={formData.minute} onChange={(e)=>setFormData({...formData, minute: parseInt(e.target.value)})} className="w-full border rounded p-1 text-xs">{minutes.map(m => <option key={m} value={m}>{m}分</option>)}</select></div>
-              </div>
-
-              <div className="pt-2 space-y-2">
-                <button onClick={handleExportXLS} className="w-full bg-emerald-700 text-white font-bold py-2 rounded-xl text-xs shadow-md">📥 下載數位命盤 (XLS)</button>
-                <button onClick={handleAnalysis} className="w-full bg-amber-800 text-white font-bold py-3 rounded-2xl text-sm shadow-md">✨ 啟動深度鑑定 (10點)</button>
-              </div>
+              <button
+                onClick={handleAnalysis}
+                className="mt-4 w-full bg-amber-800 text-white font-bold py-3 rounded-2xl text-sm shadow-md hover:bg-amber-900 transition-all"
+              >
+                啟動{selected.label} ({selected.cost} 點)
+              </button>
             </div>
           </div>
 
+          {/* 右側：命書結果 */}
           <div className="md:col-span-8">
             <div className="mb-4 bg-gradient-to-r from-amber-800 to-amber-950 p-4 rounded-[2rem] text-white flex justify-between items-center shadow-lg">
               <div><p className="text-xs opacity-70">PREMIUM CREDITS</p><p className="font-bold">NT$ 500 / 50 點</p></div>
@@ -209,13 +408,13 @@ export default function DiskPage() {
             {report ? (
               <div className="space-y-4">
                 <div className="flex justify-end">
-                  <button onClick={generatePDF} className="bg-amber-100 text-amber-900 border border-amber-300 px-5 py-2 rounded-full text-xs font-bold hover:bg-amber-200 transition-all shadow-sm flex items-center gap-2">
-                    💾 儲存 PDF 鑑定書
+                  <button onClick={generatePDF} className="bg-amber-100 text-amber-900 border border-amber-300 px-5 py-2 rounded-full text-xs font-bold hover:bg-amber-200 transition-all shadow-sm">
+                    儲存 PDF 鑑定書
                   </button>
                 </div>
                 <div className="bg-white p-1 shadow-2xl border border-red-50 rounded-sm overflow-hidden">
-                  <div 
-                    id="report-paper" 
+                  <div
+                    id="report-paper"
                     className="p-12 relative bg-[#F9F3E9]"
                     style={{
                       backgroundImage: 'linear-gradient(rgba(255, 0, 0, 0.15) 1px, transparent 1px)',
@@ -224,10 +423,10 @@ export default function DiskPage() {
                       lineHeight: '40px'
                     }}
                   >
-                    <h2 className="text-3xl font-bold text-center text-amber-950 mb-8 border-b-2 border-red-800 pb-4 tracking-[1em]">命理鑑定書</h2>
-                    <div 
+                    <h2 className="text-3xl font-bold text-center text-amber-950 mb-8 border-b-2 border-red-800 pb-4 tracking-[1em]">{reportTitle}</h2>
+                    <div
                       className="whitespace-pre-wrap text-xl text-gray-800 text-justify tracking-[0.1em]"
-                      style={{ 
+                      style={{
                         fontFamily: '"標楷體", "Kaiti", "BiauKai", "DFKai-SB", "STKaiti", serif',
                         paddingTop: '2px'
                       }}
@@ -239,7 +438,20 @@ export default function DiskPage() {
                 </div>
               </div>
             ) : (
-              <div className="h-[500px] border-2 border-dashed border-amber-100 rounded-[3rem] flex items-center justify-center bg-white/40 font-bold text-amber-200 text-xl italic tracking-widest">請輸入資料後開啟深度鑑定</div>
+              <div className="h-[500px] border-2 border-dashed border-amber-100 rounded-[3rem] flex flex-col items-center justify-center bg-white/40 gap-3">
+                <div className="text-amber-200 text-xl italic tracking-widest font-bold">請輸入資料後開啟鑑定</div>
+                <div className="flex gap-3">
+                  {REPORT_TYPES.map(rt => (
+                    <button
+                      key={rt.key}
+                      onClick={() => setReportType(rt.key)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${reportType === rt.key ? 'bg-amber-800 text-white border-amber-800' : 'bg-amber-50 text-amber-600 border-amber-200 hover:border-amber-400'}`}
+                    >
+                      {rt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
         </div>
