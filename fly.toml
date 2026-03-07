@@ -7,7 +7,7 @@ app = 'myweb'
 primary_region = 'sin'
 
 [build]
-  args = {NEXT_PUBLIC_API_URL="https://ecanapi.fly.dev"}
+  args = {NEXT_PUBLIC_API_URL="https://ecanapi.fly.dev/api"}
 
 [env]
   NEXT_PUBLIC_API_URL = "https://ecanapi.fly.dev/api"
