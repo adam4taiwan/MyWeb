@@ -15,6 +15,10 @@ RUN npm install
 # 複製所有程式碼
 COPY . .
 
+# 接收 build arg 並設為環境變數，讓 Next.js build 能嵌入 NEXT_PUBLIC_ 變數
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
 # 運行建構指令
 RUN npm run build
 
