@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import Header from '@/components/Header';
@@ -16,17 +16,17 @@ const minutes = Array.from({ length: 60 }, (_, i) => i);
 
 const REPORT_TYPES = [
   { key: '綜合性命書', label: '綜合命書', cost: 50, desc: '八字紫微全面鑑定' },
-  { key: '大運命書', label: '大運命書', cost: 30, desc: '逐月吉凶大運推演' },
+  { key: '大運命書', label: '大運命書', cost: 150, desc: '逐月吉凶大運推演' },
   { key: '流年命書', label: '流年命書', cost: 20, desc: '指定年份運勢推演' },
   { key: '問事', label: '問事鑑定', cost: 10, desc: '針對特定事項剖析' },
 ] as const;
 
 const FORTUNE_DURATIONS = [
-  { value: 5, label: '5年大運', cost: 30 },
-  { value: 10, label: '10年大運', cost: 50 },
-  { value: 20, label: '20年大運', cost: 80 },
-  { value: 30, label: '30年大運', cost: 120 },
-  { value: 0, label: '終身命書', cost: 200 },
+  { value: 5, label: '5年大運', cost: 150 },
+  { value: 10, label: '10年大運', cost: 200 },
+  { value: 20, label: '20年大運', cost: 250 },
+  { value: 30, label: '30年大運', cost: 300 },
+  { value: 0, label: '終身命書', cost: 500 },
 ];
 
 const TOPICS = ['事業', '婚姻', '財運', '子女', '學業', '買房', '投資', '住宅風水', '合夥', '出國', '開店'];
@@ -48,6 +48,7 @@ export default function DiskPage() {
     year: 2000, month: 1, day: 1, hour: 1, minute: 0
   });
   const [profileLoaded, setProfileLoaded] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const [reportType, setReportType] = useState<ReportTypeKey>('綜合性命書');
   const [targetYear, setTargetYear] = useState(currentYear);
@@ -84,6 +85,7 @@ export default function DiskPage() {
           });
         }
         setRemainingPoints(data.points ?? 0);
+        setIsAdmin(data.isAdmin === true);
         setProfileLoaded(true);
       }
     } catch (err) { console.error("載入生辰失敗", err); }
@@ -132,7 +134,61 @@ export default function DiskPage() {
   useEffect(() => { if (token) loadProfile(); }, [token]);
 
   const cleanReport = (text: string) => {
-    return text.replace(/[#*]/g, '').replace(/\n\s*\n/g, '\n');
+    return text.replace(/[#*]/g, '').replace(/\n\s*\n/g, '\n')
+      .replace(/（限\d+字[內以]?）/g, '').replace(/\(限\d+字[內以]?\)/g, '');
+  };
+
+  const renderReport = (text: string) => {
+    const lines = text.split('\n');
+    const segments: React.ReactNode[] = [];
+    let tableRows: string[][] = [];
+    let isFirstRow = true;
+
+    const flushTable = (key: number) => {
+      if (tableRows.length === 0) return;
+      segments.push(
+        <table key={`t${key}`} className="w-full border-collapse my-2 text-sm">
+          <tbody>
+            {tableRows.map((cells, i) => (
+              <tr key={i}>
+                {cells.map((c, j) =>
+                  i === 0
+                    ? <th key={j} className="border border-amber-700 bg-amber-100 p-1 text-center font-bold">{c}</th>
+                    : <td key={j} className="border border-amber-600 p-1 text-center leading-snug">{c}</td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
+      tableRows = [];
+      isFirstRow = true;
+    };
+
+    let textBuffer = '';
+    lines.forEach((line, idx) => {
+      const trimmed = line.trim();
+      const isTableRow = trimmed.startsWith('|') && trimmed.endsWith('|');
+      const isSeparator = /^\|[\s:\-|]+\|$/.test(trimmed);
+
+      if (isSeparator) return;
+
+      if (isTableRow) {
+        if (textBuffer) {
+          segments.push(<span key={`s${idx}`} className="whitespace-pre-wrap">{textBuffer}</span>);
+          textBuffer = '';
+        }
+        tableRows.push(trimmed.slice(1, -1).split('|').map(c => c.trim()));
+      } else {
+        if (tableRows.length > 0) flushTable(idx);
+        textBuffer += line + '\n';
+      }
+    });
+
+    if (tableRows.length > 0) flushTable(lines.length);
+    if (textBuffer) segments.push(<span key="last" className="whitespace-pre-wrap">{textBuffer}</span>);
+
+    return segments;
   };
 
   const getSelectedType = () => {
@@ -149,7 +205,7 @@ export default function DiskPage() {
     if (remainingPoints !== null && remainingPoints < selected.cost) {
       return alert(`點數不足，此功能需要 ${selected.cost} 點`);
     }
-    setLoadingText('命理鑑定計算中...');
+    setLoadingText('命理鑑定計算中，複雜命書需 1-2 分鐘，請耐心等候...');
     setIsLoading(true);
     try {
       const body: Record<string, unknown> = {
@@ -160,11 +216,15 @@ export default function DiskPage() {
       if (reportType === '問事') body.topic = topic;
       if (reportType === '大運命書') body.fortuneDuration = fortuneDuration;
 
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 5 * 60 * 1000);
       const res = await fetch(`${API_URL}/Consultation/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify(body)
+        body: JSON.stringify(body),
+        signal: controller.signal
       });
+      clearTimeout(timer);
       const data = await res.json();
       if (res.ok) {
         setReport(cleanReport(data.result || data.analysis || ''));
@@ -179,9 +239,11 @@ export default function DiskPage() {
         };
         setReportTitle(titles[reportType]);
       } else {
-        alert(data.error || '鑑定失敗');
+        const msg = data.error || '鑑定失敗';
+        const detail = data.details ? `\n\n詳情：${data.details}` : '';
+        alert(msg + detail);
       }
-    } catch { alert('鑑定失敗'); } finally { setIsLoading(false); }
+    } catch (err) { alert('鑑定失敗：' + String(err)); } finally { setIsLoading(false); }
   };
 
   const generatePDF = async () => {
@@ -193,11 +255,30 @@ export default function DiskPage() {
       const canvas = await html2canvas(element, {
         scale: 2, useCORS: true, logging: false, backgroundColor: '#F9F3E9'
       });
-      const imgData = canvas.toDataURL('image/jpeg', 0.8);
-      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgData = canvas.toDataURL('image/jpeg', 0.85);
+      const pdf = new jsPDF({
+        orientation: 'p',
+        unit: 'mm',
+        format: 'a4',
+        encryption: {
+          userPassword: '',
+          ownerPassword: 'YuDongZi2026',
+          userPermissions: ['print']
+        }
+      });
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+      const pdfPageHeight = pdf.internal.pageSize.getHeight();
+      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+      let position = 0;
+      let remaining = imgHeight;
+      while (remaining > 0) {
+        pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight);
+        remaining -= pdfPageHeight;
+        if (remaining > 0) {
+          pdf.addPage();
+          position -= pdfPageHeight;
+        }
+      }
       pdf.save(`${formData.name}_${reportTitle}.pdf`);
     } catch {
       alert("PDF 儲存失敗，請嘗試手動截圖");
@@ -222,6 +303,31 @@ export default function DiskPage() {
         document.body.appendChild(a); a.click(); a.remove();
       }
     } catch { alert("下載失敗"); } finally { setIsLoading(false); }
+  };
+
+  const handleExpertReport = async () => {
+    if (!token) return alert("請先登入");
+    if (remainingPoints !== null && remainingPoints < 200) return alert("點數不足，專家命書需要 200 點");
+    setLoadingText('正在產製專家命書...');
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/Astrology/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(formData)
+      });
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `${formData.name}_專家命書.docx`;
+        document.body.appendChild(a); a.click(); a.remove();
+        setRemainingPoints(prev => prev !== null ? prev - 200 : null);
+      } else {
+        const data = await response.json().catch(() => ({}));
+        alert(data.error || '專家命書產製失敗');
+      }
+    } catch (err) { alert('下載失敗：' + String(err)); } finally { setIsLoading(false); }
   };
 
   const handlePurchase = async () => {
@@ -304,6 +410,14 @@ export default function DiskPage() {
                     {profileSaving ? '儲存中...' : (profileLoaded ? '更新生辰' : '儲存生辰')}
                   </button>
                 </div>
+                {isAdmin && (
+                  <button
+                    onClick={handleExpertReport}
+                    className="w-full bg-amber-800 text-white font-bold py-2 rounded-xl text-xs shadow-md mt-1"
+                  >
+                    專家命書下載 (200點)
+                  </button>
+                )}
                 {profileLoaded && (
                   <p className="text-[10px] text-green-600 text-center">已載入會員生辰資料</p>
                 )}
@@ -425,13 +539,13 @@ export default function DiskPage() {
                   >
                     <h2 className="text-3xl font-bold text-center text-amber-950 mb-8 border-b-2 border-red-800 pb-4 tracking-[1em]">{reportTitle}</h2>
                     <div
-                      className="whitespace-pre-wrap text-xl text-gray-800 text-justify tracking-[0.1em]"
+                      className="text-xl text-gray-800 text-justify tracking-[0.1em]"
                       style={{
                         fontFamily: '"標楷體", "Kaiti", "BiauKai", "DFKai-SB", "STKaiti", serif',
                         paddingTop: '2px'
                       }}
                     >
-                      {report}
+                      {renderReport(report)}
                     </div>
                     <div className="mt-20 text-right text-amber-900/40 italic text-sm font-serif">玉洞子 謹誌</div>
                   </div>
