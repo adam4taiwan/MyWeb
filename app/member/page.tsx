@@ -8,6 +8,12 @@ import { useAuth } from '@/components/AuthContext';
 
 type Tab = 'profile' | 'points' | 'orders' | 'security';
 
+interface DailyFortune {
+  content: string;
+  date: string;
+  cached: boolean;
+}
+
 interface PointRecord {
   id: string;
   type: string;
@@ -35,6 +41,10 @@ export default function MemberPage() {
   const [historyLoaded, setHistoryLoaded] = useState(false);
   const [ordersLoaded, setOrdersLoaded] = useState(false);
   const [purchaseLoading, setPurchaseLoading] = useState(false);
+
+  const [dailyFortune, setDailyFortune] = useState<DailyFortune | null>(null);
+  const [fortuneLoading, setFortuneLoading] = useState(false);
+  const [fortuneError, setFortuneError] = useState('');
 
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
@@ -70,6 +80,31 @@ export default function MemberPage() {
   useEffect(() => {
     fetchPoints();
   }, [fetchPoints]);
+
+  const fetchDailyFortune = useCallback(async () => {
+    if (!token) return;
+    setFortuneLoading(true);
+    setFortuneError('');
+    try {
+      const res = await fetch(`${API_URL}/Fortune/daily`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setDailyFortune(data);
+      } else {
+        setFortuneError('今日運勢暫時無法取得，請稍後再試');
+      }
+    } catch {
+      setFortuneError('連線失敗，請稍後再試');
+    } finally {
+      setFortuneLoading(false);
+    }
+  }, [token, API_URL]);
+
+  useEffect(() => {
+    fetchDailyFortune();
+  }, [fetchDailyFortune]);
 
   const fetchPointHistory = async () => {
     if (historyLoaded || !token) return;
@@ -211,6 +246,38 @@ export default function MemberPage() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* 每日運勢卡 */}
+        <div className="bg-white rounded-2xl shadow-sm p-5 mb-6 border border-amber-100">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
+              <span className="text-amber-500">✦</span> 今日運勢
+            </h2>
+            {dailyFortune && (
+              <span className="text-xs text-gray-400">{dailyFortune.date}</span>
+            )}
+          </div>
+          {fortuneLoading ? (
+            <div className="py-6 text-center">
+              <div className="inline-block w-6 h-6 border-2 border-amber-400 border-t-transparent rounded-full animate-spin mb-2"></div>
+              <p className="text-sm text-gray-400">玉洞子正在推算今日運勢...</p>
+            </div>
+          ) : fortuneError ? (
+            <div className="py-4 text-center">
+              <p className="text-sm text-red-400">{fortuneError}</p>
+              <button
+                onClick={fetchDailyFortune}
+                className="mt-2 text-xs text-amber-600 underline"
+              >
+                重新取得
+              </button>
+            </div>
+          ) : dailyFortune ? (
+            <div className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
+              {dailyFortune.content}
+            </div>
+          ) : null}
         </div>
 
         {/* Tab 列 */}
