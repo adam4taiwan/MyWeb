@@ -252,7 +252,7 @@ export default function MemberPage() {
         <div className="bg-white rounded-2xl shadow-sm p-5 mb-6 border border-amber-100">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <span className="text-amber-500">✦</span> 今日運勢
+              今日運勢
             </h2>
             {dailyFortune && (
               <span className="text-xs text-gray-400">{dailyFortune.date}</span>
