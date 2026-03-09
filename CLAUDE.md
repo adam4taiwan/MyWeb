@@ -165,6 +165,12 @@ logout();
 - 使用 fetch 或 axios 發出請求
 - 透過 `useAuth()` hook 取得 JWT token 以進行認證標頭
 
+## 程式碼撰寫規範
+
+- 程式碼只使用英文、數字、ASCII 符號
+- 中文字只使用繁體中文
+- 禁止在程式碼中使用 emoji 或 Unicode 特殊符號（如 ✦ 🌟 ⭐ 等）
+
 ## 跨專案規範
 
 ### Ecanapi 資料庫異動規範
@@ -174,6 +180,28 @@ logout();
 2. 在 `/home/adamtsai/projects/Ecanapi/sql/` 目錄新增 SQL 腳本（格式：`YYYYMMDD_<描述>.sql`）
 
 SQL 腳本供生產環境手動執行（Fly.io 不自動 migrate）。
+
+## Gemini API 呼叫 UI 規範
+
+任何呼叫後端 Gemini API 的操作（如 `/Fortune/daily`、`/Consultation/analyze` 等），**必須**在前端顯示全頁 loading overlay，規則如下：
+
+1. 使用 `fixed inset-0 z-50` 覆蓋全頁，防止使用者操作其他功能
+2. 背景使用半透明遮罩：`bg-black/60 backdrop-blur-sm`
+3. 顯示 amber 色 spinner + 繁體中文等待提示文字
+4. loading 狀態結束（finally）後立即移除 overlay
+
+```tsx
+{isLoading && (
+  <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div className="w-12 h-12 border-4 border-amber-400 border-t-transparent rounded-full animate-spin mb-4"></div>
+    <p className="text-amber-200 text-sm">處理中，請稍候...</p>
+  </div>
+)}
+```
+
+**已套用頁面：**
+- `app/disk/page.tsx` - 命理鑑定（`isLoading`）
+- `app/member/page.tsx` - 每日運勢（`fortuneLoading`）
 
 ## 未來開發注意事項
 
