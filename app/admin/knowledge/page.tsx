@@ -281,7 +281,7 @@ export default function KnowledgePage() {
           <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
             <h2 className="font-semibold text-gray-700 mb-4">上傳命理文件</h2>
             <p className="text-sm text-gray-500 mb-4">
-              支援格式：xlsx, xls, doc, docx, csv, txt（上傳後解析預覽，確認後匯入資料庫）
+              支援格式：xlsx, xls, docx, doc, csv, txt（上傳後解析預覽，確認後匯入資料庫）
             </p>
 
             <div className="grid grid-cols-2 gap-4 mb-4">
@@ -318,7 +318,7 @@ export default function KnowledgePage() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".xlsx,.xls,.docx,.csv,.txt"
+                accept=".xlsx,.xls,.docx,.doc,.csv,.txt"
                 className="hidden"
                 onChange={handleFileChange}
               />
@@ -330,7 +330,7 @@ export default function KnowledgePage() {
               ) : (
                 <div>
                   <p className="text-gray-500 text-sm">拖放文件至此，或點擊選擇</p>
-                  <p className="text-gray-400 text-xs mt-1">.xlsx .xls .docx .csv .txt</p>
+                  <p className="text-gray-400 text-xs mt-1">.xlsx .xls .docx .doc .csv .txt</p>
                 </div>
               )}
             </div>
