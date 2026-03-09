@@ -1,8 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
+import { useState } from 'react';
 
 export default function Footer() {
+  const [qr, setQr] = useState<'line' | 'wechat' | null>(null);
+
   return (
     <footer className="bg-gray-900 text-white">
       <div className="container mx-auto px-4 py-12">
@@ -15,12 +19,43 @@ export default function Footer() {
               <span className="text-xl font-bold" style={{fontFamily: 'var(--font-pacifico)'}}>玉洞子</span>
             </div>
             <p className="text-gray-400 mb-4">三十年命理經驗，傳承古典智慧，為現代人生提供專業指導。</p>
-            <div className="flex space-x-4">
-              <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center cursor-pointer hover:bg-amber-600 transition-colors">
-                <i className="ri-wechat-line text-sm"></i>
+            <div className="flex space-x-3">
+              {/* WeChat */}
+              <div className="relative">
+                <div
+                  onClick={() => setQr(qr === 'wechat' ? null : 'wechat')}
+                  className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center cursor-pointer hover:bg-emerald-600 transition-colors"
+                  title="微信"
+                >
+                  <i className="ri-wechat-line text-sm"></i>
+                </div>
+                {qr === 'wechat' && (
+                  <div className="absolute bottom-10 left-0 bg-white rounded-xl shadow-2xl p-3 w-44 text-center z-50">
+                    <p className="text-xs font-bold text-gray-700 mb-2">微信掃碼</p>
+                    <div className="relative w-full aspect-square rounded-lg overflow-hidden">
+                      <Image src="/image/WeChatID.jpg" alt="WeChat QR" fill className="object-contain" />
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center cursor-pointer hover:bg-amber-600 transition-colors">
-                <i className="ri-line-line text-sm"></i>
+              {/* Line */}
+              <div className="relative">
+                <div
+                  onClick={() => setQr(qr === 'line' ? null : 'line')}
+                  className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center cursor-pointer hover:bg-green-500 transition-colors"
+                  title="LINE"
+                >
+                  <i className="ri-line-line text-sm"></i>
+                </div>
+                {qr === 'line' && (
+                  <div className="absolute bottom-10 left-0 bg-white rounded-xl shadow-2xl p-3 w-44 text-center z-50">
+                    <p className="text-xs font-bold text-gray-700 mb-2">LINE 掃碼</p>
+                    <div className="relative w-full aspect-square rounded-lg overflow-hidden">
+                      <Image src="/image/lineID.jpg" alt="Line QR" fill className="object-contain" />
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">ID：adam4taiwan</p>
+                  </div>
+                )}
               </div>
               <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center cursor-pointer hover:bg-amber-600 transition-colors">
                 <i className="ri-facebook-line text-sm"></i>
