@@ -60,7 +60,7 @@ interface KnowledgeDocument {
 const CATEGORIES = ['八字', '紫微', '通用'];
 const SUBCATEGORIES: Record<string, string[]> = {
   '八字': ['基礎', '格局', '六親', '大運', '日主', '十天干', '十二地支', '象法', '直斷', '通則'],
-  '紫微': ['四化', '格局', '星情', '宮位', '主星', '飛星', '大運', '通則'],
+  '紫微': ['四化', '格局', '星情', '宮位', '主星', '飛星', '大運', '職業', '通則'],
   '通用': ['通則', '其他'],
 };
 
@@ -204,6 +204,26 @@ export default function KnowledgePage() {
     setImporting(true);
     setImportMsg('');
     try {
+      // Check if file already exists in DB
+      let forceReplace = false;
+      const checkRes = await fetch(
+        `${API_URL}/Knowledge/check-file?fileName=${encodeURIComponent(uploadResult.fileName)}`,
+        { headers: authHeaders }
+      );
+      if (checkRes.ok) {
+        const checkData = await checkRes.json();
+        if (checkData.exists) {
+          const confirmed = window.confirm(
+            `檔案「${uploadResult.fileName}」資料庫已有 ${checkData.count} 筆資料。\n\n按「確定」先刪除舊資料再匯入，按「取消」則放棄本次匯入。`
+          );
+          if (!confirmed) {
+            setImportMsg('已取消匯入');
+            return;
+          }
+          forceReplace = true;
+        }
+      }
+
       const res = await fetch(`${API_URL}/Knowledge/import`, {
         method: 'POST',
         headers: { ...authHeaders, 'Content-Type': 'application/json' },
@@ -211,12 +231,13 @@ export default function KnowledgePage() {
           fileName: uploadResult.fileName,
           fileType: uploadResult.fileType,
           category: uploadCategory,
+          forceReplace,
           rules: editingRules,
         }),
       });
       const data = await res.json();
       if (res.ok) {
-        setImportMsg(`成功匯入 ${data.imported} 筆規則`);
+        setImportMsg(`成功匯入 ${data.imported} 筆規則${forceReplace ? '（已刪除舊資料）' : ''}`);
         setUploadResult(null);
         setEditingRules([]);
         setUploadFile(null);
