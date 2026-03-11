@@ -70,8 +70,9 @@ export default function KnowledgePage() {
 
   // Upload state
   const [uploadFile, setUploadFile] = useState<File | null>(null);
-  const [uploadCategory, setUploadCategory] = useState('紫微');
+  const [uploadCategory, setUploadCategory] = useState('\u516b\u5b57');
   const [uploadSubcategory, setUploadSubcategory] = useState('');
+  const [parseMode, setParseMode] = useState('');
   const [uploading, setUploading] = useState(false);
   const [uploadResult, setUploadResult] = useState<UploadResult | null>(null);
   const [editingRules, setEditingRules] = useState<ParsedRule[]>([]);
@@ -133,16 +134,43 @@ export default function KnowledgePage() {
 
   // File upload and parse
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setUploadFile(e.target.files?.[0] || null);
+    const f = e.target.files?.[0] || null;
+    setUploadFile(f);
     setUploadResult(null);
     setEditingRules([]);
     setImportMsg('');
+    // Auto-detect category from filename
+    if (f) {
+      const name = f.name;
+      if (/\u516b\u5b57/.test(name)) {
+        setUploadCategory('\u516b\u5b57');
+        if (/\u76f4\u65b7/.test(name)) setUploadSubcategory('\u76f4\u65b7');
+        else setUploadSubcategory('');
+      } else if (/\u7d2b\u5fae/.test(name)) {
+        setUploadCategory('\u7d2b\u5fae');
+        setUploadSubcategory('');
+      }
+    }
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     const f = e.dataTransfer.files[0];
-    if (f) { setUploadFile(f); setUploadResult(null); setEditingRules([]); setImportMsg(''); }
+    if (f) {
+      setUploadFile(f);
+      setUploadResult(null);
+      setEditingRules([]);
+      setImportMsg('');
+      const name = f.name;
+      if (/\u516b\u5b57/.test(name)) {
+        setUploadCategory('\u516b\u5b57');
+        if (/\u76f4\u65b7/.test(name)) setUploadSubcategory('\u76f4\u65b7');
+        else setUploadSubcategory('');
+      } else if (/\u7d2b\u5fae/.test(name)) {
+        setUploadCategory('\u7d2b\u5fae');
+        setUploadSubcategory('');
+      }
+    }
   };
 
   const handleParse = async () => {
@@ -154,6 +182,7 @@ export default function KnowledgePage() {
       form.append('file', uploadFile);
       form.append('category', uploadCategory);
       form.append('subcategory', uploadSubcategory);
+      if (parseMode) form.append('parseMode', parseMode);
       const res = await fetch(`${API_URL}/Knowledge/upload`, {
         method: 'POST',
         headers: authHeaders,
@@ -306,6 +335,20 @@ export default function KnowledgePage() {
                   {(SUBCATEGORIES[uploadCategory] ?? []).map(s => <option key={s}>{s}</option>)}
                 </select>
               </div>
+              {uploadFile && /\.(txt|docx|doc)$/i.test(uploadFile.name) && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">解析模式</label>
+                  <select
+                    value={parseMode}
+                    onChange={e => setParseMode(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                  >
+                    <option value="">自動偵測（預設）</option>
+                    <option value="chapters">章節結構（八字直斷式）</option>
+                    <option value="paragraphs">段落結構（逐段解讀）</option>
+                  </select>
+                </div>
+              )}
             </div>
 
             {/* Drop zone */}
@@ -381,11 +424,20 @@ export default function KnowledgePage() {
                             </span>
                           )}
                         </div>
-                        {rule.title && (
+                        {rule.title !== undefined && (
                           <input
-                            value={rule.title}
+                            value={rule.title ?? ''}
                             onChange={e => updateEditingRule(idx, 'title', e.target.value)}
-                            className="w-full text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded px-2 py-1 mb-1"
+                            placeholder="T: 標題"
+                            className="w-full text-xs text-purple-700 bg-purple-50 border border-purple-200 rounded px-2 py-1 mb-1"
+                          />
+                        )}
+                        {rule.conditionText !== undefined && (
+                          <input
+                            value={rule.conditionText ?? ''}
+                            onChange={e => updateEditingRule(idx, 'conditionText', e.target.value)}
+                            placeholder="C: 條件"
+                            className="w-full text-xs text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1 mb-1"
                           />
                         )}
                         <textarea
