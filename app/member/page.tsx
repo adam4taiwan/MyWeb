@@ -102,7 +102,7 @@ export default function MemberPage() {
     setFortuneLoading(true);
     setFortuneError('');
     try {
-      const res = await fetch(`${API_URL}/Fortune/daily`, {
+      const res = await fetch(`${API_URL}/Fortune/daily-kb`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
