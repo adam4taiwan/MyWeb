@@ -102,9 +102,15 @@ export default function MemberPage() {
     setFortuneLoading(true);
     setFortuneError('');
     try {
-      const res = await fetch(`${API_URL}/Fortune/daily-kb`, {
+      // 優先嘗試個人化運勢（需生辰資料），若無生辰則 fallback 通用版
+      let res = await fetch(`${API_URL}/Fortune/daily-personal`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (res.status === 400) {
+        res = await fetch(`${API_URL}/Fortune/daily-kb`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      }
       if (res.ok) {
         const data = await res.json();
         setDailyFortune(data);
