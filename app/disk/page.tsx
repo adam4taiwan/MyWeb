@@ -550,7 +550,7 @@ export default function DiskPage() {
           {/* 右側：命書結果 */}
           <div className="md:col-span-8">
             <div className="mb-4 bg-gradient-to-r from-amber-800 to-amber-950 p-4 rounded-[2rem] text-white flex justify-between items-center shadow-lg">
-              <div><p className="text-xs opacity-70">PREMIUM CREDITS</p><p className="font-bold">NT$ 500 / 50 點</p></div>
+              <div><p className="text-xs text-white/80">PREMIUM CREDITS</p><p className="font-bold text-white">NT$ 500 / 50 點</p></div>
               <button onClick={handlePurchase} disabled={purchaseLoading} className="bg-white text-amber-900 px-6 py-2 rounded-full font-bold text-sm shadow-sm active:scale-95 transition-all">{purchaseLoading ? "處理中..." : "立即儲值"}</button>
             </div>
 
@@ -587,19 +587,8 @@ export default function DiskPage() {
                 </div>
               </div>
             ) : (
-              <div className="h-[500px] border-2 border-dashed border-amber-100 rounded-[3rem] flex flex-col items-center justify-center bg-white/40 gap-3">
+              <div className="h-[500px] border-2 border-dashed border-amber-100 rounded-[3rem] flex items-center justify-center bg-white/40">
                 <div className="text-amber-200 text-xl italic tracking-widest font-bold">請輸入資料後開啟鑑定</div>
-                <div className="flex gap-3">
-                  {REPORT_TYPES.map(rt => (
-                    <button
-                      key={rt.key}
-                      onClick={() => setReportType(rt.key)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${reportType === rt.key ? 'bg-amber-800 text-white border-amber-800' : 'bg-amber-50 text-amber-600 border-amber-200 hover:border-amber-400'}`}
-                    >
-                      {rt.label}
-                    </button>
-                  ))}
-                </div>
               </div>
             )}
           </div>
