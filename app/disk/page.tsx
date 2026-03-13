@@ -62,8 +62,7 @@ export default function DiskPage() {
   const [loadingText, setLoadingText] = useState('命理鑑定計算中...');
   const [purchaseLoading, setPurchaseLoading] = useState(false);
   const [profileSaving, setProfileSaving] = useState(false);
-  const [chartSaving, setChartSaving] = useState(false);
-  const [chartSavedMsg, setChartSavedMsg] = useState('');
+  const [saveMsg, setSaveMsg] = useState('');
 
   // 登入後自動載入會員生辰資料
   const loadProfile = async () => {
@@ -93,12 +92,14 @@ export default function DiskPage() {
     } catch (err) { console.error("載入生辰失敗", err); }
   };
 
-  // 儲存生辰至會員資料
+  // 儲存生辰 + 命盤（合併操作）
   const saveProfile = async () => {
     if (!token) return;
     setProfileSaving(true);
+    setSaveMsg('');
     try {
-      const res = await fetch(`${API_URL}/Auth/profile`, {
+      // 1. 儲存生辰資料
+      const profileRes = await fetch(`${API_URL}/Auth/profile`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({
@@ -112,35 +113,28 @@ export default function DiskPage() {
           dateType: formData.dateType,
         })
       });
-      if (res.ok) alert('生辰資料已儲存至會員帳號');
-      else alert('儲存失敗');
-    } catch { alert('儲存失敗'); } finally { setProfileSaving(false); }
-  };
+      if (!profileRes.ok) { setSaveMsg('生辰資料儲存失敗'); return; }
 
-  const saveChart = async () => {
-    if (!token) return;
-    setChartSaving(true);
-    setChartSavedMsg('');
-    try {
+      // 2. 計算命盤
       const calcRes = await fetch(`${API_URL}/Astrology/calculate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(formData),
       });
-      if (!calcRes.ok) { setChartSavedMsg('排盤失敗，請確認生辰資料'); return; }
+      if (!calcRes.ok) { setSaveMsg('生辰已儲存，但命盤計算失敗'); return; }
       const chartData = await calcRes.json();
+
+      // 3. 儲存命盤 JSON
       const saveRes = await fetch(`${API_URL}/Astrology/save-chart`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(chartData),
       });
-      const saveData = await saveRes.json();
-      if (saveRes.ok) {
-        setChartSavedMsg(`命盤已儲存！命宮主星：${saveData.mingGongMainStars || '無主星'}`);
-      } else {
-        setChartSavedMsg('命盤儲存失敗');
-      }
-    } catch { setChartSavedMsg('連線失敗'); } finally { setChartSaving(false); }
+      const saveData = saveRes.ok ? await saveRes.json() : null;
+      const starLabel = saveData?.mingGongMainStars ? `命宮主星：${saveData.mingGongMainStars}` : '';
+      setSaveMsg(`生辰與命盤已儲存${starLabel ? '，' + starLabel : ''}`);
+      setProfileLoaded(true);
+    } catch { setSaveMsg('儲存失敗，請稍後再試'); } finally { setProfileSaving(false); }
   };
 
   const syncPoints = async () => {
@@ -392,6 +386,13 @@ export default function DiskPage() {
         </div>
       )}
 
+      {profileSaving && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="w-12 h-12 border-4 border-amber-400 border-t-transparent rounded-full animate-spin mb-4"></div>
+          <p className="text-amber-200 text-sm">儲存生辰與命盤資料中，請稍候...</p>
+        </div>
+      )}
+
       <main className="flex-1 pt-24 px-4 pb-8 overflow-y-auto">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
 
@@ -435,18 +436,13 @@ export default function DiskPage() {
                     disabled={profileSaving}
                     className="w-full bg-sky-700 text-white font-bold py-2 rounded-xl text-xs shadow-md disabled:opacity-60"
                   >
-                    {profileSaving ? '儲存中...' : (profileLoaded ? '更新生辰' : '儲存生辰')}
+                    {profileLoaded ? '更新生辰' : '儲存生辰'}
                   </button>
                 </div>
-                <button
-                  onClick={saveChart}
-                  disabled={chartSaving}
-                  className="w-full bg-purple-700 text-white font-bold py-2 rounded-xl text-xs shadow-md mt-1 disabled:opacity-60"
-                >
-                  {chartSaving ? '同步中...' : '同步命盤至今日運勢'}
-                </button>
-                {chartSavedMsg && (
-                  <p className="text-xs text-center text-amber-300 mt-1">{chartSavedMsg}</p>
+                {saveMsg && (
+                  <p className={`text-xs text-center mt-1 ${saveMsg.includes('失敗') ? 'text-red-400' : 'text-green-400'}`}>
+                    {saveMsg}
+                  </p>
                 )}
                 {isAdmin && (
                   <button
