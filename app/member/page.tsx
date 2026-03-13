@@ -104,6 +104,12 @@ export default function MemberPage() {
     setFortuneLoading(true);
     setFortuneError('');
     try {
+      // 進入會員中心時先清除今日快取，確保取得最新個人化運勢
+      await fetch(`${API_URL}/Fortune/my-cache-today`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => {});
+
       // 先查是否有儲存命盤
       const chartRes = await fetch(`${API_URL}/Astrology/my-chart`, {
         headers: { Authorization: `Bearer ${token}` },

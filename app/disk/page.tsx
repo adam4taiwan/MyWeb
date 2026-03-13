@@ -131,6 +131,7 @@ export default function DiskPage() {
         body: JSON.stringify(chartData),
       });
       const saveData = saveRes.ok ? await saveRes.json() : null;
+
       const starLabel = saveData?.mingGongMainStars ? `命宮主星：${saveData.mingGongMainStars}` : '';
       setSaveMsg(`生辰與命盤已儲存${starLabel ? '，' + starLabel : ''}`);
       setProfileLoaded(true);
