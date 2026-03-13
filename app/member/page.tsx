@@ -46,6 +46,7 @@ export default function MemberPage() {
   const [dailyFortune, setDailyFortune] = useState<DailyFortune | null>(null);
   const [fortuneLoading, setFortuneLoading] = useState(false);
   const [fortuneError, setFortuneError] = useState('');
+  const [mingGongStars, setMingGongStars] = useState<string | null>(null);
 
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
@@ -127,6 +128,16 @@ export default function MemberPage() {
   useEffect(() => {
     fetchDailyFortune();
   }, [fetchDailyFortune]);
+
+  useEffect(() => {
+    if (!token) return;
+    fetch(`${API_URL}/Astrology/my-chart`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.mingGongMainStars) setMingGongStars(d.mingGongMainStars); })
+      .catch(() => {});
+  }, [token, API_URL]);
 
   const fetchPointHistory = async () => {
     if (historyLoaded || !token) return;
@@ -363,6 +374,14 @@ export default function MemberPage() {
                   </p>
                 </div>
               </div>
+
+              {mingGongStars && (
+                <div className="bg-purple-50 border border-purple-100 rounded-xl p-4">
+                  <p className="text-xs font-medium text-purple-500 mb-1">紫微命宮主星</p>
+                  <p className="text-gray-800 font-semibold">{mingGongStars}</p>
+                  <p className="text-xs text-gray-400 mt-1">已加成至今日運勢</p>
+                </div>
+              )}
 
               <div className="pt-4 border-t">
                 <p className="text-sm font-bold text-gray-700 mb-3">快速操作</p>

@@ -62,6 +62,8 @@ export default function DiskPage() {
   const [loadingText, setLoadingText] = useState('命理鑑定計算中...');
   const [purchaseLoading, setPurchaseLoading] = useState(false);
   const [profileSaving, setProfileSaving] = useState(false);
+  const [chartSaving, setChartSaving] = useState(false);
+  const [chartSavedMsg, setChartSavedMsg] = useState('');
 
   // 登入後自動載入會員生辰資料
   const loadProfile = async () => {
@@ -113,6 +115,32 @@ export default function DiskPage() {
       if (res.ok) alert('生辰資料已儲存至會員帳號');
       else alert('儲存失敗');
     } catch { alert('儲存失敗'); } finally { setProfileSaving(false); }
+  };
+
+  const saveChart = async () => {
+    if (!token) return;
+    setChartSaving(true);
+    setChartSavedMsg('');
+    try {
+      const calcRes = await fetch(`${API_URL}/Astrology/calculate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(formData),
+      });
+      if (!calcRes.ok) { setChartSavedMsg('排盤失敗，請確認生辰資料'); return; }
+      const chartData = await calcRes.json();
+      const saveRes = await fetch(`${API_URL}/Astrology/save-chart`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(chartData),
+      });
+      const saveData = await saveRes.json();
+      if (saveRes.ok) {
+        setChartSavedMsg(`命盤已儲存！命宮主星：${saveData.mingGongMainStars || '無主星'}`);
+      } else {
+        setChartSavedMsg('命盤儲存失敗');
+      }
+    } catch { setChartSavedMsg('連線失敗'); } finally { setChartSaving(false); }
   };
 
   const syncPoints = async () => {
@@ -410,6 +438,16 @@ export default function DiskPage() {
                     {profileSaving ? '儲存中...' : (profileLoaded ? '更新生辰' : '儲存生辰')}
                   </button>
                 </div>
+                <button
+                  onClick={saveChart}
+                  disabled={chartSaving}
+                  className="w-full bg-purple-700 text-white font-bold py-2 rounded-xl text-xs shadow-md mt-1 disabled:opacity-60"
+                >
+                  {chartSaving ? '同步中...' : '同步命盤至今日運勢'}
+                </button>
+                {chartSavedMsg && (
+                  <p className="text-xs text-center text-amber-300 mt-1">{chartSavedMsg}</p>
+                )}
                 {isAdmin && (
                   <button
                     onClick={handleExpertReport}
