@@ -47,6 +47,7 @@ export default function MemberPage() {
   const [fortuneLoading, setFortuneLoading] = useState(false);
   const [fortuneError, setFortuneError] = useState('');
   const [mingGongStars, setMingGongStars] = useState<string | null>(null);
+  const [hasChart, setHasChart] = useState<boolean | null>(null); // null = 尚未查詢
 
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
@@ -103,15 +104,23 @@ export default function MemberPage() {
     setFortuneLoading(true);
     setFortuneError('');
     try {
-      // 優先嘗試個人化運勢（需生辰資料），若無生辰則 fallback 通用版
-      let res = await fetch(`${API_URL}/Fortune/daily-personal`, {
+      // 先查是否有儲存命盤
+      const chartRes = await fetch(`${API_URL}/Astrology/my-chart`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.status === 400) {
-        res = await fetch(`${API_URL}/Fortune/daily-kb`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-      }
+      const chartData = chartRes.ok ? await chartRes.json() : null;
+      const chartExists = chartRes.ok && chartData?.mingGongMainStars;
+      setHasChart(!!chartExists);
+      if (chartExists) setMingGongStars(chartData.mingGongMainStars);
+
+      // 有命盤 → KB 個人化版；無命盤 → Gemini 通用版（原行為保留）
+      const fortuneUrl = chartExists
+        ? `${API_URL}/Fortune/daily-personal`
+        : `${API_URL}/Fortune/daily`;
+
+      const res = await fetch(fortuneUrl, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (res.ok) {
         const data = await res.json();
         setDailyFortune(data);
@@ -128,16 +137,6 @@ export default function MemberPage() {
   useEffect(() => {
     fetchDailyFortune();
   }, [fetchDailyFortune]);
-
-  useEffect(() => {
-    if (!token) return;
-    fetch(`${API_URL}/Astrology/my-chart`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.mingGongMainStars) setMingGongStars(d.mingGongMainStars); })
-      .catch(() => {});
-  }, [token, API_URL]);
 
   const fetchPointHistory = async () => {
     if (historyLoaded || !token) return;
@@ -295,11 +294,30 @@ export default function MemberPage() {
           </div>
         </div>
 
+        {/* 無命盤提示 */}
+        {hasChart === false && (
+          <div className="bg-amber-50 border border-amber-300 rounded-2xl p-4 mb-4 flex items-start gap-3">
+            <div className="flex-shrink-0 w-8 h-8 bg-amber-400 rounded-full flex items-center justify-center text-white font-bold text-sm">!</div>
+            <div>
+              <p className="text-sm font-bold text-amber-800 mb-1">尚未建立個人命盤</p>
+              <p className="text-xs text-amber-700 leading-relaxed">
+                請前往排盤工具，輸入出生年月日時，點擊「儲存生辰」即可建立命盤，獲得含大運、紫微命宮的個人化每日運勢。
+              </p>
+              <Link href="/disk">
+                <button className="mt-2 px-3 py-1.5 bg-amber-500 text-white text-xs font-medium rounded-lg hover:bg-amber-600 transition-colors">
+                  前往排盤工具
+                </button>
+              </Link>
+            </div>
+          </div>
+        )}
+
         {/* 每日運勢卡 */}
         <div className="bg-white rounded-2xl shadow-sm p-5 mb-6 border border-amber-100">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
               今日運勢
+              {hasChart && <span className="text-xs text-purple-500 font-normal">個人化</span>}
             </h2>
             {dailyFortune && (
               <span className="text-xs text-gray-400">{dailyFortune.date}</span>
