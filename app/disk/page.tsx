@@ -228,7 +228,9 @@ export default function DiskPage() {
     if (remainingPoints !== null && remainingPoints < selected.cost) {
       return alert(`點數不足，此功能需要 ${selected.cost} 點`);
     }
-    setLoadingText('命理鑑定計算中，複雜命書需 1-2 分鐘，請耐心等候...');
+    setLoadingText(reportType === '綜合性命書' && profileLoaded
+      ? '知識庫命書生成中，請稍候...'
+      : '命理鑑定計算中，複雜命書需 1-2 分鐘，請耐心等候...');
     setIsLoading(true);
     try {
       const body: Record<string, unknown> = {
@@ -241,12 +243,23 @@ export default function DiskPage() {
 
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 5 * 60 * 1000);
-      const res = await fetch(`${API_URL}/Consultation/analyze`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify(body),
-        signal: controller.signal
-      });
+
+      // 綜合命書：有命盤(profileLoaded)走 KB 端點，無命盤走 Gemini
+      let res: Response;
+      if (reportType === '綜合性命書' && profileLoaded) {
+        res = await fetch(`${API_URL}/Consultation/analyze-kb`, {
+          method: 'GET',
+          headers: { 'Authorization': `Bearer ${token}` },
+          signal: controller.signal
+        });
+      } else {
+        res = await fetch(`${API_URL}/Consultation/analyze`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify(body),
+          signal: controller.signal
+        });
+      }
       clearTimeout(timer);
       const data = await res.json();
       if (res.ok) {
@@ -353,22 +366,17 @@ export default function DiskPage() {
     } catch (err) { alert('下載失敗：' + String(err)); } finally { setIsLoading(false); }
   };
 
-  const handlePurchase = async () => {
+  const handlePurchase = async (packageId = 'starter') => {
     setPurchaseLoading(true);
     try {
-      const userEmail = localStorage.getItem('email');
-      if (!userEmail) {
-        alert("請先登入，系統才能同步您的帳號資訊進行儲值。");
-        setPurchaseLoading(false);
-        return;
-      }
       const res = await fetch(`${API_URL}/Payment/create-checkout-session`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ points: 50, price: 500, userName: userEmail })
+        body: JSON.stringify({ packageId })
       });
       const data = await res.json();
       if (data.url) window.location.href = data.url;
+      else alert(data.message || '儲值失敗，請稍後再試');
     } catch { alert("支付跳轉失敗"); } finally { setPurchaseLoading(false); }
   };
 
@@ -551,7 +559,7 @@ export default function DiskPage() {
           <div className="md:col-span-8">
             <div className="mb-4 bg-gradient-to-r from-amber-800 to-amber-950 p-4 rounded-[2rem] text-white flex justify-between items-center shadow-lg">
               <div><p className="text-xs text-white/80">PREMIUM CREDITS</p><p className="font-bold text-white">NT$ 500 / 50 點</p></div>
-              <button onClick={handlePurchase} disabled={purchaseLoading} className="bg-white text-amber-900 px-6 py-2 rounded-full font-bold text-sm shadow-sm active:scale-95 transition-all">{purchaseLoading ? "處理中..." : "立即儲值"}</button>
+              <button onClick={() => handlePurchase('starter')} disabled={purchaseLoading} className="bg-white text-amber-900 px-6 py-2 rounded-full font-bold text-sm shadow-sm active:scale-95 transition-all">{purchaseLoading ? "處理中..." : "立即儲值"}</button>
             </div>
 
             {report ? (
