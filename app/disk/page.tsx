@@ -16,7 +16,7 @@ const minutes = Array.from({ length: 60 }, (_, i) => i);
 
 const REPORT_TYPES = [
   { key: '綜合性命書', label: '綜合命書', cost: 50, desc: '八字紫微全面鑑定' },
-  { key: '終身命書', label: '終身命書', cost: 50, desc: '12章科學化一生命運剖析' },
+  { key: '八字命書', label: '八字命書', cost: 50, desc: '12章科學化一生命運剖析' },
   { key: '大運命書', label: '大運命書', cost: 150, desc: '逐月吉凶大運推演' },
   { key: '流年命書', label: '流年命書', cost: 20, desc: '指定年份運勢推演' },
   { key: '問事', label: '問事鑑定', cost: 10, desc: '針對特定事項剖析' },
@@ -27,7 +27,7 @@ const FORTUNE_DURATIONS = [
   { value: 10, label: '10年大運', cost: 200 },
   { value: 20, label: '20年大運', cost: 250 },
   { value: 30, label: '30年大運', cost: 300 },
-  { value: 0, label: '終身命書', cost: 500 },
+  { value: 0, label: '終身大運', cost: 500 },
 ];
 
 const TOPICS = ['事業', '婚姻', '財運', '子女', '學業', '買房', '投資', '住宅風水', '合夥', '出國', '開店'];
@@ -59,7 +59,8 @@ export default function DiskPage() {
   const [report, setReport] = useState('');
   const [reportTitle, setReportTitle] = useState('命理鑑定書');
   const [remainingPoints, setRemainingPoints] = useState<number | null>(null);
-  const [lifelongCycles, setLifelongCycles] = useState<Array<{stem:string;branch:string;startAge:number;endAge:number;score:number;level:string}> | null>(null);
+  const [lifelongCycles, setLifelongCycles] = useState<Array<{stem:string;branch:string;liuShen:string;startAge:number;endAge:number;score:number;level:string}> | null>(null);
+  const [baziTable, setBaziTable] = useState<{pillars:Array<{label:string;stem:string;branch:string;stemSS:string;naYin:string;hiddenPairs:Array<{ss:string;stem:string}>}>} | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingText, setLoadingText] = useState('命理鑑定計算中...');
   const [purchaseLoading, setPurchaseLoading] = useState(false);
@@ -251,13 +252,13 @@ export default function DiskPage() {
 
   const handleAnalysis = async () => {
     const selected = getSelectedType();
-    if (reportType === '終身命書' && !profileLoaded) {
-      return alert('終身命書需要先儲存生辰資料，請先填寫並儲存您的生辰。');
+    if (reportType === '八字命書' && !profileLoaded) {
+      return alert('八字命書需要先儲存生辰資料，請先填寫並儲存您的生辰。');
     }
     if (remainingPoints !== null && remainingPoints < selected.cost) {
       return alert(`點數不足，此功能需要 ${selected.cost} 點`);
     }
-    setLoadingText((reportType === '綜合性命書' || reportType === '終身命書') && profileLoaded
+    setLoadingText((reportType === '綜合性命書' || reportType === '八字命書') && profileLoaded
       ? '知識庫命書生成中，請稍候...'
       : '命理鑑定計算中，複雜命書需 1-2 分鐘，請耐心等候...');
     setIsLoading(true);
@@ -281,7 +282,7 @@ export default function DiskPage() {
           headers: { 'Authorization': `Bearer ${token}` },
           signal: controller.signal
         });
-      } else if (reportType === '終身命書' && profileLoaded) {
+      } else if (reportType === '八字命書' && profileLoaded) {
         res = await fetch(`${API_URL}/Consultation/analyze-lifelong`, {
           method: 'GET',
           headers: { 'Authorization': `Bearer ${token}` },
@@ -302,11 +303,13 @@ export default function DiskPage() {
         setRemainingPoints(data.remainingPoints);
         if (data.luckCycles) setLifelongCycles(data.luckCycles);
         else setLifelongCycles(null);
+        if (data.baziTable) setBaziTable(data.baziTable);
+        else setBaziTable(null);
         // 設定報告標題
         const durLabel = FORTUNE_DURATIONS.find(d => d.value === fortuneDuration)?.label ?? '大運';
         const titles: Record<ReportTypeKey, string> = {
           '綜合性命書': '綜合命理鑑定書',
-          '終身命書': '終身命書（科學化規則版）',
+          '八字命書': '八字命書',
           '大運命書': `${durLabel}鑑定書`,
           '流年命書': `${targetYear} 年流年鑑定書`,
           '問事': `${topic} 問事鑑定書`,
@@ -345,10 +348,51 @@ export default function DiskPage() {
     // 第一章不要 page-break-before
     const bodyHtml = bodyLines.join('\n').replace('page-break-before:always', 'page-break-before:auto');
 
+    // 八字命盤表格 HTML（僅八字命書有）
+    let baziTableHtml = '';
+    if (baziTable && baziTable.pillars) {
+      const ps = [...baziTable.pillars].reverse(); // 時日月年
+      const thStyle = 'border:1px solid #c8a96e;background:#fef3c7;padding:4pt 8pt;text-align:center;font-weight:bold;color:#7B3F00;';
+      const tdStyle = 'border:1px solid #c8a96e;padding:4pt 8pt;text-align:center;';
+      const tdLgStyle = 'border:1px solid #c8a96e;padding:6pt 8pt;text-align:center;font-size:14pt;font-weight:bold;';
+      const tdSmStyle = 'border:1px solid #c8a96e;padding:3pt 8pt;text-align:center;font-size:9pt;color:#555;';
+      const maxHidden = Math.max(...ps.map(p => p.hiddenPairs.length));
+      const hiddenRows = Array.from({length: maxHidden}, (_, row) =>
+        `<tr>${ps.map(p => {
+          const hp = p.hiddenPairs[row];
+          return hp ? `<td style="${tdSmStyle}"><span style="color:#7B3F00">${hp.ss}</span>${hp.stem}</td>` : `<td style="${tdSmStyle}"></td>`;
+        }).join('')}</tr>`
+      ).join('');
+      baziTableHtml = `
+<h3 style="font-size:12pt;color:#5C3317;margin:8pt 0 4pt">八字命盤結構</h3>
+<table style="border-collapse:collapse;width:100%;margin-bottom:8pt;">
+  <tr><th style="${thStyle}">時柱</th><th style="${thStyle}">日柱</th><th style="${thStyle}">月柱</th><th style="${thStyle}">年柱</th></tr>
+  <tr>${ps.map(p=>`<td style="${tdStyle}color:#92400e">${p.stemSS||'-'}</td>`).join('')}</tr>
+  <tr>${ps.map(p=>`<td style="${tdLgStyle}">${p.stem}</td>`).join('')}</tr>
+  <tr>${ps.map(p=>`<td style="${tdLgStyle}">${p.branch}</td>`).join('')}</tr>
+  ${hiddenRows}
+  <tr>${ps.map(p=>`<td style="${tdSmStyle}color:#888">${p.naYin}</td>`).join('')}</tr>
+</table>`;
+
+      if (lifelongCycles && lifelongCycles.length > 0) {
+        const cycles = [...lifelongCycles].reverse();
+        baziTableHtml += `
+<h3 style="font-size:12pt;color:#5C3317;margin:8pt 0 4pt">大運</h3>
+<table style="border-collapse:collapse;width:100%;margin-bottom:12pt;">
+  <tr>${cycles.map(c=>`<td style="${thStyle}font-size:9pt;">${c.startAge}</td>`).join('')}</tr>
+  <tr>${cycles.map(c=>`<td style="${tdSmStyle}color:#92400e">${c.liuShen}</td>`).join('')}</tr>
+  <tr>${cycles.map(c=>`<td style="${tdStyle}font-weight:bold">${c.stem}</td>`).join('')}</tr>
+  <tr>${cycles.map(c=>`<td style="${tdStyle}font-weight:bold">${c.branch}</td>`).join('')}</tr>
+</table>`;
+      }
+    }
+
+    const docTitle = reportTitle.replace('終身命書（科學化規則版）', '八字命書');
+
     const docHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
 <head>
 <meta charset="utf-8">
-<title>${formData.name} ${reportTitle}</title>
+<title>${formData.name} ${docTitle}</title>
 <!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument></xml><![endif]-->
 <style>
   @page { size: A4; margin: 2cm 2.5cm; }
@@ -359,8 +403,10 @@ export default function DiskPage() {
 </style>
 </head>
 <body>
-<p style="text-align:center;font-size:18pt;font-weight:bold;color:#7B3F00;margin-bottom:6pt">${formData.name} ${reportTitle}</p>
+<p style="text-align:center;font-size:18pt;font-weight:bold;color:#7B3F00;margin-bottom:6pt">${formData.name} ${docTitle}</p>
 <p style="text-align:center;font-size:10pt;color:#888;margin-bottom:16pt">命理鑑定大師：玉洞子  |  修身齊家，命在人心。  v3.0</p>
+${baziTableHtml}
+${baziTableHtml ? '<p style="page-break-before:always;margin:0">&nbsp;</p>' : ''}
 ${bodyHtml}
 </body>
 </html>`;
@@ -369,7 +415,7 @@ ${bodyHtml}
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${formData.name}_${reportTitle}.doc`;
+    a.download = `${formData.name}_${docTitle}.doc`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -646,7 +692,94 @@ ${bodyHtml}
                     <div className="mt-20 text-right text-amber-900/40 italic text-sm font-serif">玉洞子 謹誌</div>
                   </div>
                 </div>
-                {/* 終身命書：大運走勢圖 */}
+                {/* 八字命書：命盤結構表格 */}
+                {baziTable && baziTable.pillars && (
+                  <div className="bg-white p-4 rounded-2xl border border-amber-100 shadow-sm overflow-x-auto">
+                    <h3 className="text-base font-bold text-amber-900 mb-3">八字命盤</h3>
+                    <table className="w-full border-collapse text-sm text-center">
+                      <thead>
+                        <tr className="bg-amber-50">
+                          {['時柱','日柱','月柱','年柱'].map(l => (
+                            <th key={l} className="border border-amber-300 px-3 py-1 font-bold text-amber-900">{l}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(() => { const rp = [...baziTable.pillars].reverse(); return (<>
+                        <tr className="bg-amber-50/50">
+                          {rp.map((p,i) => (
+                            <td key={i} className="border border-amber-200 px-3 py-1 font-medium text-amber-700">{p.stemSS || '-'}</td>
+                          ))}
+                        </tr>
+                        <tr>
+                          {rp.map((p,i) => (
+                            <td key={i} className="border border-amber-200 px-3 py-2 text-xl font-bold text-gray-800">{p.stem}</td>
+                          ))}
+                        </tr>
+                        <tr>
+                          {rp.map((p,i) => (
+                            <td key={i} className="border border-amber-200 px-3 py-2 text-xl font-bold text-gray-800">{p.branch}</td>
+                          ))}
+                        </tr>
+                        {[0,1,2].map(row => {
+                          const hasData = rp.some(p => p.hiddenPairs[row]);
+                          if (!hasData) return null;
+                          return (
+                            <tr key={`h${row}`} className="bg-stone-50">
+                              {rp.map((p,i) => {
+                                const hp = p.hiddenPairs[row];
+                                return (
+                                  <td key={i} className="border border-amber-200 px-3 py-1 text-xs text-gray-600">
+                                    {hp ? <><span className="text-amber-700">{hp.ss}</span>{hp.stem}</> : ''}
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          );
+                        })}
+                        <tr className="bg-amber-50/30">
+                          {rp.map((p,i) => (
+                            <td key={i} className="border border-amber-200 px-3 py-1 text-xs text-gray-500">{p.naYin}</td>
+                          ))}
+                        </tr>
+                        </>); })()}
+                      </tbody>
+                    </table>
+                    {/* 大運表格 */}
+                    {lifelongCycles && lifelongCycles.length > 0 && (
+                      <div className="mt-4">
+                        <h4 className="text-sm font-bold text-amber-900 mb-2">大運</h4>
+                        <div className="overflow-x-auto">
+                          <table className="w-full border-collapse text-xs text-center">
+                            <tbody>
+                              <tr className="bg-amber-50">
+                                {[...lifelongCycles].reverse().map(c => (
+                                  <td key={c.startAge} className="border border-amber-200 px-2 py-1 font-bold text-amber-800">{c.startAge}</td>
+                                ))}
+                              </tr>
+                              <tr>
+                                {[...lifelongCycles].reverse().map(c => (
+                                  <td key={c.startAge} className="border border-amber-200 px-2 py-1 text-amber-700">{c.liuShen}</td>
+                                ))}
+                              </tr>
+                              <tr>
+                                {[...lifelongCycles].reverse().map(c => (
+                                  <td key={c.startAge} className="border border-amber-200 px-2 py-1 font-bold text-gray-800">{c.stem}</td>
+                                ))}
+                              </tr>
+                              <tr>
+                                {[...lifelongCycles].reverse().map(c => (
+                                  <td key={c.startAge} className="border border-amber-200 px-2 py-1 font-bold text-gray-800">{c.branch}</td>
+                                ))}
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {/* 八字命書：大運走勢圖 */}
                 {lifelongCycles && lifelongCycles.length > 0 && (
                   <div className="bg-white p-5 rounded-2xl border border-amber-100 shadow-sm">
                     <h3 className="text-base font-bold text-amber-900 mb-3">大運走勢圖（百分制）</h3>
