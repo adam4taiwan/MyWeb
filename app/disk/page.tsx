@@ -61,6 +61,10 @@ export default function DiskPage() {
   const [remainingPoints, setRemainingPoints] = useState<number | null>(null);
   const [lifelongCycles, setLifelongCycles] = useState<Array<{stem:string;branch:string;liuShen:string;startAge:number;endAge:number;score:number;level:string}> | null>(null);
   const [baziTable, setBaziTable] = useState<{pillars:Array<{label:string;stem:string;branch:string;stemSS:string;naYin:string;hiddenPairs:Array<{ss:string;stem:string}>}>} | null>(null);
+  const [yongJiTable, setYongJiTable] = useState<{
+    stems: Array<{stem:string;elem:string;shiShen:string;cls:string}>;
+    branches: Array<{branch:string;elem:string;shiShen:string;cls:string;inChart:boolean}>;
+  } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingText, setLoadingText] = useState('命理鑑定計算中...');
   const [purchaseLoading, setPurchaseLoading] = useState(false);
@@ -223,7 +227,6 @@ export default function DiskPage() {
       }
 
       if (isTableRow) {
-        flushTable();
         tableRows.push(trimmed.slice(1, -1).split('|').map(c => c.trim()));
       } else {
         flushTable();
@@ -305,6 +308,8 @@ export default function DiskPage() {
         else setLifelongCycles(null);
         if (data.baziTable) setBaziTable(data.baziTable);
         else setBaziTable(null);
+        if (data.yongJiTable) setYongJiTable(data.yongJiTable);
+        else setYongJiTable(null);
         // 設定報告標題
         const durLabel = FORTUNE_DURATIONS.find(d => d.value === fortuneDuration)?.label ?? '大運';
         const titles: Record<ReportTypeKey, string> = {
@@ -328,8 +333,33 @@ export default function DiskPage() {
     const lines = report.split('\n');
     const bodyLines: string[] = [];
 
+    const thDocStyle = 'border:1px solid #c8a96e;background:#fef3c7;padding:3pt 5pt;text-align:center;font-weight:bold;color:#7B3F00;font-size:9pt;';
+    const tdDocStyle = 'border:1px solid #c8a96e;padding:3pt 5pt;text-align:center;font-size:9pt;';
+    let tableBuffer: string[][] = [];
+
+    const flushDocTable = () => {
+      if (tableBuffer.length === 0) return;
+      const rows = tableBuffer.map((cells, i) =>
+        `<tr>${cells.map(c => `<${i === 0 ? 'th' : 'td'} style="${i === 0 ? thDocStyle : tdDocStyle}">${c}</${i === 0 ? 'th' : 'td'}>`).join('')}</tr>`
+      ).join('');
+      bodyLines.push(`<table style="border-collapse:collapse;margin:4pt 0 6pt;">${rows}</table>`);
+      tableBuffer = [];
+    };
+
     lines.forEach((line) => {
       const trimmed = line.trim();
+      const isTableRow = trimmed.startsWith('|') && trimmed.endsWith('|');
+      const isSeparator = /^\|[\s:\-|]+\|$/.test(trimmed);
+
+      if (isSeparator) return;
+
+      if (isTableRow) {
+        tableBuffer.push(trimmed.slice(1, -1).split('|').map(c => c.trim()));
+        return;
+      }
+
+      flushDocTable();
+
       if (!trimmed) { bodyLines.push('<p style="margin:2pt 0">&nbsp;</p>'); return; }
       if (trimmed.startsWith('===') && trimmed.endsWith('===')) {
         const title = trimmed.replace(/^=+\s*/, '').replace(/\s*=+$/, '');
@@ -344,6 +374,7 @@ export default function DiskPage() {
       const escaped = trimmed.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
       bodyLines.push(`<p style="margin:3pt 0;line-height:1.6">${escaped}</p>`);
     });
+    flushDocTable();
 
     // 第一章不要 page-break-before
     const bodyHtml = bodyLines.join('\n').replace('page-break-before:always', 'page-break-before:auto');
@@ -777,6 +808,67 @@ ${bodyHtml}
                         </div>
                       </div>
                     )}
+                  </div>
+                )}
+                {/* 八字命書：天干地支喜忌對照表 */}
+                {yongJiTable && (
+                  <div className="bg-white p-4 rounded-2xl border border-amber-100 shadow-sm overflow-x-auto">
+                    <h3 className="text-base font-bold text-amber-900 mb-3">天干地支喜忌對照</h3>
+                    <div className="mb-3">
+                      <h4 className="text-xs font-bold text-amber-700 mb-1">天干</h4>
+                      <table className="border-collapse text-xs text-center">
+                        <tbody>
+                          <tr className="bg-amber-50">
+                            {yongJiTable.stems.map(s => (
+                              <td key={s.stem} className="border border-amber-200 px-2 py-1 font-bold text-amber-900">{s.stem}</td>
+                            ))}
+                          </tr>
+                          <tr>
+                            {yongJiTable.stems.map(s => (
+                              <td key={s.stem} className="border border-amber-200 px-2 py-1 text-gray-600">{s.elem}</td>
+                            ))}
+                          </tr>
+                          <tr>
+                            {yongJiTable.stems.map(s => (
+                              <td key={s.stem} className="border border-amber-200 px-2 py-1 text-gray-700">{s.shiShen}</td>
+                            ))}
+                          </tr>
+                          <tr>
+                            {yongJiTable.stems.map(s => (
+                              <td key={s.stem} className={`border border-amber-200 px-2 py-1 font-bold ${s.cls === 'X' ? 'text-red-600 bg-red-50' : s.cls === '○' ? 'text-green-700 bg-green-50' : s.cls === '△忌' ? 'text-orange-600 bg-orange-50' : 'text-gray-500'}`}>{s.cls}</td>
+                            ))}
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-amber-700 mb-1">地支（*=命局已有）</h4>
+                      <table className="border-collapse text-xs text-center">
+                        <tbody>
+                          <tr className="bg-amber-50">
+                            {yongJiTable.branches.map(b => (
+                              <td key={b.branch} className={`border border-amber-200 px-2 py-1 font-bold ${b.inChart ? 'text-amber-900 bg-amber-100' : 'text-amber-700'}`}>{b.branch}{b.inChart ? '*' : ''}</td>
+                            ))}
+                          </tr>
+                          <tr>
+                            {yongJiTable.branches.map(b => (
+                              <td key={b.branch} className="border border-amber-200 px-2 py-1 text-gray-600">{b.elem}</td>
+                            ))}
+                          </tr>
+                          <tr>
+                            {yongJiTable.branches.map(b => (
+                              <td key={b.branch} className="border border-amber-200 px-2 py-1 text-gray-700">{b.shiShen}</td>
+                            ))}
+                          </tr>
+                          <tr>
+                            {yongJiTable.branches.map(b => (
+                              <td key={b.branch} className={`border border-amber-200 px-2 py-1 font-bold ${b.cls === 'X' ? 'text-red-600 bg-red-50' : b.cls === '○' ? 'text-green-700 bg-green-50' : b.cls === '△忌' ? 'text-orange-600 bg-orange-50' : 'text-gray-500'}`}>{b.cls}</td>
+                            ))}
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <p className="text-[10px] text-gray-400 mt-2">○=喜用  △忌=次忌（克用神）  △=中性  X=大忌（克身）</p>
                   </div>
                 )}
                 {/* 八字命書：大運走勢圖 */}
