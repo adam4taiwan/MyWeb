@@ -16,6 +16,7 @@ const minutes = Array.from({ length: 60 }, (_, i) => i);
 
 const REPORT_TYPES = [
   { key: '綜合性命書', label: '綜合命書', cost: 50, desc: '八字紫微全面鑑定' },
+  { key: '終身命書', label: '終身命書', cost: 50, desc: '12章科學化一生命運剖析' },
   { key: '大運命書', label: '大運命書', cost: 150, desc: '逐月吉凶大運推演' },
   { key: '流年命書', label: '流年命書', cost: 20, desc: '指定年份運勢推演' },
   { key: '問事', label: '問事鑑定', cost: 10, desc: '針對特定事項剖析' },
@@ -58,6 +59,7 @@ export default function DiskPage() {
   const [report, setReport] = useState('');
   const [reportTitle, setReportTitle] = useState('命理鑑定書');
   const [remainingPoints, setRemainingPoints] = useState<number | null>(null);
+  const [lifelongCycles, setLifelongCycles] = useState<Array<{stem:string;branch:string;startAge:number;endAge:number;score:number;level:string}> | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingText, setLoadingText] = useState('命理鑑定計算中...');
   const [purchaseLoading, setPurchaseLoading] = useState(false);
@@ -163,14 +165,16 @@ export default function DiskPage() {
 
   const renderReport = (text: string) => {
     const lines = text.split('\n');
-    const segments: React.ReactNode[] = [];
+    const allSegments: React.ReactNode[] = [];
     let tableRows: string[][] = [];
-    let isFirstRow = true;
+    let chapterContent: React.ReactNode[] = [];
+    let chapterIdx = 0;
+    let nodeIdx = 0;
 
-    const flushTable = (key: number) => {
+    const flushTable = () => {
       if (tableRows.length === 0) return;
-      segments.push(
-        <table key={`t${key}`} className="w-full border-collapse my-2 text-sm">
+      chapterContent.push(
+        <table key={`t${nodeIdx++}`} className="pdf-block w-full border-collapse my-2 text-sm">
           <tbody>
             {tableRows.map((cells, i) => (
               <tr key={i}>
@@ -185,33 +189,55 @@ export default function DiskPage() {
         </table>
       );
       tableRows = [];
-      isFirstRow = true;
     };
 
-    let textBuffer = '';
-    lines.forEach((line, idx) => {
+    const flushChapter = () => {
+      flushTable();
+      if (chapterContent.length > 0) {
+        allSegments.push(
+          <div key={`ch${chapterIdx}`} className="pdf-chapter">
+            {chapterContent}
+          </div>
+        );
+        chapterIdx++;
+        chapterContent = [];
+      }
+    };
+
+    lines.forEach((line) => {
       const trimmed = line.trim();
+      const isChapterHeader = trimmed.startsWith('===') && trimmed.endsWith('===');
       const isTableRow = trimmed.startsWith('|') && trimmed.endsWith('|');
       const isSeparator = /^\|[\s:\-|]+\|$/.test(trimmed);
 
       if (isSeparator) return;
 
+      if (isChapterHeader) {
+        flushTable();
+        flushChapter();
+        chapterContent.push(
+          <p key={`h${nodeIdx++}`} className="pdf-block whitespace-pre-wrap">{line}</p>
+        );
+        return;
+      }
+
       if (isTableRow) {
-        if (textBuffer) {
-          segments.push(<span key={`s${idx}`} className="whitespace-pre-wrap">{textBuffer}</span>);
-          textBuffer = '';
-        }
+        flushTable();
         tableRows.push(trimmed.slice(1, -1).split('|').map(c => c.trim()));
       } else {
-        if (tableRows.length > 0) flushTable(idx);
-        textBuffer += line + '\n';
+        flushTable();
+        if (trimmed) {
+          chapterContent.push(
+            <p key={`p${nodeIdx++}`} className="pdf-block whitespace-pre-wrap">{line}</p>
+          );
+        } else {
+          chapterContent.push(<div key={`e${nodeIdx++}`} className="h-1" />);
+        }
       }
     });
 
-    if (tableRows.length > 0) flushTable(lines.length);
-    if (textBuffer) segments.push(<span key="last" className="whitespace-pre-wrap">{textBuffer}</span>);
-
-    return segments;
+    flushChapter();
+    return allSegments;
   };
 
   const getSelectedType = () => {
@@ -225,10 +251,13 @@ export default function DiskPage() {
 
   const handleAnalysis = async () => {
     const selected = getSelectedType();
+    if (reportType === '終身命書' && !profileLoaded) {
+      return alert('終身命書需要先儲存生辰資料，請先填寫並儲存您的生辰。');
+    }
     if (remainingPoints !== null && remainingPoints < selected.cost) {
       return alert(`點數不足，此功能需要 ${selected.cost} 點`);
     }
-    setLoadingText(reportType === '綜合性命書' && profileLoaded
+    setLoadingText((reportType === '綜合性命書' || reportType === '終身命書') && profileLoaded
       ? '知識庫命書生成中，請稍候...'
       : '命理鑑定計算中，複雜命書需 1-2 分鐘，請耐心等候...');
     setIsLoading(true);
@@ -244,10 +273,16 @@ export default function DiskPage() {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 5 * 60 * 1000);
 
-      // 綜合命書：有命盤(profileLoaded)走 KB 端點，無命盤走 Gemini
+      // 路由邏輯：綜合命書/終身命書走 KB 端點，其餘走 Gemini
       let res: Response;
       if (reportType === '綜合性命書' && profileLoaded) {
         res = await fetch(`${API_URL}/Consultation/analyze-kb`, {
+          method: 'GET',
+          headers: { 'Authorization': `Bearer ${token}` },
+          signal: controller.signal
+        });
+      } else if (reportType === '終身命書' && profileLoaded) {
+        res = await fetch(`${API_URL}/Consultation/analyze-lifelong`, {
           method: 'GET',
           headers: { 'Authorization': `Bearer ${token}` },
           signal: controller.signal
@@ -265,10 +300,13 @@ export default function DiskPage() {
       if (res.ok) {
         setReport(cleanReport(data.result || data.analysis || ''));
         setRemainingPoints(data.remainingPoints);
+        if (data.luckCycles) setLifelongCycles(data.luckCycles);
+        else setLifelongCycles(null);
         // 設定報告標題
         const durLabel = FORTUNE_DURATIONS.find(d => d.value === fortuneDuration)?.label ?? '大運';
         const titles: Record<ReportTypeKey, string> = {
           '綜合性命書': '綜合命理鑑定書',
+          '終身命書': '終身命書（科學化規則版）',
           '大運命書': `${durLabel}鑑定書`,
           '流年命書': `${targetYear} 年流年鑑定書`,
           '問事': `${topic} 問事鑑定書`,
@@ -282,43 +320,58 @@ export default function DiskPage() {
     } catch (err) { alert('鑑定失敗：' + String(err)); } finally { setIsLoading(false); }
   };
 
-  const generatePDF = async () => {
-    const element = document.getElementById('report-paper');
-    if (!element) return;
-    setLoadingText('正在生成 PDF 鑑定書...');
-    setIsLoading(true);
-    try {
-      const canvas = await html2canvas(element, {
-        scale: 2, useCORS: true, logging: false, backgroundColor: '#F9F3E9'
-      });
-      const imgData = canvas.toDataURL('image/jpeg', 0.85);
-      const pdf = new jsPDF({
-        orientation: 'p',
-        unit: 'mm',
-        format: 'a4',
-        encryption: {
-          userPassword: '',
-          ownerPassword: 'YuDongZi2026',
-          userPermissions: ['print']
-        }
-      });
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfPageHeight = pdf.internal.pageSize.getHeight();
-      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
-      let position = 0;
-      let remaining = imgHeight;
-      while (remaining > 0) {
-        pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight);
-        remaining -= pdfPageHeight;
-        if (remaining > 0) {
-          pdf.addPage();
-          position -= pdfPageHeight;
-        }
+  const generateDOC = () => {
+    if (!report) return;
+    const lines = report.split('\n');
+    const bodyLines: string[] = [];
+
+    lines.forEach((line) => {
+      const trimmed = line.trim();
+      if (!trimmed) { bodyLines.push('<p style="margin:2pt 0">&nbsp;</p>'); return; }
+      if (trimmed.startsWith('===') && trimmed.endsWith('===')) {
+        const title = trimmed.replace(/^=+\s*/, '').replace(/\s*=+$/, '');
+        bodyLines.push(`<h2 style="font-size:14pt;color:#7B3F00;border-bottom:1px solid #c8a96e;margin:12pt 0 4pt;page-break-before:always">${title}</h2>`);
+        return;
       }
-      pdf.save(`${formData.name}_${reportTitle}.pdf`);
-    } catch {
-      alert("PDF 儲存失敗，請嘗試手動截圖");
-    } finally { setIsLoading(false); }
+      if (trimmed.startsWith('---') && trimmed.endsWith('---')) {
+        const sub = trimmed.replace(/^-+\s*/, '').replace(/\s*-+$/, '');
+        bodyLines.push(`<h3 style="font-size:12pt;color:#5C3317;margin:8pt 0 2pt">${sub}</h3>`);
+        return;
+      }
+      const escaped = trimmed.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      bodyLines.push(`<p style="margin:3pt 0;line-height:1.6">${escaped}</p>`);
+    });
+
+    // 第一章不要 page-break-before
+    const bodyHtml = bodyLines.join('\n').replace('page-break-before:always', 'page-break-before:auto');
+
+    const docHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<title>${formData.name} ${reportTitle}</title>
+<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument></xml><![endif]-->
+<style>
+  @page { size: A4; margin: 2cm 2.5cm; }
+  body { font-family: "Microsoft JhengHei","PMingLiU",serif; font-size: 11pt; color: #2c1810; line-height: 1.6; }
+  h2 { font-size: 14pt; color: #7B3F00; }
+  h3 { font-size: 12pt; color: #5C3317; }
+  p { margin: 3pt 0; }
+</style>
+</head>
+<body>
+<p style="text-align:center;font-size:18pt;font-weight:bold;color:#7B3F00;margin-bottom:6pt">${formData.name} ${reportTitle}</p>
+<p style="text-align:center;font-size:10pt;color:#888;margin-bottom:16pt">命理鑑定大師：玉洞子  |  修身齊家，命在人心。  v3.0</p>
+${bodyHtml}
+</body>
+</html>`;
+
+    const blob = new Blob(['\ufeff', docHtml], { type: 'application/msword;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${formData.name}_${reportTitle}.doc`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleExportXLS = async () => {
@@ -565,8 +618,8 @@ export default function DiskPage() {
             {report ? (
               <div className="space-y-4">
                 <div className="flex justify-end">
-                  <button onClick={generatePDF} className="bg-amber-100 text-amber-900 border border-amber-300 px-5 py-2 rounded-full text-xs font-bold hover:bg-amber-200 transition-all shadow-sm">
-                    儲存 PDF 鑑定書
+                  <button onClick={generateDOC} className="bg-amber-100 text-amber-900 border border-amber-300 px-5 py-2 rounded-full text-xs font-bold hover:bg-amber-200 transition-all shadow-sm">
+                    儲存 DOC 鑑定書
                   </button>
                 </div>
                 <div className="bg-white p-1 shadow-2xl border border-red-50 rounded-sm overflow-hidden">
@@ -593,6 +646,38 @@ export default function DiskPage() {
                     <div className="mt-20 text-right text-amber-900/40 italic text-sm font-serif">玉洞子 謹誌</div>
                   </div>
                 </div>
+                {/* 終身命書：大運走勢圖 */}
+                {lifelongCycles && lifelongCycles.length > 0 && (
+                  <div className="bg-white p-5 rounded-2xl border border-amber-100 shadow-sm">
+                    <h3 className="text-base font-bold text-amber-900 mb-3">大運走勢圖（百分制）</h3>
+                    <div className="flex items-end gap-1 h-32">
+                      {lifelongCycles.map((c) => {
+                        const colorMap: Record<string, string> = {
+                          '大吉運': 'bg-amber-500', '中吉運': 'bg-amber-300',
+                          '平運': 'bg-gray-300', '中凶運': 'bg-orange-300', '大凶運': 'bg-red-400'
+                        };
+                        const barH = Math.max(4, Math.round(c.score * 0.9));
+                        return (
+                          <div key={c.startAge} className="flex flex-col items-center flex-1 min-w-0">
+                            <div className="text-[9px] text-gray-500 mb-0.5 font-bold">{c.score}</div>
+                            <div
+                              className={`w-full rounded-t ${colorMap[c.level] || 'bg-gray-200'}`}
+                              style={{ height: `${barH}px` }}
+                              title={`${c.startAge}-${c.endAge}歲 ${c.stem}${c.branch} ${c.score}分 ${c.level}`}
+                            />
+                            <div className="text-[8px] text-gray-600 mt-0.5 truncate w-full text-center">{c.stem}{c.branch}</div>
+                            <div className="text-[7px] text-gray-400 truncate w-full text-center">{c.startAge}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="flex gap-2 mt-2 flex-wrap text-[9px]">
+                      {[['大吉運','bg-amber-500'],['中吉運','bg-amber-300'],['平運','bg-gray-300'],['中凶運','bg-orange-300'],['大凶運','bg-red-400']].map(([lv, cls]) => (
+                        <div key={lv} className="flex items-center gap-1"><div className={`w-2.5 h-2.5 rounded ${cls}`} /><span className="text-gray-500">{lv}</span></div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="h-[500px] border-2 border-dashed border-amber-100 rounded-[3rem] flex items-center justify-center bg-white/40">
