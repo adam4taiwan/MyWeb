@@ -17,7 +17,7 @@ const minutes = Array.from({ length: 60 }, (_, i) => i);
 const REPORT_TYPES = [
   { key: '綜合性命書', label: '綜合命書', cost: 50, desc: '八字紫微全面鑑定' },
   { key: '八字命書', label: '八字命書', cost: 50, desc: '12章科學化一生命運剖析' },
-  { key: '大運命書', label: '大運命書', cost: 150, desc: '逐月吉凶大運推演' },
+  { key: '大運命書', label: '大運命書', cost: 150, desc: '逐年吉凶大運推演' },
   { key: '流年命書', label: '流年命書', cost: 20, desc: '指定年份運勢推演' },
   { key: '問事', label: '問事鑑定', cost: 10, desc: '針對特定事項剖析' },
 ] as const;
@@ -60,6 +60,7 @@ export default function DiskPage() {
   const [reportTitle, setReportTitle] = useState('命理鑑定書');
   const [remainingPoints, setRemainingPoints] = useState<number | null>(null);
   const [lifelongCycles, setLifelongCycles] = useState<Array<{stem:string;branch:string;liuShen:string;startAge:number;endAge:number;score:number;level:string}> | null>(null);
+  const [annualForecasts, setAnnualForecasts] = useState<Array<{year:number;age:number;stemBranch:string;daiyunStem:string;daiyunBranch:string;baziScore:number;ziweiScore:number;crossClass:string;summary:string}> | null>(null);
   const [baziTable, setBaziTable] = useState<{pillars:Array<{label:string;stem:string;branch:string;stemSS:string;naYin:string;hiddenPairs:Array<{ss:string;stem:string}>}>} | null>(null);
   const [yongJiTable, setYongJiTable] = useState<{
     stems: Array<{stem:string;elem:string;shiShen:string;cls:string}>;
@@ -255,14 +256,16 @@ export default function DiskPage() {
 
   const handleAnalysis = async () => {
     const selected = getSelectedType();
-    if (reportType === '八字命書' && !profileLoaded) {
-      return alert('八字命書需要先儲存生辰資料，請先填寫並儲存您的生辰。');
+    if ((reportType === '八字命書' || reportType === '大運命書') && !profileLoaded) {
+      return alert(`${reportType}需要先儲存生辰資料，請先填寫並儲存您的生辰。`);
     }
     if (remainingPoints !== null && remainingPoints < selected.cost) {
       return alert(`點數不足，此功能需要 ${selected.cost} 點`);
     }
     setLoadingText((reportType === '綜合性命書' || reportType === '八字命書') && profileLoaded
       ? '知識庫命書生成中，請稍候...'
+      : reportType === '大運命書' && profileLoaded
+      ? `大運命書（${fortuneDuration === 0 ? '終身' : fortuneDuration + '年'}）生成中，請稍候...`
       : '命理鑑定計算中，複雜命書需 1-2 分鐘，請耐心等候...');
     setIsLoading(true);
     try {
@@ -291,6 +294,12 @@ export default function DiskPage() {
           headers: { 'Authorization': `Bearer ${token}` },
           signal: controller.signal
         });
+      } else if (reportType === '大運命書' && profileLoaded) {
+        res = await fetch(`${API_URL}/Consultation/analyze-daiyun?years=${fortuneDuration}`, {
+          method: 'GET',
+          headers: { 'Authorization': `Bearer ${token}` },
+          signal: controller.signal
+        });
       } else {
         res = await fetch(`${API_URL}/Consultation/analyze`, {
           method: 'POST',
@@ -310,6 +319,8 @@ export default function DiskPage() {
         else setBaziTable(null);
         if (data.yongJiTable) setYongJiTable(data.yongJiTable);
         else setYongJiTable(null);
+        if (data.annualForecasts) setAnnualForecasts(data.annualForecasts);
+        else setAnnualForecasts(null);
         // 設定報告標題
         const durLabel = FORTUNE_DURATIONS.find(d => d.value === fortuneDuration)?.label ?? '大運';
         const titles: Record<ReportTypeKey, string> = {
@@ -699,31 +710,7 @@ ${bodyHtml}
                     儲存 DOC 鑑定書
                   </button>
                 </div>
-                <div className="bg-white p-1 shadow-2xl border border-red-50 rounded-sm overflow-hidden">
-                  <div
-                    id="report-paper"
-                    className="p-12 relative bg-[#F9F3E9]"
-                    style={{
-                      backgroundImage: 'linear-gradient(rgba(255, 0, 0, 0.15) 1px, transparent 1px)',
-                      backgroundSize: '100% 40px',
-                      border: '18px double #4a3721',
-                      lineHeight: '40px'
-                    }}
-                  >
-                    <h2 className="text-3xl font-bold text-center text-amber-950 mb-8 border-b-2 border-red-800 pb-4 tracking-[1em]">{reportTitle}</h2>
-                    <div
-                      className="text-xl text-gray-800 text-justify tracking-[0.1em]"
-                      style={{
-                        fontFamily: '"標楷體", "Kaiti", "BiauKai", "DFKai-SB", "STKaiti", serif',
-                        paddingTop: '2px'
-                      }}
-                    >
-                      {renderReport(report)}
-                    </div>
-                    <div className="mt-20 text-right text-amber-900/40 italic text-sm font-serif">玉洞子 謹誌</div>
-                  </div>
-                </div>
-                {/* 八字命書：命盤結構表格 */}
+                {/* 命盤結構表格（八字命書/大運命書共用，顯示在報告之前） */}
                 {baziTable && baziTable.pillars && (
                   <div className="bg-white p-4 rounded-2xl border border-amber-100 shadow-sm overflow-x-auto">
                     <h3 className="text-base font-bold text-amber-900 mb-3">八字命盤</h3>
@@ -810,7 +797,63 @@ ${bodyHtml}
                     )}
                   </div>
                 )}
-                {/* 八字命書：天干地支喜忌對照表 */}
+                {/* 大運走勢圖（報告之前） */}
+                {lifelongCycles && lifelongCycles.length > 0 && (
+                  <div className="bg-white p-5 rounded-2xl border border-amber-100 shadow-sm">
+                    <h3 className="text-base font-bold text-amber-900 mb-3">大運走勢圖（百分制）</h3>
+                    <div className="flex items-end gap-1 h-32">
+                      {lifelongCycles.map((c) => {
+                        const colorMap: Record<string, string> = {
+                          '大吉運': 'bg-amber-500', '中吉運': 'bg-amber-300',
+                          '平運': 'bg-gray-300', '中凶運': 'bg-orange-300', '大凶運': 'bg-red-400'
+                        };
+                        const barH = Math.max(4, Math.round(c.score * 0.9));
+                        return (
+                          <div key={c.startAge} className="flex flex-col items-center flex-1 min-w-0">
+                            <div className="text-[9px] text-gray-500 mb-0.5 font-bold">{c.score}</div>
+                            <div
+                              className={`w-full rounded-t ${colorMap[c.level] || 'bg-gray-200'}`}
+                              style={{ height: `${barH}px` }}
+                              title={`${c.startAge}-${c.endAge}歲 ${c.stem}${c.branch} ${c.score}分 ${c.level}`}
+                            />
+                            <div className="text-[8px] text-gray-600 mt-0.5 truncate w-full text-center">{c.stem}{c.branch}</div>
+                            <div className="text-[7px] text-gray-400 truncate w-full text-center">{c.startAge}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="flex gap-2 mt-2 flex-wrap text-[9px]">
+                      {[['大吉運','bg-amber-500'],['中吉運','bg-amber-300'],['平運','bg-gray-300'],['中凶運','bg-orange-300'],['大凶運','bg-red-400']].map(([lv, cls]) => (
+                        <div key={lv} className="flex items-center gap-1"><div className={`w-2.5 h-2.5 rounded ${cls}`} /><span className="text-gray-500">{lv}</span></div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="bg-white p-1 shadow-2xl border border-red-50 rounded-sm overflow-hidden">
+                  <div
+                    id="report-paper"
+                    className="p-12 relative bg-[#F9F3E9]"
+                    style={{
+                      backgroundImage: 'linear-gradient(rgba(255, 0, 0, 0.15) 1px, transparent 1px)',
+                      backgroundSize: '100% 40px',
+                      border: '18px double #4a3721',
+                      lineHeight: '40px'
+                    }}
+                  >
+                    <h2 className="text-3xl font-bold text-center text-amber-950 mb-8 border-b-2 border-red-800 pb-4 tracking-[1em]">{reportTitle}</h2>
+                    <div
+                      className="text-xl text-gray-800 text-justify tracking-[0.1em]"
+                      style={{
+                        fontFamily: '"標楷體", "Kaiti", "BiauKai", "DFKai-SB", "STKaiti", serif',
+                        paddingTop: '2px'
+                      }}
+                    >
+                      {renderReport(report)}
+                    </div>
+                    <div className="mt-20 text-right text-amber-900/40 italic text-sm font-serif">玉洞子 謹誌</div>
+                  </div>
+                </div>
+                {/* 天干地支喜忌對照表 */}
                 {yongJiTable && (
                   <div className="bg-white p-4 rounded-2xl border border-amber-100 shadow-sm overflow-x-auto">
                     <h3 className="text-base font-bold text-amber-900 mb-3">天干地支喜忌對照</h3>
@@ -871,35 +914,38 @@ ${bodyHtml}
                     <p className="text-[10px] text-gray-400 mt-2">○=喜用  △忌=次忌（克用神）  △=中性  X=大忌（克身）</p>
                   </div>
                 )}
-                {/* 八字命書：大運走勢圖 */}
-                {lifelongCycles && lifelongCycles.length > 0 && (
+                {/* 大運命書：逐年摘要 */}
+                {annualForecasts && annualForecasts.length > 0 && (
                   <div className="bg-white p-5 rounded-2xl border border-amber-100 shadow-sm">
-                    <h3 className="text-base font-bold text-amber-900 mb-3">大運走勢圖（百分制）</h3>
-                    <div className="flex items-end gap-1 h-32">
-                      {lifelongCycles.map((c) => {
-                        const colorMap: Record<string, string> = {
-                          '大吉運': 'bg-amber-500', '中吉運': 'bg-amber-300',
-                          '平運': 'bg-gray-300', '中凶運': 'bg-orange-300', '大凶運': 'bg-red-400'
+                    <h3 className="text-base font-bold text-amber-900 mb-3">流年逐年摘要（{annualForecasts.length} 年）</h3>
+                    <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
+                      {annualForecasts.map(f => {
+                        const clsMap: Record<string, string> = {
+                          '大吉': 'bg-amber-500 text-white', '吉': 'bg-amber-300 text-amber-900',
+                          '平': 'bg-gray-200 text-gray-700', '小凶': 'bg-orange-300 text-orange-900',
+                          '大凶': 'bg-red-400 text-white'
                         };
-                        const barH = Math.max(4, Math.round(c.score * 0.9));
+                        const badgeClass = clsMap[f.crossClass] || 'bg-gray-200 text-gray-700';
                         return (
-                          <div key={c.startAge} className="flex flex-col items-center flex-1 min-w-0">
-                            <div className="text-[9px] text-gray-500 mb-0.5 font-bold">{c.score}</div>
-                            <div
-                              className={`w-full rounded-t ${colorMap[c.level] || 'bg-gray-200'}`}
-                              style={{ height: `${barH}px` }}
-                              title={`${c.startAge}-${c.endAge}歲 ${c.stem}${c.branch} ${c.score}分 ${c.level}`}
-                            />
-                            <div className="text-[8px] text-gray-600 mt-0.5 truncate w-full text-center">{c.stem}{c.branch}</div>
-                            <div className="text-[7px] text-gray-400 truncate w-full text-center">{c.startAge}</div>
+                          <div key={f.year} className="flex items-start gap-2 p-2 rounded-lg bg-amber-50/60 border border-amber-100">
+                            <div className="flex-shrink-0 text-center min-w-[48px]">
+                              <div className="text-sm font-bold text-amber-800">{f.year}</div>
+                              <div className="text-[10px] text-gray-500">{f.age}歲</div>
+                            </div>
+                            <div className="flex-shrink-0 text-center min-w-[36px]">
+                              <div className="text-xs font-bold text-amber-700">{f.stemBranch}</div>
+                              <div className="text-[9px] text-gray-400">{f.daiyunStem}{f.daiyunBranch}運</div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1 mb-0.5">
+                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${badgeClass}`}>{f.crossClass}</span>
+                                <span className="text-[10px] text-gray-500">八字{f.baziScore}·紫微{f.ziweiScore}</span>
+                              </div>
+                              <div className="text-[10px] text-gray-600 leading-tight">{f.summary}</div>
+                            </div>
                           </div>
                         );
                       })}
-                    </div>
-                    <div className="flex gap-2 mt-2 flex-wrap text-[9px]">
-                      {[['大吉運','bg-amber-500'],['中吉運','bg-amber-300'],['平運','bg-gray-300'],['中凶運','bg-orange-300'],['大凶運','bg-red-400']].map(([lv, cls]) => (
-                        <div key={lv} className="flex items-center gap-1"><div className={`w-2.5 h-2.5 rounded ${cls}`} /><span className="text-gray-500">{lv}</span></div>
-                      ))}
                     </div>
                   </div>
                 )}
