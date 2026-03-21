@@ -19,7 +19,7 @@ const REPORT_TYPES = [
   { key: '八字命書', label: '八字命書', cost: 50, desc: '12章科學化一生命運剖析' },
   { key: '大運命書', label: '大運命書', cost: 150, desc: '逐年吉凶大運推演' },
   { key: '流年命書', label: '流年命書', cost: 100, desc: '五術合一年度全方位推演' },
-  { key: '問事', label: '問事鑑定', cost: 10, desc: '針對特定事項剖析' },
+  { key: '問事', label: '主題命書', cost: 10, desc: 'AI 針對特定主題生成書面分析' },
 ] as const;
 
 const FORTUNE_DURATIONS = [
@@ -349,7 +349,7 @@ export default function DiskPage() {
           '八字命書': '八字命書',
           '大運命書': `${durLabel}鑑定書`,
           '流年命書': `${targetYear} 年流年鑑定書`,
-          '問事': `${topic} 問事鑑定書`,
+          '問事': `${topic} 主題命書`,
         };
         setReportTitle(titles[reportType]);
       } else {
@@ -722,10 +722,10 @@ ${bodyHtml}
                 </div>
               )}
 
-              {/* 問事：主題選擇 */}
+              {/* 主題命書：主題選擇 */}
               {reportType === '問事' && (
                 <div className="mt-3 pt-3 border-t border-gray-100">
-                  <label className="block text-gray-600 mb-1 font-bold text-xs">問事主題</label>
+                  <label className="block text-gray-600 mb-1 font-bold text-xs">分析主題</label>
                   <select
                     value={topic}
                     onChange={(e) => setTopic(e.target.value)}

@@ -24,7 +24,7 @@ export default function Header() {
             <Link href="/heritage" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">命學傳承</Link>
             <Link href="/bookstore" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">二手書店</Link>
             {isAuthenticated && (
-              <Link href="/disk" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">排盤工具</Link>
+              <Link href="/disk" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">排盤鑑定</Link>
             )}
             {isAuthenticated && (
               <Link href="/blessing" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">祈福服務</Link>
@@ -83,7 +83,7 @@ export default function Header() {
               <Link href="/bookstore" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>二手書店</Link>
               <Link href="/consultation" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>諮詢服務</Link>
               {isAuthenticated && (
-                <Link href="/disk" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>排盤工具</Link>
+                <Link href="/disk" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>排盤鑑定</Link>
               )}
               {isAuthenticated && (
                 <Link href="/blessing" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>祈福服務</Link>

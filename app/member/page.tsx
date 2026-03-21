@@ -347,11 +347,11 @@ export default function MemberPage() {
             <div>
               <p className="text-sm font-bold text-amber-800 mb-1">尚未建立個人命盤</p>
               <p className="text-xs text-amber-700 leading-relaxed">
-                請前往排盤工具，輸入出生年月日時，點擊「儲存生辰」即可建立命盤，獲得含大運、紫微命宮的個人化每日運勢。
+                請前往排盤鑑定，輸入出生年月日時，點擊「儲存生辰」即可建立命盤，獲得含大運、紫微命宮的個人化每日運勢。
               </p>
               <Link href="/disk">
                 <button className="mt-2 px-3 py-1.5 bg-amber-500 text-white text-xs font-medium rounded-lg hover:bg-amber-600 transition-colors">
-                  前往排盤工具
+                  前往排盤鑑定
                 </button>
               </Link>
             </div>
@@ -483,7 +483,7 @@ export default function MemberPage() {
                 <div className="flex flex-wrap gap-3">
                   <Link href="/disk">
                     <button className="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 transition-colors">
-                      前往排盤工具
+                      前往排盤鑑定
                     </button>
                   </Link>
                   <button
