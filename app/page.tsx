@@ -33,12 +33,10 @@ export default function Home() {
       <Header />
 
       <main className="flex-grow">
-        <HeroSection />
-
         {/* Subscription nudge banner - logged in but not subscribed */}
         {isAuthenticated && isSubscribed === false && (
-          <div className="bg-gradient-to-r from-amber-700 to-amber-900 text-white py-4 px-4">
-            <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="bg-gradient-to-r from-amber-700 to-amber-900 text-white py-3 px-4">
+            <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
               <div>
                 <p className="font-bold text-sm">訂閱會員方案，解鎖完整服務</p>
                 <p className="text-amber-200 text-xs mt-0.5">
@@ -54,6 +52,7 @@ export default function Home() {
           </div>
         )}
 
+        <HeroSection />
         <FeaturesSection />
         <PricingSection />
         <TestimonialsSection />
