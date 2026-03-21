@@ -20,7 +20,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const protectedRoutes = ['/disk', '/member', '/admin'];
+const protectedRoutes = ['/disk', '/member', '/admin', '/blessing', '/appointment'];
 
 function decodeJwtPayload(token: string): Record<string, string> | null {
   try {

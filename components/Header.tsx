@@ -26,6 +26,12 @@ export default function Header() {
             {isAuthenticated && (
               <Link href="/disk" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">排盤工具</Link>
             )}
+            {isAuthenticated && (
+              <Link href="/blessing" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">祈福服務</Link>
+            )}
+            {isAuthenticated && (
+              <Link href="/appointment" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">問事預約</Link>
+            )}
           </nav>
 
           <div className="hidden md:flex items-center space-x-3">
@@ -78,6 +84,12 @@ export default function Header() {
               <Link href="/consultation" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>諮詢服務</Link>
               {isAuthenticated && (
                 <Link href="/disk" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>排盤工具</Link>
+              )}
+              {isAuthenticated && (
+                <Link href="/blessing" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>祈福服務</Link>
+              )}
+              {isAuthenticated && (
+                <Link href="/appointment" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>問事預約</Link>
               )}
               {isAuthenticated && (
                 <Link href="/member" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>會員中心</Link>

@@ -161,9 +161,12 @@ export default function MemberPage() {
     }
   }, [token, API_URL]);
 
+  // Only fetch daily fortune for subscribed members
   useEffect(() => {
+    if (subscription === null) return; // subscription not loaded yet
+    if (!subscription.isSubscribed) return; // not subscribed - show upgrade card instead
     fetchDailyFortune();
-  }, [fetchDailyFortune]);
+  }, [subscription, fetchDailyFortune]);
 
   const fetchPointHistory = async () => {
     if (historyLoaded || !token) return;
@@ -366,7 +369,23 @@ export default function MemberPage() {
               <span className="text-xs text-gray-400">{dailyFortune.date}</span>
             )}
           </div>
-          {fortuneLoading ? (
+          {subscription === null ? (
+            <div className="py-6 text-center">
+              <div className="inline-block w-6 h-6 border-2 border-amber-400 border-t-transparent rounded-full animate-spin mb-2"></div>
+              <p className="text-sm text-gray-400">載入中...</p>
+            </div>
+          ) : !subscription.isSubscribed ? (
+            <div className="py-4 text-center space-y-3">
+              <p className="text-sm text-gray-500 leading-relaxed">
+                每日個人化運勢為<span className="font-bold text-amber-700">訂閱會員</span>專屬服務。
+              </p>
+              <Link href="/subscribe">
+                <button className="px-5 py-2 bg-amber-600 text-white rounded-lg text-sm font-bold hover:bg-amber-700 transition-colors">
+                  訂閱即可查看每日運勢
+                </button>
+              </Link>
+            </div>
+          ) : fortuneLoading ? (
             <div className="py-6 text-center">
               <div className="inline-block w-6 h-6 border-2 border-amber-400 border-t-transparent rounded-full animate-spin mb-2"></div>
               <p className="text-sm text-gray-400">玉洞子正在推算今日運勢...</p>
@@ -473,9 +492,14 @@ export default function MemberPage() {
                   >
                     儲值點數
                   </button>
-                  <Link href="/consultation">
+                  <Link href="/blessing">
                     <button className="px-4 py-2 border border-amber-300 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-50 transition-colors">
-                      預約諮詢
+                      祈福服務
+                    </button>
+                  </Link>
+                  <Link href="/appointment">
+                    <button className="px-4 py-2 border border-amber-300 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-50 transition-colors">
+                      問事預約
                     </button>
                   </Link>
                 </div>
