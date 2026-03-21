@@ -6,7 +6,17 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/components/AuthContext';
 
-type Tab = 'profile' | 'points' | 'orders' | 'security';
+type Tab = 'profile' | 'subscription' | 'points' | 'orders' | 'security';
+
+interface SubscriptionStatus {
+  isSubscribed: boolean;
+  planCode?: string;
+  planName?: string;
+  expiryDate?: string;
+  daysRemaining?: number;
+  benefits?: { productCode: string | null; productType: string | null; benefitType: string; benefitValue: string; description: string | null }[];
+  quotaStatus?: { productCode: string; productType: string | null; total: number; used: number; remaining: number }[];
+}
 
 interface DailyFortune {
   content: string;
@@ -42,6 +52,7 @@ export default function MemberPage() {
   const [historyLoaded, setHistoryLoaded] = useState(false);
   const [ordersLoaded, setOrdersLoaded] = useState(false);
   const [purchaseLoading, setPurchaseLoading] = useState(false);
+  const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
 
   const [dailyFortune, setDailyFortune] = useState<DailyFortune | null>(null);
   const [fortuneLoading, setFortuneLoading] = useState(false);
@@ -83,6 +94,16 @@ export default function MemberPage() {
   useEffect(() => {
     fetchPoints();
   }, [fetchPoints]);
+
+  useEffect(() => {
+    if (!token) return;
+    fetch(`${API_URL}/Subscription/status`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data) setSubscription(data); })
+      .catch(() => {});
+  }, [token, API_URL]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -255,6 +276,7 @@ export default function MemberPage() {
 
   const tabs: { id: Tab; label: string }[] = [
     { id: 'profile', label: '個人資料' },
+    { id: 'subscription', label: '訂閱方案' },
     { id: 'points', label: '點數管理' },
     { id: 'orders', label: '購買記錄' },
     { id: 'security', label: '帳號安全' },
@@ -285,9 +307,19 @@ export default function MemberPage() {
               <h1 className="text-xl font-bold truncate">{displayName}</h1>
               <p className="text-amber-200 text-sm truncate">{displayEmail}</p>
               <div className="flex flex-wrap items-center gap-2 mt-1.5">
-                <span className="bg-amber-600 text-white text-xs px-2 py-0.5 rounded-full">
-                  一般會員
-                </span>
+                {subscription?.isSubscribed ? (
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                    subscription.planCode === 'GOLD' ? 'bg-yellow-400 text-yellow-900' :
+                    subscription.planCode === 'SILVER' ? 'bg-slate-300 text-slate-900' :
+                    'bg-amber-500 text-white'
+                  }`}>
+                    {subscription.planName}
+                  </span>
+                ) : (
+                  <span className="bg-white/20 text-white text-xs px-2 py-0.5 rounded-full">
+                    一般會員
+                  </span>
+                )}
                 <span className="text-amber-100 text-sm">
                   點數餘額：
                   <strong className="text-white text-base">
@@ -295,6 +327,11 @@ export default function MemberPage() {
                   </strong>{' '}
                   點
                 </span>
+                {subscription?.isSubscribed && subscription.daysRemaining !== undefined && (
+                  <span className="text-amber-200 text-xs">
+                    訂閱剩餘 {subscription.daysRemaining} 天
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -428,6 +465,90 @@ export default function MemberPage() {
                   </Link>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* ── 訂閱方案 ── */}
+          {activeTab === 'subscription' && (
+            <div className="space-y-6">
+              <h2 className="text-lg font-bold text-gray-900 border-b pb-3">訂閱方案</h2>
+
+              {subscription?.isSubscribed ? (
+                <>
+                  {/* 目前訂閱狀態卡 */}
+                  <div className={`rounded-xl p-5 text-white ${
+                    subscription.planCode === 'GOLD' ? 'bg-gradient-to-r from-yellow-500 to-amber-600' :
+                    subscription.planCode === 'SILVER' ? 'bg-gradient-to-r from-slate-500 to-slate-700' :
+                    'bg-gradient-to-r from-amber-700 to-amber-900'
+                  }`}>
+                    <p className="text-sm opacity-80 mb-1">目前方案</p>
+                    <p className="text-2xl font-bold">{subscription.planName}</p>
+                    <p className="text-sm opacity-80 mt-2">
+                      到期日：{subscription.expiryDate ? new Date(subscription.expiryDate).toLocaleDateString('zh-TW') : '---'}
+                      （剩餘 {subscription.daysRemaining} 天）
+                    </p>
+                  </div>
+
+                  {/* 額度使用狀況 */}
+                  {subscription.quotaStatus && subscription.quotaStatus.length > 0 && (
+                    <div>
+                      <p className="text-sm font-bold text-gray-700 mb-3">免費額度使用狀況（本年度）</p>
+                      <div className="space-y-3">
+                        {subscription.quotaStatus.map((q, i) => (
+                          <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                            <div>
+                              <p className="text-sm font-medium text-gray-800">{q.productCode}</p>
+                              <p className="text-xs text-gray-400">已使用 {q.used} / 共 {q.total}</p>
+                            </div>
+                            <span className={`text-sm font-bold ${q.remaining > 0 ? 'text-green-600' : 'text-gray-400'}`}>
+                              剩餘 {q.remaining}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 方案福利列表 */}
+                  {subscription.benefits && subscription.benefits.length > 0 && (
+                    <div>
+                      <p className="text-sm font-bold text-gray-700 mb-3">方案包含福利</p>
+                      <div className="space-y-2">
+                        {subscription.benefits.map((b, i) => (
+                          <div key={i} className="flex items-start gap-2 text-sm text-gray-700">
+                            <span className="text-green-500 font-bold mt-0.5">v</span>
+                            <span>{b.description ?? `${b.benefitType} ${b.benefitValue}`}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="pt-2">
+                    <Link href="/subscribe">
+                      <button className="px-4 py-2 border border-amber-300 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-50 transition-colors">
+                        查看其他方案 / 續訂
+                      </button>
+                    </Link>
+                  </div>
+                </>
+              ) : (
+                /* 未訂閱 */
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span className="text-2xl text-amber-400">*</span>
+                  </div>
+                  <p className="text-gray-700 font-medium mb-1">尚未訂閱任何方案</p>
+                  <p className="text-sm text-gray-500 mb-6 leading-relaxed">
+                    訂閱會員即可享有每日建議、命書折扣、祈福服務等專屬福利。
+                  </p>
+                  <Link href="/subscribe">
+                    <button className="px-6 py-3 bg-amber-600 text-white rounded-xl font-bold hover:bg-amber-700 transition-colors">
+                      查看訂閱方案
+                    </button>
+                  </Link>
+                </div>
+              )}
             </div>
           )}
 
