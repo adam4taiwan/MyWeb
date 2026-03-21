@@ -1,5 +1,7 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import HeroSection from '../components/HeroSection';
@@ -11,35 +13,51 @@ import FinalCTASection from '../components/FinalCTASection';
 import { useAuth } from '@/components/AuthContext';
 
 export default function Home() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, token } = useAuth();
+  const [isSubscribed, setIsSubscribed] = useState<boolean | null>(null);
 
-  // If still authenticating, return null to let AuthProvider show loading UI
-  if (typeof isAuthenticated === 'undefined') {
-    return null;
-  }
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://ecanapi.fly.dev/api';
+
+  useEffect(() => {
+    if (!token) return;
+    fetch(`${API_URL}/Subscription/status`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => setIsSubscribed(data?.isSubscribed ?? false))
+      .catch(() => setIsSubscribed(false));
+  }, [token, API_URL]);
 
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
 
-      {/* Main content sections */}
       <main className="flex-grow">
-        {/* Hero Section - Main entry point */}
         <HeroSection />
 
-        {/* Features/Services Section */}
+        {/* Subscription nudge banner - logged in but not subscribed */}
+        {isAuthenticated && isSubscribed === false && (
+          <div className="bg-gradient-to-r from-amber-700 to-amber-900 text-white py-4 px-4">
+            <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div>
+                <p className="font-bold text-sm">訂閱會員方案，解鎖完整服務</p>
+                <p className="text-amber-200 text-xs mt-0.5">
+                  每日個人化建議 + 命書折扣 + 祈福服務，年費方案 NT$1,200 起
+                </p>
+              </div>
+              <Link href="/subscribe" className="flex-shrink-0">
+                <button className="bg-white text-amber-800 px-5 py-2 rounded-lg font-bold text-sm hover:bg-amber-50 transition-colors whitespace-nowrap">
+                  查看方案
+                </button>
+              </Link>
+            </div>
+          </div>
+        )}
+
         <FeaturesSection />
-
-        {/* Pricing Section */}
         <PricingSection />
-
-        {/* Testimonials Section */}
         <TestimonialsSection />
-
-        {/* FAQ Section */}
         <FAQSection />
-
-        {/* Final CTA Section */}
         <FinalCTASection />
       </main>
 

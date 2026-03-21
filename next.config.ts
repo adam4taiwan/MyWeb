@@ -1,20 +1,26 @@
 // next.config.js
 import type { NextConfig } from "next";
 
+const isDev = process.env.NODE_ENV === 'development';
+
 const nextConfig: NextConfig = {
-  // 新增這行：啟用 Standalone 模式，優化 Docker 映像
-  output: "standalone", 
-  
+  output: "standalone",
+
   images: {
     unoptimized: true,
   },
-  typescript: {
-    // ignoreBuildErrors: true,
+
+  // Dev proxy: browser calls /ecan-api/... -> Next.js server -> localhost:5013/api/...
+  // Avoids WSL2 network isolation issue where browser can't reach WSL2 localhost:5013
+  async rewrites() {
+    if (!isDev) return [];
+    return [
+      {
+        source: '/ecan-api/:path*',
+        destination: 'http://localhost:5013/api/:path*',
+      },
+    ];
   },
-  // env: {
-  //   // 您的後端 API 地址
-  //   NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL, 
-  // },
 };
 
 export default nextConfig;

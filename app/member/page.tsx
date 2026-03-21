@@ -444,6 +444,21 @@ export default function MemberPage() {
                 </div>
               )}
 
+              {/* Subscription nudge - shown when not subscribed */}
+              {subscription !== null && !subscription.isSubscribed && (
+                <div className="bg-gradient-to-r from-amber-700 to-amber-900 rounded-xl p-5 text-white">
+                  <p className="font-bold mb-1">尚未訂閱會員方案</p>
+                  <p className="text-amber-200 text-xs leading-relaxed mb-3">
+                    訂閱後可享有每日個人化建議、命書折扣、祈福服務，年費 NT$1,200 起。
+                  </p>
+                  <Link href="/subscribe">
+                    <button className="bg-white text-amber-800 px-4 py-2 rounded-lg text-sm font-bold hover:bg-amber-50 transition-colors">
+                      查看訂閱方案
+                    </button>
+                  </Link>
+                </div>
+              )}
+
               <div className="pt-4 border-t">
                 <p className="text-sm font-bold text-gray-700 mb-3">快速操作</p>
                 <div className="flex flex-wrap gap-3">

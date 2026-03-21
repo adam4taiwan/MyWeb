@@ -25,10 +25,7 @@ interface Plan {
   benefits: PlanBenefit[];
 }
 
-const API_URL =
-  typeof window !== 'undefined' && window.location.hostname === 'localhost'
-    ? 'http://localhost:5013/api'
-    : 'https://ecanapi.fly.dev/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://ecanapi.fly.dev/api';
 
 const PLAN_META: Record<string, { badge: string; color: string; border: string; btnClass: string; highlight: boolean }> = {
   BRONZE: {

@@ -102,7 +102,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     router.push('/');
   };
 
-  if (loading || (!isAuthenticated && protectedRoutes.some(route => pathname.startsWith(route)))) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-xl text-amber-600 bg-gray-50">
         會員狀態驗證中...

@@ -15,52 +15,50 @@ interface PricingPlan {
 
 const pricingPlans: PricingPlan[] = [
   {
-    name: '基礎命盤',
+    name: '銅會員',
     price: 1200,
     currency: 'NT$',
-    description: '完整的八字和紫微分析',
+    description: '入門訂閱方案，享受基本會員福利',
     features: [
-      '完整命盤報告',
-      '八字詳細解讀',
-      '五行分析',
-      '立即交付',
+      '每日個人化建議',
+      '每年流年命書 x1',
+      '命書九折優惠',
+      '年費方案，到期不自動續訂',
     ],
-    cta: '選擇此方案',
-    href: '/login',
+    cta: '訂閱銅會員',
+    href: '/subscribe',
   },
   {
-    name: '進階深度分析',
-    price: 2800,
+    name: '銀會員',
+    price: 1800,
     currency: 'NT$',
-    description: '專業諮詢師為您深度解讀',
+    description: '進階方案，含祈福服務',
     features: [
-      '完整命盤報告',
-      '全面分析（八字+紫微）',
-      '年度運勢預測',
-      '1 次 30分鐘諮詢',
-      '1 小時內交付',
-      '優先客服支持',
+      '每日個人化建議',
+      '每年流年命書 x1',
+      '命書八五折優惠',
+      '問事九折優惠',
+      '贈送祈福服務 x1',
     ],
-    cta: '熱銷推薦',
+    cta: '訂閱銀會員',
     recommended: true,
-    href: '/login',
+    href: '/subscribe',
   },
   {
-    name: 'VIP 終身會員',
-    price: 8888,
+    name: '金會員',
+    price: 2500,
     currency: 'NT$',
-    description: '全套諮詢和終身支持',
+    description: '尊榮方案，最大折扣與祈福服務',
     features: [
-      '上述所有服務',
-      '1 次深度面諮（60 分）',
-      '婚配分析',
-      '團隊命盤分析',
-      '優先預約',
-      '專屬 WhatsApp 群組',
-      '終身高優先級客服',
+      '每日個人化建議',
+      '每年流年命書 x1',
+      '命書八折優惠',
+      '問事八五折優惠',
+      '課程八折優惠',
+      '贈送祈福服務 x1',
     ],
-    cta: '聯繫我們',
-    href: '/contact',
+    cta: '訂閱金會員',
+    href: '/subscribe',
   },
 ];
 
@@ -70,9 +68,9 @@ export default function PricingSection() {
       <div className="max-w-6xl mx-auto">
         {/* Section header */}
         <div className="text-center mb-16">
-          <h2 className="section-title">透明的價格，卓越的價值</h2>
+          <h2 className="section-title">會員訂閱方案</h2>
           <p className="text-gray-600 max-w-2xl mx-auto mt-4">
-            選擇最適合您的方案。所有客戶都享受相同的高品質分析和支持。
+            年費訂閱，享有每日建議、命書折扣、祈福服務等專屬福利。到期後不自動續訂。
           </p>
         </div>
 
