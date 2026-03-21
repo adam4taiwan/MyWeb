@@ -165,6 +165,16 @@ export default function DiskPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (token) loadProfile(); }, [token]);
 
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('payment') === 'success') {
+      setPaymentSuccess(true);
+      window.history.replaceState({}, '', '/disk');
+      setTimeout(() => setPaymentSuccess(false), 5000);
+    }
+  }, []);
+
   const cleanReport = (text: string) => {
     return text.replace(/[#*]/g, '').replace(/\n\s*\n/g, '\n')
       .replace(/（限\d+字[內以]?）/g, '').replace(/\(限\d+字[內以]?\)/g, '');
@@ -521,14 +531,28 @@ ${bodyHtml}
   const handlePurchase = async (packageId = 'starter') => {
     setPurchaseLoading(true);
     try {
-      const res = await fetch(`${API_URL}/Payment/create-checkout-session`, {
+      const res = await fetch(`${API_URL}/Payment/create-ecpay-checkout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ packageId })
       });
       const data = await res.json();
-      if (data.url) window.location.href = data.url;
-      else alert(data.message || '儲值失敗，請稍後再試');
+      if (data.actionUrl && data.parameters) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = data.actionUrl;
+        Object.entries(data.parameters).forEach(([key, value]) => {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = key;
+          input.value = String(value);
+          form.appendChild(input);
+        });
+        document.body.appendChild(form);
+        form.submit();
+      } else {
+        alert(data.message || '儲值失敗，請稍後再試');
+      }
     } catch { alert("支付跳轉失敗"); } finally { setPurchaseLoading(false); }
   };
 
@@ -537,6 +561,15 @@ ${bodyHtml}
   return (
     <div className="min-h-screen bg-[#FDFBF7] flex flex-col relative">
       <div className="fixed top-0 left-0 right-0 z-[100] bg-white shadow-md"><Header /></div>
+
+      {paymentSuccess && (
+        <div className="fixed top-16 left-0 right-0 z-[90] flex justify-center px-4 pointer-events-none">
+          <div className="bg-green-600 text-white px-6 py-3 rounded-2xl shadow-lg text-sm font-bold flex items-center gap-2">
+            <span>儲值成功！點數已入帳</span>
+            <button className="pointer-events-auto text-white/80 hover:text-white ml-2" onClick={() => setPaymentSuccess(false)}>x</button>
+          </div>
+        </div>
+      )}
 
       {isLoading && (
         <div className="fixed inset-0 bg-black/30 z-[9999] flex items-center justify-center backdrop-blur-sm">
