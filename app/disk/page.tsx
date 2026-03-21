@@ -18,7 +18,7 @@ const REPORT_TYPES = [
   { key: '綜合性命書', label: '綜合命書', cost: 50, desc: '八字紫微全面鑑定' },
   { key: '八字命書', label: '八字命書', cost: 50, desc: '12章科學化一生命運剖析' },
   { key: '大運命書', label: '大運命書', cost: 150, desc: '逐年吉凶大運推演' },
-  { key: '流年命書', label: '流年命書', cost: 20, desc: '指定年份運勢推演' },
+  { key: '流年命書', label: '流年命書', cost: 100, desc: '五術合一年度全方位推演' },
   { key: '問事', label: '問事鑑定', cost: 10, desc: '針對特定事項剖析' },
 ] as const;
 
@@ -61,6 +61,7 @@ export default function DiskPage() {
   const [remainingPoints, setRemainingPoints] = useState<number | null>(null);
   const [lifelongCycles, setLifelongCycles] = useState<Array<{stem:string;branch:string;liuShen:string;startAge:number;endAge:number;score:number;level:string}> | null>(null);
   const [annualForecasts, setAnnualForecasts] = useState<Array<{year:number;age:number;stemBranch:string;daiyunStem:string;daiyunBranch:string;baziScore:number;ziweiScore:number;crossClass:string;summary:string}> | null>(null);
+  const [monthlyForecasts, setMonthlyForecasts] = useState<Array<{month:number;label:string;stemBranch:string;season:string;flowStar:string;baziHint:string;crossClass:string;baziScore:number;ziweiScore:number;tip:string}> | null>(null);
   const [baziTable, setBaziTable] = useState<{pillars:Array<{label:string;stem:string;branch:string;stemSS:string;naYin:string;hiddenPairs:Array<{ss:string;stem:string}>}>} | null>(null);
   const [yongJiTable, setYongJiTable] = useState<{
     stems: Array<{stem:string;elem:string;shiShen:string;cls:string}>;
@@ -256,7 +257,7 @@ export default function DiskPage() {
 
   const handleAnalysis = async () => {
     const selected = getSelectedType();
-    if ((reportType === '八字命書' || reportType === '大運命書') && !profileLoaded) {
+    if ((reportType === '八字命書' || reportType === '大運命書' || reportType === '流年命書') && !profileLoaded) {
       return alert(`${reportType}需要先儲存生辰資料，請先填寫並儲存您的生辰。`);
     }
     if (remainingPoints !== null && remainingPoints < selected.cost) {
@@ -266,6 +267,8 @@ export default function DiskPage() {
       ? '知識庫命書生成中，請稍候...'
       : reportType === '大運命書' && profileLoaded
       ? `大運命書（${fortuneDuration === 0 ? '終身' : fortuneDuration + '年'}）生成中，請稍候...`
+      : reportType === '流年命書'
+      ? `流年命書（${targetYear} 年，五術合一）生成中，請稍候...`
       : '命理鑑定計算中，複雜命書需 1-2 分鐘，請耐心等候...');
     setIsLoading(true);
     try {
@@ -300,6 +303,12 @@ export default function DiskPage() {
           headers: { 'Authorization': `Bearer ${token}` },
           signal: controller.signal
         });
+      } else if (reportType === '流年命書') {
+        res = await fetch(`${API_URL}/Consultation/analyze-liunian?year=${targetYear}`, {
+          method: 'GET',
+          headers: { 'Authorization': `Bearer ${token}` },
+          signal: controller.signal
+        });
       } else {
         res = await fetch(`${API_URL}/Consultation/analyze`, {
           method: 'POST',
@@ -321,6 +330,8 @@ export default function DiskPage() {
         else setYongJiTable(null);
         if (data.annualForecasts) setAnnualForecasts(data.annualForecasts);
         else setAnnualForecasts(null);
+        if (data.monthlyForecasts) setMonthlyForecasts(data.monthlyForecasts);
+        else setMonthlyForecasts(null);
         // 設定報告標題
         const durLabel = FORTUNE_DURATIONS.find(d => d.value === fortuneDuration)?.label ?? '大運';
         const titles: Record<ReportTypeKey, string> = {
@@ -659,17 +670,22 @@ ${bodyHtml}
 
               {/* 流年命書：年份選擇 */}
               {reportType === '流年命書' && (
-                <div className="mt-3 pt-3 border-t border-gray-100">
-                  <label className="block text-gray-600 mb-1 font-bold text-xs">指定年份</label>
+                <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
+                  <label className="block text-gray-600 font-bold text-xs">指定年份（僅限當年及未來）</label>
                   <select
                     value={targetYear}
                     onChange={(e) => setTargetYear(parseInt(e.target.value))}
                     className="w-full px-3 py-1.5 rounded-xl border border-gray-200 text-sm"
                   >
-                    {Array.from({ length: 21 }, (_, i) => currentYear - 5 + i).map(y => (
+                    {Array.from({ length: 6 }, (_, i) => currentYear + i).map(y => (
                       <option key={y} value={y}>{y} 年{y === currentYear ? '（今年）' : ''}</option>
                     ))}
                   </select>
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-xs text-amber-800">
+                    <div className="font-bold mb-0.5">流年命書計費說明</div>
+                    <div>每選擇一個年份消耗 <span className="font-bold text-amber-900">100 點</span></div>
+                    <div className="text-amber-600 mt-0.5">包含：八字·太歲·生肖·盲派·紫微四化 + 逐月分析</div>
+                  </div>
                 </div>
               )}
 
@@ -943,6 +959,39 @@ ${bodyHtml}
                               </div>
                               <div className="text-[10px] text-gray-600 leading-tight">{f.summary}</div>
                             </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                {/* 流年命書：月曆卡片 */}
+                {monthlyForecasts && monthlyForecasts.length > 0 && (
+                  <div className="bg-white p-5 rounded-2xl border border-amber-100 shadow-sm">
+                    <h3 className="text-base font-bold text-amber-900 mb-1">流年逐月速覽（12個月）</h3>
+                    <p className="text-xs text-gray-400 mb-3">月建以節氣約略日期區分，月曆卡供快速掌握吉凶月份</p>
+                    <div className="grid grid-cols-3 gap-2 md:grid-cols-4">
+                      {monthlyForecasts.map(m => {
+                        const borderCls = m.crossClass === '大吉' ? 'border-amber-500 bg-amber-900/10'
+                          : m.crossClass === '吉' ? 'border-amber-400 bg-amber-50'
+                          : m.crossClass === '大凶' ? 'border-red-600 bg-red-50'
+                          : m.crossClass === '小凶' ? 'border-orange-400 bg-orange-50'
+                          : 'border-gray-300 bg-gray-50';
+                        const badgeCls = m.crossClass === '大吉' ? 'bg-amber-500 text-white'
+                          : m.crossClass === '吉' ? 'bg-amber-300 text-amber-900'
+                          : m.crossClass === '大凶' ? 'bg-red-500 text-white'
+                          : m.crossClass === '小凶' ? 'bg-orange-400 text-white'
+                          : 'bg-gray-200 text-gray-600';
+                        return (
+                          <div key={m.month} className={`rounded-xl p-2.5 border ${borderCls}`}>
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="text-amber-800 font-bold text-sm">{m.label.split('(')[0]}</span>
+                              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${badgeCls}`}>{m.crossClass}</span>
+                            </div>
+                            <div className="text-gray-500 text-[10px]">{m.stemBranch} · {m.season}季</div>
+                            {m.flowStar && <div className="text-gray-600 text-[10px] mt-0.5 leading-tight truncate" title={m.flowStar}>{m.flowStar}</div>}
+                            <div className="text-gray-500 text-[10px] mt-1">八字{m.baziScore}·紫微{m.ziweiScore}</div>
+                            <div className="text-gray-700 text-[10px] mt-1 leading-tight">{m.tip.slice(0, 30)}{m.tip.length > 30 ? '...' : ''}</div>
                           </div>
                         );
                       })}
