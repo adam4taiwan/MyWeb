@@ -23,11 +23,11 @@ const REPORT_TYPES = [
 ] as const;
 
 const FORTUNE_DURATIONS = [
-  { value: 5, label: '5年大運', cost: 150 },
-  { value: 10, label: '10年大運', cost: 200 },
-  { value: 20, label: '20年大運', cost: 250 },
-  { value: 30, label: '30年大運', cost: 300 },
-  { value: 0, label: '終身大運', cost: 500 },
+  { value: 5, label: '5年大運', cost: 200 },
+  { value: 10, label: '10年大運', cost: 250 },
+  { value: 20, label: '20年大運', cost: 300 },
+  { value: 30, label: '30年大運', cost: 400 },
+  { value: 0, label: '終身大運', cost: 600 },
 ];
 
 const TOPICS = ['事業', '婚姻', '財運', '子女', '學業', '買房', '投資', '住宅風水', '合夥', '出國', '開店'];

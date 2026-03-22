@@ -103,20 +103,52 @@ export default function ContactMethods() {
           </div>
         </div>
 
-        <div className="mt-16 text-center">
-          <div className="bg-gradient-to-r from-amber-600 to-orange-600 rounded-2xl p-8 text-white">
-            <h3 className="text-2xl font-bold mb-4">24小時服務承諾</h3>
-            <p className="text-lg opacity-90 mb-6">
+        {/* 玉洞子親談費率 */}
+        <div className="mt-16">
+          <div className="bg-gradient-to-br from-amber-900 to-amber-950 rounded-2xl p-8 text-white">
+            <div className="flex flex-col md:flex-row items-center gap-8">
+              <div className="flex-shrink-0 text-center md:text-left">
+                <p className="text-amber-300 text-sm font-medium tracking-widest mb-2">PERSONAL CONSULTATION</p>
+                <h3 className="text-2xl font-bold mb-1">玉洞子親談</h3>
+                <p className="text-amber-200 text-sm">百事可問，線上視訊深度諮詢</p>
+                <div className="mt-4">
+                  <p className="text-4xl font-bold text-yellow-300">NT$3,600</p>
+                  <p className="text-amber-300 text-sm mt-1">/ 小時</p>
+                </div>
+              </div>
+              <div className="flex-grow grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {[
+                  '命主八字全面剖析',
+                  '紫微斗數深度解讀',
+                  '大運流年交叉論斷',
+                  '事業婚姻財運諮詢',
+                  '風水格局指點',
+                  '可錄影備存參考',
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center gap-2 text-sm text-amber-100">
+                    <span className="text-yellow-400 font-bold">✓</span>
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex-shrink-0 text-center">
+                <a href="/appointment">
+                  <button className="bg-amber-400 text-amber-900 px-8 py-3 rounded-xl font-bold hover:bg-amber-300 transition-colors whitespace-nowrap">
+                    立即預約
+                  </button>
+                </a>
+                <p className="text-amber-300 text-xs mt-2">訂閱會員享折扣優惠</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-8 text-center">
+          <div className="bg-gradient-to-r from-amber-600 to-orange-600 rounded-2xl p-6 text-white">
+            <h3 className="text-lg font-bold mb-2">24小時服務承諾</h3>
+            <p className="text-sm opacity-90">
               無論您選擇哪種聯繫方式，我們承諾在24小時內給予回覆
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <button className="bg-white text-amber-600 px-8 py-3 rounded-full font-semibold hover:bg-gray-100 transition-colors whitespace-nowrap cursor-pointer">
-                查看服務時間
-              </button>
-              <button className="border-2 border-white text-white px-8 py-3 rounded-full font-semibold hover:bg-white hover:text-amber-600 transition-colors whitespace-nowrap cursor-pointer">
-                緊急諮詢專線
-              </button>
-            </div>
           </div>
         </div>
       </div>

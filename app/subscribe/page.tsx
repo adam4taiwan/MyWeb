@@ -189,6 +189,40 @@ export default function SubscribePage() {
           </div>
         )}
 
+        {/* VIP Coming Soon card */}
+        {!loading && (
+          <div className="max-w-4xl mx-auto mt-6">
+            <div className="relative rounded-2xl bg-gradient-to-r from-gray-800 to-gray-900 border border-gray-600 shadow-lg overflow-hidden opacity-80">
+              <div className="absolute top-4 right-4">
+                <span className="bg-gray-600 text-gray-200 px-3 py-1 rounded-full text-xs font-bold tracking-wide">
+                  即將推出
+                </span>
+              </div>
+              <div className="p-6 flex flex-col md:flex-row md:items-center gap-5">
+                <div className="flex-shrink-0">
+                  <p className="text-xs text-gray-400 uppercase tracking-widest mb-1">VIP</p>
+                  <p className="text-2xl font-bold text-yellow-300">VIP 會員</p>
+                  <p className="text-3xl font-bold text-yellow-300 mt-2">NT$6,000<span className="text-sm font-normal text-gray-400 ml-1">/ 年</span></p>
+                  <p className="text-gray-400 text-xs mt-1">頂級尊榮，一次擁有最完整服務</p>
+                </div>
+                <div className="flex-grow grid grid-cols-2 gap-2">
+                  {['每日個人化建議', '終身命書(8大運) x1', '玉洞子解說 x1', '流年命書六折優惠', '問事六折優惠', '課程八折優惠', '贈送祈福服務 x1'].map((f, i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm text-gray-300">
+                      <span className="text-yellow-400 font-bold">✓</span>
+                      <span>{f}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex-shrink-0">
+                  <button disabled className="w-full px-6 py-3 rounded-xl font-bold bg-gray-600 text-gray-400 cursor-not-allowed text-sm">
+                    敬請期待
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* FAQ / Notes */}
         <div className="max-w-2xl mx-auto mt-14 space-y-4">
           <h2 className="text-center text-base font-bold text-gray-700 mb-4">常見問題</h2>

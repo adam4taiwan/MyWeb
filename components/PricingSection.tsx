@@ -21,7 +21,7 @@ const pricingPlans: PricingPlan[] = [
     description: '入門訂閱方案，享受基本會員福利',
     features: [
       '每日個人化建議',
-      '每年流年命書 x1',
+      '每年綜合命書 x1',
       '命書九折優惠',
       '年費方案，到期不自動續訂',
     ],
@@ -35,7 +35,7 @@ const pricingPlans: PricingPlan[] = [
     description: '進階方案，含祈福服務',
     features: [
       '每日個人化建議',
-      '每年流年命書 x1',
+      '每年綜合命書 x1',
       '命書八五折優惠',
       '問事九折優惠',
       '贈送祈福服務 x1',
@@ -51,10 +51,11 @@ const pricingPlans: PricingPlan[] = [
     description: '尊榮方案，最大折扣與祈福服務',
     features: [
       '每日個人化建議',
-      '每年流年命書 x1',
+      '每年綜合命書 x1',
+      '玉洞子解說 x1',
       '命書八折優惠',
       '問事八五折優惠',
-      '課程八折優惠',
+      '課程九折優惠',
       '贈送祈福服務 x1',
     ],
     cta: '訂閱金會員',
@@ -75,7 +76,7 @@ export default function PricingSection() {
         </div>
 
         {/* Pricing cards grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-6">
           {pricingPlans.map((plan, index) => (
             <div
               key={index}
@@ -137,6 +138,35 @@ export default function PricingSection() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* VIP Plan - Coming Soon */}
+        <div className="relative rounded-2xl bg-gradient-to-r from-gray-800 to-gray-900 border border-gray-600 shadow-lg overflow-hidden opacity-80">
+          <div className="absolute top-4 right-4">
+            <span className="bg-gray-600 text-gray-200 px-3 py-1 rounded-full text-xs font-bold tracking-wide">
+              即將推出
+            </span>
+          </div>
+          <div className="p-8 flex flex-col md:flex-row md:items-center gap-6">
+            <div className="flex-shrink-0">
+              <h3 className="text-2xl font-serif font-bold text-yellow-300">VIP 會員</h3>
+              <p className="text-gray-400 text-sm mt-1">頂級尊榮，一次擁有最完整服務</p>
+              <p className="text-4xl font-bold text-yellow-300 mt-3">NT$6,000<span className="text-sm font-normal text-gray-400 ml-1">/ 年</span></p>
+            </div>
+            <div className="flex-grow grid grid-cols-2 md:grid-cols-3 gap-2">
+              {['每日個人化建議', '終身命書(8大運) x1', '玉洞子解說 x1', '流年命書六折優惠', '問事六折優惠', '課程八折優惠', '贈送祈福服務 x1'].map((f, i) => (
+                <div key={i} className="flex items-center gap-2 text-sm text-gray-300">
+                  <span className="text-yellow-400 font-bold">✓</span>
+                  <span>{f}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex-shrink-0">
+              <button disabled className="w-full md:w-auto px-8 py-3 rounded-lg font-bold bg-gray-600 text-gray-400 cursor-not-allowed">
+                敬請期待
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Trust signal */}
