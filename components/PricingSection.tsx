@@ -21,7 +21,7 @@ const pricingPlans: PricingPlan[] = [
     description: '入門訂閱方案，享受基本會員福利',
     features: [
       '每日個人化建議',
-      '每年綜合命書 x1',
+      '綜合命書 x1',
       '命書九折優惠',
       '年費方案，到期不自動續訂',
     ],
@@ -35,7 +35,7 @@ const pricingPlans: PricingPlan[] = [
     description: '進階方案，含祈福服務',
     features: [
       '每日個人化建議',
-      '每年綜合命書 x1',
+      '綜合命書 x1',
       '命書八五折優惠',
       '問事九折優惠',
       '贈送祈福服務 x1',
@@ -51,7 +51,7 @@ const pricingPlans: PricingPlan[] = [
     description: '尊榮方案，最大折扣與祈福服務',
     features: [
       '每日個人化建議',
-      '每年綜合命書 x1',
+      '綜合命書 x1',
       '玉洞子解說 x1',
       '命書八折優惠',
       '問事八五折優惠',

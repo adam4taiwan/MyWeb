@@ -17,13 +17,13 @@ const SERVICES = [
     code: 'BLESSING_LIGHT',
     name: '光明燈',
     desc: '點燃光明燈，照亮人生前程，增添智慧光芒，驅散陰霾晦氣，諸事光明順利。',
-    price: 'NT$800',
+    price: 'NT$1,200',
   },
   {
     code: 'BLESSING_WEALTH',
     name: '補財庫',
     desc: '財庫破損、財運受阻時，透過補財庫儀式，修補財運缺口，迎財納福，豐盛充裕。',
-    price: 'NT$1,500',
+    price: 'NT$3,000',
   },
   {
     code: 'BLESSING_PRAYER',
