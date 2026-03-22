@@ -19,7 +19,7 @@ const REPORT_TYPES = [
   { key: '八字命書', label: '八字命書', cost: 50, desc: '12章科學化一生命運剖析' },
   { key: '大運命書', label: '大運命書', cost: 150, desc: '逐年吉凶大運推演' },
   { key: '流年命書', label: '流年命書', cost: 100, desc: '五術合一年度全方位推演' },
-  { key: '問事', label: '主題命書', cost: 80, desc: '針對特定人生課題深度命書鑑定' },
+  { key: '問事', label: '主題命書', cost: 20, desc: '針對特定人生課題深度命書鑑定' },
 ] as const;
 
 const FORTUNE_DURATIONS = [
