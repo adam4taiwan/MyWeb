@@ -11,6 +11,7 @@ primary_region = 'sin'
 
 [env]
   NEXT_PUBLIC_API_URL = "https://ecanapi.fly.dev/api"
+  NEXT_PUBLIC_SITE_URL = "https://yudongzi.tw"
 
 [http_service]
   internal_port = 3000

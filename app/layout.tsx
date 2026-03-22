@@ -21,7 +21,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://myweb.fly.dev';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://yudongzi.tw';
 const siteName = '玉洞子星相古學堂';
 
 export const metadata: Metadata = {

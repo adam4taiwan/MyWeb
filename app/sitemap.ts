@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://myweb.fly.dev';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://yudongzi.tw';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
