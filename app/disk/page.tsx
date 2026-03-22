@@ -536,6 +536,35 @@ ${bodyHtml}
     } catch (err) { alert('下載失敗：' + String(err)); } finally { setIsLoading(false); }
   };
 
+  const handleYudongziReport = async () => {
+    if (!profileLoaded) return alert('玉洞子命書需要先儲存生辰資料。');
+    setLoadingText('玉洞子命書生成中，請稍候...');
+    setIsLoading(true);
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 5 * 60 * 1000);
+      const res = await fetch(`${API_URL}/Consultation/analyze-yudongzi`, {
+        method: 'GET',
+        headers: { 'Authorization': `Bearer ${token}` },
+        signal: controller.signal
+      });
+      clearTimeout(timer);
+      const data = await res.json();
+      if (!res.ok) return alert(data.error || '玉洞子命書生成失敗');
+      setReport(data.result);
+      setBaziTable(null);
+      setYongJiTable(null);
+      setLuckCycles([]);
+      setReportTitle('玉洞子命書（內部版）');
+      if (data.remainingPoints !== undefined) setRemainingPoints(data.remainingPoints);
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'AbortError') alert('請求逾時，請稍後再試。');
+      else alert('玉洞子命書生成失敗：' + String(err));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handlePurchase = async (packageId = 'starter') => {
     setPurchaseLoading(true);
     try {
@@ -750,6 +779,15 @@ ${bodyHtml}
               >
                 啟動{selected.label} ({selected.cost} 點)
               </button>
+
+              {isAdmin && (
+                <button
+                  onClick={handleYudongziReport}
+                  className="mt-2 w-full bg-stone-800 text-amber-200 font-bold py-2.5 rounded-2xl text-xs shadow-md hover:bg-stone-900 transition-all border border-amber-700"
+                >
+                  玉洞子命書（內部版）
+                </button>
+              )}
             </div>
           </div>
 
