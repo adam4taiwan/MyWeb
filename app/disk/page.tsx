@@ -19,7 +19,7 @@ const REPORT_TYPES = [
   { key: '八字命書', label: '八字命書', cost: 50, desc: '12章科學化一生命運剖析' },
   { key: '大運命書', label: '大運命書', cost: 150, desc: '逐年吉凶大運推演' },
   { key: '流年命書', label: '流年命書', cost: 100, desc: '五術合一年度全方位推演' },
-  { key: '問事', label: '主題命書', cost: 10, desc: 'AI 針對特定主題生成書面分析' },
+  { key: '問事', label: '主題命書', cost: 80, desc: '針對特定人生課題深度命書鑑定' },
 ] as const;
 
 const FORTUNE_DURATIONS = [
@@ -30,7 +30,7 @@ const FORTUNE_DURATIONS = [
   { value: 0, label: '終身大運', cost: 600 },
 ];
 
-const TOPICS = ['事業', '婚姻', '財運', '子女', '學業', '買房', '投資', '住宅風水', '合夥', '出國', '開店'];
+const TOPICS = ['事業', '婚姻', '財運', '健康', '子女', '學業', '買房', '投資', '住宅風水', '合夥', '出國', '開店'];
 
 type ReportTypeKey = typeof REPORT_TYPES[number]['key'];
 
@@ -267,8 +267,8 @@ export default function DiskPage() {
 
   const handleAnalysis = async () => {
     const selected = getSelectedType();
-    if ((reportType === '八字命書' || reportType === '大運命書' || reportType === '流年命書') && !profileLoaded) {
-      return alert(`${reportType}需要先儲存生辰資料，請先填寫並儲存您的生辰。`);
+    if ((reportType === '八字命書' || reportType === '大運命書' || reportType === '流年命書' || reportType === '問事') && !profileLoaded) {
+      return alert(`${reportType === '問事' ? '主題命書' : reportType}需要先儲存生辰資料，請先填寫並儲存您的生辰。`);
     }
     if (remainingPoints !== null && remainingPoints < selected.cost) {
       return alert(`點數不足，此功能需要 ${selected.cost} 點`);
@@ -279,6 +279,8 @@ export default function DiskPage() {
       ? `大運命書（${fortuneDuration === 0 ? '終身' : fortuneDuration + '年'}）生成中，請稍候...`
       : reportType === '流年命書'
       ? `流年命書（${targetYear} 年，五術合一）生成中，請稍候...`
+      : reportType === '問事'
+      ? `${topic} 主題命書生成中，請稍候...`
       : '命理鑑定計算中，複雜命書需 1-2 分鐘，請耐心等候...');
     setIsLoading(true);
     try {
@@ -315,6 +317,12 @@ export default function DiskPage() {
         });
       } else if (reportType === '流年命書') {
         res = await fetch(`${API_URL}/Consultation/analyze-liunian?year=${targetYear}`, {
+          method: 'GET',
+          headers: { 'Authorization': `Bearer ${token}` },
+          signal: controller.signal
+        });
+      } else if (reportType === '問事') {
+        res = await fetch(`${API_URL}/Consultation/analyze-topic?topic=${encodeURIComponent(topic)}`, {
           method: 'GET',
           headers: { 'Authorization': `Bearer ${token}` },
           signal: controller.signal
