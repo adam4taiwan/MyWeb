@@ -552,9 +552,9 @@ ${bodyHtml}
       const data = await res.json();
       if (!res.ok) return alert(data.error || '玉洞子命書生成失敗');
       setReport(data.result);
-      setBaziTable(null);
-      setYongJiTable(null);
-      setLuckCycles([]);
+      if (data.baziTable) setBaziTable(data.baziTable); else setBaziTable(null);
+      if (data.yongJiTable) setYongJiTable(data.yongJiTable); else setYongJiTable(null);
+      if (data.luckCycles) setLifelongCycles(data.luckCycles); else setLifelongCycles(null);
       setReportTitle('玉洞子命書（內部版）');
       if (data.remainingPoints !== undefined) setRemainingPoints(data.remainingPoints);
     } catch (err: unknown) {
