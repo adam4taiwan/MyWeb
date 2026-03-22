@@ -9,7 +9,7 @@ export default function ContactMethods() {
       color: 'bg-green-500 hover:bg-green-600',
       id: '@destiny-master',
       description: '即時訊息諮詢，快速回覆',
-      qrCode: 'line official account qr code for fortune telling consultation service, green background with line logo, professional design'
+      qrImage: '/image/lineID.jpg',
     },
     {
       platform: '微信',
@@ -17,24 +17,8 @@ export default function ContactMethods() {
       color: 'bg-green-600 hover:bg-green-700',
       id: 'destiny_master_tw',
       description: '語音文字皆可，24小時內回覆',
-      qrCode: 'wechat qr code for fortune telling consultation, traditional chinese design with wechat green color scheme'
+      qrImage: '/image/WeChatID.jpg',
     },
-    {
-      platform: 'Facebook',
-      icon: 'ri-facebook-line',
-      color: 'bg-blue-600 hover:bg-blue-700',
-      id: '玉洞子星相古學堂',
-      description: 'Messenger訊息，支援圖片傳送',
-      qrCode: 'facebook page qr code for fortune telling consultation service, blue facebook themed design with professional layout'
-    },
-    {
-      platform: 'WhatsApp',
-      icon: 'ri-whatsapp-line',
-      color: 'bg-green-500 hover:bg-green-600',
-      id: '+886-912-345-678',
-      description: '國際用戶首選，語音通話支援',
-      qrCode: 'whatsapp contact qr code for fortune telling consultation, green whatsapp color scheme with contact information'
-    }
   ];
 
   const traditionalContacts = [
@@ -75,25 +59,25 @@ export default function ContactMethods() {
 
         <div className="mb-16">
           <h3 className="text-3xl font-bold text-center text-gray-900 mb-12">社群平台聯繫</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-2xl mx-auto">
             {socialContacts.map((contact, index) => (
               <div key={index} className="bg-gradient-to-br from-gray-50 to-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow text-center">
-                <div className="mb-6">
-                  <div className="w-24 h-24 bg-cover bg-center bg-no-repeat rounded-lg mx-auto mb-4"
-                    style={{
-                      backgroundImage: `url('https://readdy.ai/api/search-image?query=$%7Bcontact.qrCode%7D&width=200&height=200&seq=${contact.platform}-qr&orientation=squarish')`
-                    }}
-                  ></div>
+                <div className="mb-4">
+                  <img
+                    src={contact.qrImage}
+                    alt={`${contact.platform} QR Code`}
+                    className="w-28 h-28 object-cover rounded-lg mx-auto"
+                  />
                 </div>
-                
-                <div className={`w-16 h-16 ${contact.color} rounded-full flex items-center justify-center mx-auto mb-4 cursor-pointer transition-colors`}>
+
+                <div className={`w-14 h-14 ${contact.color} rounded-full flex items-center justify-center mx-auto mb-3 transition-colors`}>
                   <i className={`${contact.icon} text-white text-2xl`}></i>
                 </div>
-                
-                <h4 className="text-xl font-bold text-gray-900 mb-2">{contact.platform}</h4>
+
+                <h4 className="text-xl font-bold text-gray-900 mb-1">{contact.platform}</h4>
                 <p className="text-amber-600 font-semibold mb-2">{contact.id}</p>
                 <p className="text-gray-600 text-sm leading-relaxed">{contact.description}</p>
-                
+
                 <button className={`mt-4 ${contact.color} text-white px-6 py-2 rounded-full transition-colors whitespace-nowrap cursor-pointer`}>
                   立即聯繫
                 </button>
