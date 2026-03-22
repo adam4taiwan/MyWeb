@@ -30,7 +30,7 @@ const FORTUNE_DURATIONS = [
   { value: 0, label: '終身大運', cost: 600 },
 ];
 
-const TOPICS = ['事業', '婚姻', '財運', '健康', '子女', '學業', '買房', '投資', '住宅風水', '合夥', '出國', '開店'];
+const TOPICS = ['事業', '婚姻', '財運', '健康', '子女', '父母', '兄妹', '學業', '買房', '投資', '住宅風水', '合夥', '出國', '開店'];
 
 type ReportTypeKey = typeof REPORT_TYPES[number]['key'];
 
