@@ -165,6 +165,50 @@ export default function DiskPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (token) loadProfile(); }, [token]);
 
+  // Subscription discount rates: book / consultation
+  const [subscriptionDiscount, setSubscriptionDiscount] = useState<{ book: number; consultation: number }>({ book: 1.0, consultation: 1.0 });
+
+  useEffect(() => {
+    if (!token) return;
+    fetch(`${API_URL}/Subscription/status`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.isSubscribed && data.benefits) {
+          const bookB = data.benefits.find((b: { benefitType: string; productType: string | null; benefitValue: string }) =>
+            b.benefitType === 'discount' && b.productType === 'book'
+          );
+          const consultB = data.benefits.find((b: { benefitType: string; productType: string | null; benefitValue: string }) =>
+            b.benefitType === 'discount' && b.productType === 'consultation'
+          );
+          setSubscriptionDiscount({
+            book: bookB ? parseFloat(bookB.benefitValue) : 1.0,
+            consultation: consultB ? parseFloat(consultB.benefitValue) : 1.0,
+          });
+        }
+      })
+      .catch(() => {});
+  }, [token, API_URL]);
+
+  const getEffectiveCost = (baseCost: number, productType: 'book' | 'consultation'): number => {
+    const rate = subscriptionDiscount[productType];
+    return rate < 1.0 ? Math.ceil(baseCost * rate) : baseCost;
+  };
+
+  const renderCostBadge = (baseCost: number, productType: 'book' | 'consultation', isSelected: boolean) => {
+    const effective = getEffectiveCost(baseCost, productType);
+    const hasDiscount = effective < baseCost;
+    const badgeClass = isSelected ? 'bg-amber-600 text-white' : 'bg-amber-50 text-amber-700';
+    return (
+      <span className={`text-xs font-bold px-2 py-1 rounded-full ${badgeClass}`}>
+        {hasDiscount ? (
+          <><span className="line-through opacity-60 mr-0.5">{baseCost}</span>{effective}</>
+        ) : baseCost} 點
+      </span>
+    );
+  };
+
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -270,8 +314,10 @@ export default function DiskPage() {
     if ((reportType === '八字命書' || reportType === '大運命書' || reportType === '流年命書' || reportType === '問事') && !profileLoaded) {
       return alert(`${reportType === '問事' ? '主題命書' : reportType}需要先儲存生辰資料，請先填寫並儲存您的生辰。`);
     }
-    if (remainingPoints !== null && remainingPoints < selected.cost) {
-      return alert(`點數不足，此功能需要 ${selected.cost} 點`);
+    const selectedProductType = reportType === '問事' ? 'consultation' : 'book';
+    const selectedEffectiveCost = getEffectiveCost(selected.cost, selectedProductType);
+    if (remainingPoints !== null && remainingPoints < selectedEffectiveCost) {
+      return alert(`點數不足，此功能需要 ${selectedEffectiveCost} 點`);
     }
     setLoadingText((reportType === '綜合性命書' || reportType === '八字命書') && profileLoaded
       ? '知識庫命書生成中，請稍候...'
@@ -707,9 +753,7 @@ ${bodyHtml}
                         <div className="font-bold text-sm">{rt.label}</div>
                         <div className={`text-xs mt-0.5 ${reportType === rt.key ? 'text-amber-200' : 'text-gray-400'}`}>{rt.desc}</div>
                       </div>
-                      <span className={`text-xs font-bold px-2 py-1 rounded-full ${reportType === rt.key ? 'bg-amber-600 text-white' : 'bg-amber-50 text-amber-700'}`}>
-                        {rt.cost} 點
-                      </span>
+                      {renderCostBadge(rt.cost, rt.key === '問事' ? 'consultation' : 'book', reportType === rt.key)}
                     </div>
                   </button>
                 ))}
@@ -730,7 +774,7 @@ ${bodyHtml}
                           }`}
                       >
                         <span>{d.label}</span>
-                        <span className={`px-2 py-0.5 rounded-full ${fortuneDuration === d.value ? 'bg-amber-500 text-white' : 'bg-amber-50 text-amber-600'}`}>{d.cost} 點</span>
+                        {renderCostBadge(d.cost, 'book', fortuneDuration === d.value)}
                       </button>
                     ))}
                   </div>
@@ -753,7 +797,7 @@ ${bodyHtml}
                   </select>
                   <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-xs text-amber-800">
                     <div className="font-bold mb-0.5">流年命書計費說明</div>
-                    <div>每選擇一個年份消耗 <span className="font-bold text-amber-900">100 點</span></div>
+                    <div>每選擇一個年份消耗 <span className="font-bold text-amber-900">{getEffectiveCost(100, 'book')} 點</span>{getEffectiveCost(100, 'book') < 100 && <span className="line-through opacity-60 ml-1 text-xs">100</span>}</div>
                     <div className="text-amber-600 mt-0.5">包含：八字·太歲·生肖·盲派·紫微四化 + 逐月分析</div>
                   </div>
                 </div>
@@ -777,7 +821,7 @@ ${bodyHtml}
                 onClick={handleAnalysis}
                 className="mt-4 w-full bg-amber-800 text-white font-bold py-3 rounded-2xl text-sm shadow-md hover:bg-amber-900 transition-all"
               >
-                啟動{selected.label} ({selected.cost} 點)
+                啟動{selected.label} ({getEffectiveCost(selected.cost, reportType === '問事' ? 'consultation' : 'book')} 點)
               </button>
 
               {isAdmin && (

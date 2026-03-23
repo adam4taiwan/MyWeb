@@ -442,9 +442,19 @@ export default function MemberPage() {
                 </div>
                 <div>
                   <p className="text-xs font-medium text-gray-500 mb-1">會員等級</p>
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-amber-100 text-amber-800 font-medium">
-                    一般會員
-                  </span>
+                  {subscription?.isSubscribed ? (
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                      subscription.planCode === 'GOLD' ? 'bg-yellow-100 text-yellow-800' :
+                      subscription.planCode === 'SILVER' ? 'bg-slate-100 text-slate-700' :
+                      'bg-amber-100 text-amber-800'
+                    }`}>
+                      {subscription.planName}
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-600 font-medium">
+                      一般會員
+                    </span>
+                  )}
                 </div>
                 <div>
                   <p className="text-xs font-medium text-gray-500 mb-1">點數餘額</p>
