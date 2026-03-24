@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import Header from '@/components/Header';
@@ -72,6 +72,21 @@ export default function DiskPage() {
   const [purchaseLoading, setPurchaseLoading] = useState(false);
   const [profileSaving, setProfileSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState('');
+
+  type Palace = {
+    palaceName: string; palaceStem: string; earthlyBranch: string;
+    majorStars: string[]; secondaryStars: string[]; decadeAgeRange: string;
+    palaceStemTransformations: string; annualStarTransformations: string[];
+    goodStars: string[]; badStars: string[];
+  };
+  type ChartExport = {
+    palaces: Palace[];
+    bazi: { yearPillar:{heavenlyStem:string;earthlyBranch:string}; monthPillar:{heavenlyStem:string;earthlyBranch:string}; dayPillar:{heavenlyStem:string;earthlyBranch:string}; timePillar:{heavenlyStem:string;earthlyBranch:string} };
+    wuXingJuText: string; mingZhu: string; shenZhu: string; userName: string;
+  };
+  const [exportChart, setExportChart] = useState<ChartExport | null>(null);
+  const [captureMode, setCaptureMode] = useState(false);
+  const ziweiGridRef = useRef<HTMLDivElement>(null);
 
   // 登入後自動載入會員生辰資料
   const loadProfile = async () => {
@@ -611,6 +626,55 @@ ${bodyHtml}
     }
   };
 
+  const handleYudongziDocx = async () => {
+    if (!profileLoaded) return alert('需要先儲存生辰資料。');
+    setLoadingText('準備先天元神圖...');
+    setIsLoading(true);
+    try {
+      const calcRes = await fetch(`${API_URL}/Astrology/calculate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(formData),
+      });
+      if (!calcRes.ok) { alert('命盤計算失敗'); return; }
+      const chartData = await calcRes.json();
+      setExportChart(chartData);
+      setCaptureMode(true);
+    } catch (err) {
+      alert('發生錯誤：' + String(err));
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!captureMode || !ziweiGridRef.current) return;
+    let cancelled = false;
+    (async () => {
+      await new Promise(r => setTimeout(r, 200));
+      if (cancelled || !ziweiGridRef.current) return;
+      try {
+        setLoadingText('生成玉洞子命書 DOCX...');
+        const canvas = await html2canvas(ziweiGridRef.current, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+        const imgBase64 = canvas.toDataURL('image/png').split(',')[1];
+        setCaptureMode(false);
+        setExportChart(null);
+        const res = await fetch(`${API_URL}/Consultation/export-yudongzi-docx`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ chartImageBase64: imgBase64 }),
+        });
+        if (!res.ok) { const d = await res.json().catch(() => ({})); alert(d.error || 'DOCX 生成失敗'); return; }
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `${formData.name}_玉洞子命書.docx`;
+        document.body.appendChild(a); a.click(); a.remove();
+      } catch (err) { alert('DOCX 生成失敗：' + String(err)); }
+      finally { setIsLoading(false); }
+    })();
+    return () => { cancelled = true; };
+  }, [captureMode]);
+
   const handlePurchase = async (packageId = 'starter') => {
     setPurchaseLoading(true);
     try {
@@ -830,6 +894,14 @@ ${bodyHtml}
                   className="mt-2 w-full bg-stone-800 text-amber-200 font-bold py-2.5 rounded-2xl text-xs shadow-md hover:bg-stone-900 transition-all border border-amber-700"
                 >
                   玉洞子命書（內部版）
+                </button>
+              )}
+              {isAdmin && (
+                <button
+                  onClick={handleYudongziDocx}
+                  className="mt-1 w-full bg-red-900 text-amber-100 font-bold py-2.5 rounded-2xl text-xs shadow-md hover:bg-red-950 transition-all border border-red-700"
+                >
+                  下載玉洞子命書 DOCX
                 </button>
               )}
             </div>
@@ -1130,6 +1202,127 @@ ${bodyHtml}
           </div>
         </div>
       </main>
+
+      {/* 隱藏的紫微十二宮格，供 html2canvas 截圖 */}
+      {captureMode && exportChart && (
+        <div style={{ position: 'fixed', left: '-9999px', top: 0, width: 960, background: '#fff' }}>
+          <ZiweiGrid chartData={exportChart} gridRef={ziweiGridRef} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+const PALACE_COLORS: Record<string, string> = {
+  '命宮':'#FFF9C4','兄弟宮':'#E8F5E9','夫妻宮':'#FCE4EC','子女宮':'#E3F2FD',
+  '財帛宮':'#FFF3E0','疾厄宮':'#F3E5F5','遷移宮':'#E0F7FA','奴僕宮':'#F9FBE7',
+  '官祿宮':'#E8EAF6','田宅宮':'#FBE9E7','福德宮':'#E0F2F1','父母宮':'#FFF8E1',
+};
+
+const BRANCH_POS: Record<string, [number,number]> = {
+  '巳':[0,0],'午':[0,1],'未':[0,2],'申':[0,3],
+  '辰':[1,0],            '酉':[1,3],
+  '卯':[2,0],            '戌':[2,3],
+  '寅':[3,0],'丑':[3,1],'子':[3,2],'亥':[3,3],
+};
+
+function ZiweiGrid({ chartData, gridRef }: { chartData: { palaces: Array<{palaceName:string;palaceStem:string;earthlyBranch:string;majorStars:string[];secondaryStars:string[];decadeAgeRange:string;palaceStemTransformations:string;annualStarTransformations:string[];goodStars:string[];badStars:string[]}>; bazi:{yearPillar:{heavenlyStem:string;earthlyBranch:string};monthPillar:{heavenlyStem:string;earthlyBranch:string};dayPillar:{heavenlyStem:string;earthlyBranch:string};timePillar:{heavenlyStem:string;earthlyBranch:string}}; wuXingJuText:string; mingZhu:string; shenZhu:string; userName:string }; gridRef: React.RefObject<HTMLDivElement | null> }) {
+  const grid: (typeof chartData.palaces[0] | null)[][] = Array.from({ length: 4 }, () => Array(4).fill(null));
+  for (const p of chartData.palaces) {
+    const branch = p.earthlyBranch.trim().charAt(0);
+    const pos = BRANCH_POS[branch];
+    if (pos) grid[pos[0]][pos[1]] = p;
+  }
+  const bazi = chartData.bazi;
+  const stems = [bazi.timePillar.heavenlyStem, bazi.dayPillar.heavenlyStem, bazi.monthPillar.heavenlyStem, bazi.yearPillar.heavenlyStem];
+  const branches = [bazi.timePillar.earthlyBranch.trim().charAt(0), bazi.dayPillar.earthlyBranch.trim().charAt(0), bazi.monthPillar.earthlyBranch.trim().charAt(0), bazi.yearPillar.earthlyBranch.trim().charAt(0)];
+
+  const cellStyle = (p: typeof chartData.palaces[0] | null): React.CSSProperties => {
+    const name = p?.palaceName.replace('身','').trim() + '宮';
+    const bg = PALACE_COLORS[name] || '#F8F8F8';
+    return { background: bg, border: '1px solid #8B6914', padding: '4px 4px 4px 4px', verticalAlign: 'top', width: 220, height: 195, overflow: 'hidden', boxSizing: 'border-box' };
+  };
+
+  const centerStyle: React.CSSProperties = { background: '#FFFDF0', border: '1px solid #8B6914', padding: 8, boxSizing: 'border-box', textAlign: 'center', verticalAlign: 'middle' };
+
+  const isCenter = (r: number, c: number) => r >= 1 && r <= 2 && c >= 1 && c <= 2;
+
+  return (
+    <div ref={gridRef} style={{ fontFamily: '"標楷體","DFKai-SB","BiauKai",serif', padding: 12, background: '#fff' }}>
+      <div style={{ textAlign: 'center', marginBottom: 6 }}>
+        <span style={{ fontSize: 22, fontWeight: 'bold', color: '#8B0000' }}>三式命理</span>
+        <span style={{ fontSize: 28, fontWeight: 'bold', color: '#CC0000', margin: '0 16px' }}>先天元神圖</span>
+        <span style={{ fontSize: 13, color: '#333' }}>玉洞子</span>
+      </div>
+      <table style={{ borderCollapse: 'collapse', width: 880, tableLayout: 'fixed' }}>
+        <tbody>
+          {[0,1,2,3].map(row => (
+            <tr key={row}>
+              {[0,1,2,3].map(col => {
+                if (isCenter(row, col)) {
+                  if (row === 1 && col === 1) {
+                    return (
+                      <td key={col} colSpan={2} rowSpan={2} style={{ ...centerStyle, width: 440, height: 390 }}>
+                        <div style={{ fontSize: 11, color: '#555', marginBottom: 4 }}>{chartData.wuXingJuText}　命主星：{chartData.mingZhu}　身主星：{chartData.shenZhu}</div>
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginBottom: 4 }}>
+                          {stems.map((s,i) => <span key={i} style={{ fontSize: 40, fontWeight: 'bold', color: '#1a1a6e' }}>{s}</span>)}
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginBottom: 8 }}>
+                          {branches.map((b,i) => <span key={i} style={{ fontSize: 40, fontWeight: 'bold', color: '#8B0000' }}>{b}</span>)}
+                        </div>
+                        <div style={{ fontSize: 11, color: '#333', marginTop: 6 }}>{chartData.userName}</div>
+                      </td>
+                    );
+                  }
+                  return null;
+                }
+                const p = grid[row][col];
+                const palaceName = p?.palaceName ?? '';
+                const branchDir = p?.earthlyBranch.trim().replace(/\s+/g, ' ') ?? '';
+                return (
+                  <td key={col} style={cellStyle(p)}>
+                    {p && (
+                      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                        {/* Top row: age (left) | palaceName (center) | main stars (right) — all same line */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexShrink: 0, marginBottom: 2 }}>
+                          <span style={{ fontSize: 9, color: '#666', minWidth: 28 }}>{p.decadeAgeRange}</span>
+                          <span style={{ fontSize: 11, fontWeight: 'bold', color: '#222', flex: 1, textAlign: 'center' }}>{palaceName}</span>
+                          <div style={{ textAlign: 'right', minWidth: 40 }}>
+                            <div style={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+                              {p.majorStars.map((s, i) => (
+                                <span key={i} style={{ fontSize: 18, fontWeight: 'bold', color: '#8B0000', lineHeight: 1 }}>{s}</span>
+                              ))}
+                            </div>
+                            {p.annualStarTransformations && p.annualStarTransformations.length > 0 && (
+                              <div style={{ fontSize: 8, color: '#8B0000', marginTop: 1 }}>
+                                {p.annualStarTransformations.map((t, i) => <div key={i}>{t}</div>)}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        {/* Small stars */}
+                        <div style={{ flex: 1, fontSize: 9, color: '#555', lineHeight: 1.4, overflow: 'hidden' }}>
+                          {p.secondaryStars.length > 0 && <div>{p.secondaryStars.slice(0, 4).join(' ')}</div>}
+                          {p.secondaryStars.length > 4 && <div>{p.secondaryStars.slice(4, 8).join(' ')}</div>}
+                          {p.goodStars.length > 0 && <div style={{ color: '#006600' }}>{p.goodStars.join(' ')}</div>}
+                          {p.badStars.length > 0 && <div style={{ color: '#AA0000' }}>{p.badStars.join(' ')}</div>}
+                        </div>
+                        {/* Bottom: 宮干+宮四化 above 地支方位 */}
+                        <div style={{ flexShrink: 0, fontSize: 9, marginTop: 2 }}>
+                          <div style={{ color: '#333' }}>
+                            {p.palaceStem}{p.palaceStemTransformations ? <span style={{ color: '#0000AA' }}> {p.palaceStemTransformations}</span> : null}
+                          </div>
+                          <div style={{ color: '#555' }}>{branchDir}</div>
+                        </div>
+                      </div>
+                    )}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
