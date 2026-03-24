@@ -87,6 +87,7 @@ export default function DiskPage() {
   const [exportChart, setExportChart] = useState<ChartExport | null>(null);
   const [captureMode, setCaptureMode] = useState(false);
   const ziweiGridRef = useRef<HTMLDivElement>(null);
+  const exportChartJsonRef = useRef<string>('');
 
   // 登入後自動載入會員生辰資料
   const loadProfile = async () => {
@@ -638,6 +639,7 @@ ${bodyHtml}
       });
       if (!calcRes.ok) { alert('命盤計算失敗'); return; }
       const chartData = await calcRes.json();
+      exportChartJsonRef.current = JSON.stringify(chartData);
       setExportChart(chartData);
       setCaptureMode(true);
     } catch (err) {
@@ -661,7 +663,11 @@ ${bodyHtml}
         const res = await fetch(`${API_URL}/Consultation/export-yudongzi-docx`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify({ chartImageBase64: imgBase64 }),
+          body: JSON.stringify({
+            chartImageBase64: imgBase64,
+            chartJson: exportChartJsonRef.current,
+            personName: formData.name,
+          }),
         });
         if (!res.ok) { const d = await res.json().catch(() => ({})); alert(d.error || 'DOCX 生成失敗'); return; }
         const blob = await res.blob();
