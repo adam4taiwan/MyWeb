@@ -102,7 +102,7 @@ export default function DiskPage() {
           setFormData({
             dateType: data.dateType ?? 'solar',
             name: data.chartName ?? data.name ?? '吉祥名',
-            gender: String(data.birthGender ?? 1),
+            gender: String(data.birthGender === 0 ? 2 : (data.birthGender ?? 1)),
             year: data.birthYear,
             month: data.birthMonth,
             day: data.birthDay,
@@ -757,7 +757,7 @@ ${bodyHtml}
                   <div>
                     <label className="block text-gray-600 mb-1 font-bold text-xs">性別</label>
                     <select value={formData.gender} onChange={(e) => setFormData({ ...formData, gender: e.target.value })} className="w-full px-3 py-1.5 rounded-xl border border-gray-200">
-                      <option value="1">乾造 (男)</option><option value="0">坤造 (女)</option>
+                      <option value="1">乾造 (男)</option><option value="2">坤造 (女)</option>
                     </select>
                   </div>
                   <div className="text-amber-700 font-bold bg-amber-50 px-3 py-1.5 rounded-xl text-center text-xs border border-amber-100">
