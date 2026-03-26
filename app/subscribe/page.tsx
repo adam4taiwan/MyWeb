@@ -164,12 +164,19 @@ export default function SubscribePage() {
                       NT${plan.priceTwd.toLocaleString()}
                       <span className="text-sm font-normal opacity-80 ml-1">/ 年</span>
                     </p>
-                    {/* 點數價值區塊 */}
-                    <div className="mt-3 bg-white/15 rounded-lg px-3 py-2">
-                      <p className="text-xs opacity-80 mb-0.5">方案服務點數價值</p>
+                    {/* 點數對價區塊 */}
+                    <div className="mt-3 bg-white/15 rounded-lg px-3 py-2 space-y-1">
                       <div className="flex items-center justify-between">
-                        <span className="text-lg font-bold">NT${meta.pointsValue.toLocaleString()}</span>
-                        <span className="bg-white/30 text-white text-xs font-bold px-2 py-0.5 rounded-full">{meta.savingLabel}</span>
+                        <span className="text-xs opacity-75">方案含點數</span>
+                        <span className="text-sm font-bold">{meta.pointsValue / 10} 點</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs opacity-75">點數市值（1點=NT$10）</span>
+                        <span className="text-sm font-bold">NT${meta.pointsValue.toLocaleString()}</span>
+                      </div>
+                      <div className="border-t border-white/20 pt-1 flex items-center justify-between">
+                        <span className="text-xs opacity-75">訂閱實付</span>
+                        <span className="text-sm font-bold text-green-300">{meta.savingLabel}</span>
                       </div>
                     </div>
                     {plan.description && (

@@ -119,12 +119,19 @@ export default function PricingSection() {
                     {plan.price.toLocaleString()}
                     <span className="text-sm font-normal text-gray-500 ml-1">/ 年</span>
                   </p>
-                  {/* 點數價值 */}
-                  <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                    <p className="text-xs text-gray-500 mb-0.5">方案服務點數價值</p>
+                  {/* 點數對價 */}
+                  <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-base font-bold text-amber-700">NT${plan.pointsValue.toLocaleString()}</span>
-                      <span className="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-full">{plan.savingLabel}</span>
+                      <span className="text-xs text-gray-500">方案含點數</span>
+                      <span className="text-sm font-bold text-amber-700">{plan.pointsValue / 10} 點</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-500">點數市值（1點=NT$10）</span>
+                      <span className="text-sm font-bold text-amber-700">NT${plan.pointsValue.toLocaleString()}</span>
+                    </div>
+                    <div className="border-t border-amber-200 pt-1 flex items-center justify-between">
+                      <span className="text-xs text-gray-500">訂閱實付</span>
+                      <span className="text-sm font-bold text-green-600">{plan.savingLabel}</span>
                     </div>
                   </div>
                 </div>
