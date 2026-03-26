@@ -11,6 +11,8 @@ interface PricingPlan {
   cta: string;
   recommended?: boolean;
   href: string;
+  pointsValue: number;
+  savingLabel: string;
 }
 
 const pricingPlans: PricingPlan[] = [
@@ -27,6 +29,8 @@ const pricingPlans: PricingPlan[] = [
     ],
     cta: '訂閱銅會員',
     href: '/subscribe',
+    pointsValue: 1500,
+    savingLabel: '省 NT$300',
   },
   {
     name: '銀會員',
@@ -43,6 +47,8 @@ const pricingPlans: PricingPlan[] = [
     cta: '訂閱銀會員',
     recommended: true,
     href: '/subscribe',
+    pointsValue: 2500,
+    savingLabel: '省 NT$700',
   },
   {
     name: '金會員',
@@ -60,6 +66,8 @@ const pricingPlans: PricingPlan[] = [
     ],
     cta: '訂閱金會員',
     href: '/subscribe',
+    pointsValue: 4000,
+    savingLabel: '省 NT$1,500',
   },
 ];
 
@@ -109,8 +117,16 @@ export default function PricingSection() {
                   <p className="text-5xl font-bold text-brand-300">
                     {plan.currency}
                     {plan.price.toLocaleString()}
+                    <span className="text-sm font-normal text-gray-500 ml-1">/ 年</span>
                   </p>
-                  {index < 2 && <p className="text-gray-500 text-sm mt-2">/次</p>}
+                  {/* 點數價值 */}
+                  <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                    <p className="text-xs text-gray-500 mb-0.5">方案服務點數價值</p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-base font-bold text-amber-700">NT${plan.pointsValue.toLocaleString()}</span>
+                      <span className="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-full">{plan.savingLabel}</span>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Features list */}

@@ -74,13 +74,11 @@ export default function HeroSection({ showSubscribeNudge = false }: { showSubscr
             </button>
           </Link>
 
-          {showSubscribeNudge && (
-            <Link href="/subscribe" className="inline-block">
-              <button className="w-full sm:w-auto px-6 py-3 rounded-lg font-semibold text-sm border border-amber-400 text-amber-300 hover:bg-amber-400/10 transition-colors">
-                訂閱會員方案
-              </button>
-            </Link>
-          )}
+          <Link href="/subscribe" className="inline-block">
+            <button className="w-full sm:w-auto px-6 py-3 rounded-lg font-semibold text-sm border border-amber-400 text-amber-300 hover:bg-amber-400/10 transition-colors">
+              訂閱會員方案
+            </button>
+          </Link>
         </div>
 
         {/* Additional trust signal at bottom */}
