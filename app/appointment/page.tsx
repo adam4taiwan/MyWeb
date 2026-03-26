@@ -75,12 +75,18 @@ export default function AppointmentPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Fixed background */}
+      {/* Fixed background - show full portrait image without cropping */}
+      <div className="fixed inset-0 bg-stone-950" />
       <div
-        className="fixed inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url('/images/blessing-bg.jpg')" }}
+        className="fixed inset-0"
+        style={{
+          backgroundImage: "url('/images/blessing-bg.jpg')",
+          backgroundSize: 'auto 100vh',
+          backgroundPosition: 'center center',
+          backgroundRepeat: 'no-repeat',
+        }}
       />
-      <div className="fixed inset-0 bg-gradient-to-b from-black/80 via-black/70 to-black/85" />
+      <div className="fixed inset-0 bg-gradient-to-b from-black/65 via-black/55 to-black/75" />
 
       {/* Content layer */}
       <div className="relative z-10 flex flex-col min-h-screen">

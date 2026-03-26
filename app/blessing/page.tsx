@@ -11,7 +11,7 @@ const SERVICES = [
     code: 'BLESSING_ANTAISUI',
     name: '安太歲',
     icon: '★',
-    desc: '太歲當頭坐，無喜必有禍。安太歲可化解流年太歲沖犯，保佑一年平安順遂。',
+    desc: '本命年或流年與太歲沖犯者，容易破財、意外、病災。透過安太歲儀式護佑，化解沖煞，保一年平安順遂。',
     price: 'NT$1,200',
   },
   {
@@ -103,12 +103,18 @@ export default function BlessingPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Fixed background */}
+      {/* Fixed background - show full portrait image without cropping */}
+      <div className="fixed inset-0 bg-stone-950" />
       <div
-        className="fixed inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url('/images/blessing-bg.jpg')" }}
+        className="fixed inset-0"
+        style={{
+          backgroundImage: "url('/images/blessing-bg.jpg')",
+          backgroundSize: 'auto 100vh',
+          backgroundPosition: 'center center',
+          backgroundRepeat: 'no-repeat',
+        }}
       />
-      <div className="fixed inset-0 bg-gradient-to-b from-black/80 via-black/70 to-black/85" />
+      <div className="fixed inset-0 bg-gradient-to-b from-black/65 via-black/55 to-black/75" />
 
       {/* Content layer */}
       <div className="relative z-10 flex flex-col min-h-screen">
