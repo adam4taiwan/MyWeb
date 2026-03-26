@@ -37,7 +37,7 @@ export default function FinalCTASection() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 py-8 px-4 bg-white/5 rounded-brand backdrop-blur-sm">
           <div>
             <p className="text-2xl font-bold text-brand-300">✓</p>
-            <p className="text-sm text-brand-100 mt-2">免費試用版</p>
+            <p className="text-sm text-brand-100 mt-2">會員每日運勢</p>
           </div>
           <div>
             <p className="text-2xl font-bold text-brand-300">✓</p>
