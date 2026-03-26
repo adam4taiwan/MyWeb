@@ -110,7 +110,7 @@ export default function BlessingPage() {
       <div
         className="fixed inset-0"
         style={{
-          backgroundImage: "url('/images/blessing-bg.jpg')",
+          backgroundImage: "url('/images/blessing-bg.png')",
           backgroundSize: 'auto 100vh',
           backgroundPosition: 'center center',
           backgroundRepeat: 'no-repeat',
