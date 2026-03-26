@@ -573,6 +573,7 @@ ${bodyHtml}
     } catch { alert("下載失敗"); } finally { setIsLoading(false); }
   };
 
+  /* 專家命書功能暫停使用
   const handleExpertReport = async () => {
     if (!token) return alert("請先登入");
     if (remainingPoints !== null && remainingPoints < 200) return alert("點數不足，專家命書需要 200 點");
@@ -597,6 +598,7 @@ ${bodyHtml}
       }
     } catch (err) { alert('下載失敗：' + String(err)); } finally { setIsLoading(false); }
   };
+  */
 
   const handleYudongziReport = async () => {
     if (!profileLoaded) return alert('玉洞子命書需要先儲存生辰資料。');
@@ -793,10 +795,10 @@ ${bodyHtml}
                 )}
                 {isAdmin && (
                   <button
-                    onClick={handleExpertReport}
+                    onClick={handleYudongziDocx}
                     className="w-full bg-amber-800 text-white font-bold py-2 rounded-xl text-xs shadow-md mt-1"
                   >
-                    專家命書下載 (200點)
+                    執行下載玉洞子命書docx
                   </button>
                 )}
                 {profileLoaded && (
@@ -902,6 +904,7 @@ ${bodyHtml}
                   玉洞子命書（內部版）
                 </button>
               )}
+              {/* 原玉洞子命書DOCX按鈕（已移至左上方，此處暫停）
               {isAdmin && (
                 <button
                   onClick={handleYudongziDocx}
@@ -910,6 +913,7 @@ ${bodyHtml}
                   下載玉洞子命書 DOCX
                 </button>
               )}
+              */}
             </div>
           </div>
 
