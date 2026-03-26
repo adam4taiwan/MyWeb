@@ -27,13 +27,15 @@ interface Plan {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://ecanapi.fly.dev/api';
 
-const PLAN_META: Record<string, { badge: string; color: string; border: string; btnClass: string; highlight: boolean }> = {
+const PLAN_META: Record<string, { badge: string; color: string; border: string; btnClass: string; highlight: boolean; pointsValue: number; savingLabel: string }> = {
   BRONZE: {
     badge: '銅會員',
     color: 'from-amber-700 to-amber-900',
     border: 'border-amber-300',
     btnClass: 'bg-amber-600 hover:bg-amber-700 text-white',
     highlight: false,
+    pointsValue: 1500,
+    savingLabel: '省 NT$300',
   },
   SILVER: {
     badge: '銀會員',
@@ -41,6 +43,8 @@ const PLAN_META: Record<string, { badge: string; color: string; border: string; 
     border: 'border-slate-400',
     btnClass: 'bg-slate-600 hover:bg-slate-700 text-white',
     highlight: true,
+    pointsValue: 2500,
+    savingLabel: '省 NT$700',
   },
   GOLD: {
     badge: '金會員',
@@ -48,6 +52,8 @@ const PLAN_META: Record<string, { badge: string; color: string; border: string; 
     border: 'border-yellow-400',
     btnClass: 'bg-yellow-500 hover:bg-yellow-600 text-white',
     highlight: false,
+    pointsValue: 4000,
+    savingLabel: '省 NT$1,500',
   },
 };
 
@@ -158,6 +164,14 @@ export default function SubscribePage() {
                       NT${plan.priceTwd.toLocaleString()}
                       <span className="text-sm font-normal opacity-80 ml-1">/ 年</span>
                     </p>
+                    {/* 點數價值區塊 */}
+                    <div className="mt-3 bg-white/15 rounded-lg px-3 py-2">
+                      <p className="text-xs opacity-80 mb-0.5">方案服務點數價值</p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-lg font-bold">NT${meta.pointsValue.toLocaleString()}</span>
+                        <span className="bg-white/30 text-white text-xs font-bold px-2 py-0.5 rounded-full">{meta.savingLabel}</span>
+                      </div>
+                    </div>
                     {plan.description && (
                       <p className="text-xs opacity-70 mt-2">{plan.description}</p>
                     )}
@@ -203,6 +217,13 @@ export default function SubscribePage() {
                   <p className="text-xs text-gray-400 uppercase tracking-widest mb-1">VIP</p>
                   <p className="text-2xl font-bold text-yellow-300">VIP 會員</p>
                   <p className="text-3xl font-bold text-yellow-300 mt-2">NT$6,000<span className="text-sm font-normal text-gray-400 ml-1">/ 年</span></p>
+                  <div className="mt-2 bg-white/10 rounded-lg px-3 py-1.5">
+                    <p className="text-xs text-gray-400 mb-0.5">方案服務點數價值</p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-base font-bold text-yellow-300">NT$8,000+</span>
+                      <span className="bg-yellow-500/30 text-yellow-300 text-xs font-bold px-2 py-0.5 rounded-full">省 NT$2,000+</span>
+                    </div>
+                  </div>
                   <p className="text-gray-400 text-xs mt-1">頂級尊榮，一次擁有最完整服務</p>
                 </div>
                 <div className="flex-grow grid grid-cols-2 gap-2">
