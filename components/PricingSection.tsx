@@ -195,10 +195,10 @@ export default function PricingSection() {
         {/* Trust signal */}
         <div className="mt-16 p-8 bg-white rounded-xl border border-gray-200 text-center">
           <p className="text-gray-700">
-            <span className="font-bold text-brand-600">💳 玉洞子古學堂安心付款保證：</span>
-            銀行轉帳方式最安全，我們不儲存任何銀行敏感信息。
+            <span className="font-bold text-brand-600">ECPay 信用卡安全付款：</span>
+            交易由綠界科技處理，我們不儲存任何信用卡資訊。
             <span className="block mt-2 text-sm text-gray-600">
-              ✓ 7 天內無條件退款保證
+              本服務為數位內容，一經生成即無法退款，請確認了解後再下單。
             </span>
           </p>
         </div>

@@ -41,7 +41,7 @@ export default function FinalCTASection() {
           </div>
           <div>
             <p className="text-2xl font-bold text-brand-300">✓</p>
-            <p className="text-sm text-brand-100 mt-2">7 天退款保證</p>
+            <p className="text-sm text-brand-100 mt-2">確認了解再下單</p>
           </div>
           <div>
             <p className="text-2xl font-bold text-brand-300">✓</p>

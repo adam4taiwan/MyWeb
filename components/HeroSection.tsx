@@ -83,8 +83,8 @@ export default function HeroSection({ showSubscribeNudge = false }: { showSubscr
 
         {/* Additional trust signal at bottom */}
         <div className="text-sm text-brand-200 pt-8 space-y-2">
-          <p>✓ 免費試用完整命盤簡版</p>
-          <p>✓ 7 天退款保證</p>
+          <p>✓ 訂閱會員即可查看每日個人化運勢</p>
+          <p>✓ 下單前請確認了解服務內容</p>
         </div>
       </div>
 
