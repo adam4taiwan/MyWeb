@@ -22,7 +22,7 @@ export default function Header() {
           <nav className="hidden md:flex items-center space-x-8">
             <Link href="/" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">首頁</Link>
             <Link href="/heritage" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">命學傳承</Link>
-            <Link href="/bookstore" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">二手書店</Link>
+            {/* <Link href="/bookstore" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">二手書店</Link> */}
             {isAuthenticated && (
               <Link href="/disk" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">排盤鑑定</Link>
             )}
@@ -76,7 +76,7 @@ export default function Header() {
               <Link href="/" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>首頁</Link>
               {/*<Link href="/books" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>古書介紹</Link>*/}
               <Link href="/heritage" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>命學傳承</Link>
-              <Link href="/bookstore" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>二手書店</Link>
+              {/* <Link href="/bookstore" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>二手書店</Link> */}
               <Link href="/consultation" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>諮詢服務</Link>
               {isAuthenticated && (
                 <Link href="/disk" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>排盤鑑定</Link>
