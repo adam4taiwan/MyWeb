@@ -19,10 +19,11 @@ export default function LineCallbackPage() {
       return;
     }
 
+    const redirectUri = `${window.location.origin}/auth/line/callback`;
     fetch(`${API_URL}/Auth/line-login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code }),
+      body: JSON.stringify({ code, redirectUri }),
     })
       .then(res => res.json())
       .then(data => {
