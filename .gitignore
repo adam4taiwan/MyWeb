@@ -39,3 +39,6 @@ yarn-error.log*
 
 # Terminal Paste Image folder
 .cp-images/
+
+# Large generated files
+repomix-output.xml

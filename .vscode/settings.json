@@ -1,0 +1,5 @@
+{
+    "claudeCode.allowDangerouslySkipPermissions": true,
+    "claudeCode.usePythonEnvironment": false,
+    "claudeCode.useTerminal": true
+}
