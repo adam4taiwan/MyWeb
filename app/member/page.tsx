@@ -6,7 +6,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/components/AuthContext';
 
-type Tab = 'profile' | 'subscription' | 'points' | 'orders' | 'security';
+type Tab = 'profile' | 'subscription' | 'ninestar' | 'points' | 'orders' | 'security';
 
 interface SubscriptionStatus {
   isSubscribed: boolean;
@@ -41,6 +41,27 @@ interface Order {
   createdAt: string;
 }
 
+interface NineStarDaily {
+  date: string;
+  natalStar: { number: number; name: string };
+  yearStar: { number: number; name: string };
+  monthStar: { number: number; name: string };
+  dayStar: { number: number; name: string };
+  fortuneText: string;
+  auspicious: string;
+  avoid: string;
+  direction: string;
+  color: string;
+}
+
+interface NineStarTodayStars {
+  date: string;
+  yearStar: { number: number; name: string };
+  monthStar: { number: number; name: string };
+  dayStar: { number: number; name: string };
+  hourStar: { number: number; name: string };
+}
+
 export default function MemberPage() {
   const { user, token } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('profile');
@@ -59,6 +80,12 @@ export default function MemberPage() {
   const [fortuneError, setFortuneError] = useState('');
   const [mingGongStars, setMingGongStars] = useState<string | null>(null);
   const [hasChart, setHasChart] = useState<boolean | null>(null); // null = 尚未查詢
+
+  const [nineStarDaily, setNineStarDaily] = useState<NineStarDaily | null>(null);
+  const [nineStarTodayStars, setNineStarTodayStars] = useState<NineStarTodayStars | null>(null);
+  const [nineStarLoading, setNineStarLoading] = useState(false);
+  const [nineStarError, setNineStarError] = useState('');
+  const [nineStarLoaded, setNineStarLoaded] = useState(false);
 
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
@@ -206,10 +233,40 @@ export default function MemberPage() {
     }
   };
 
+  const fetchNineStarDaily = useCallback(async () => {
+    if (!token || nineStarLoaded) return;
+    setNineStarLoading(true);
+    setNineStarError('');
+    try {
+      const [dailyRes, starsRes] = await Promise.all([
+        fetch(`${API_URL}/NineStar/daily`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch(`${API_URL}/NineStar/stars/today`),
+      ]);
+      if (dailyRes.ok) {
+        const data = await dailyRes.json();
+        setNineStarDaily(data);
+      } else {
+        const err = await dailyRes.json().catch(() => ({}));
+        setNineStarError(err?.message || '找不到本命星資料，請先在排盤工具填寫生辰');
+      }
+      if (starsRes.ok) {
+        setNineStarTodayStars(await starsRes.json());
+      }
+      setNineStarLoaded(true);
+    } catch {
+      setNineStarError('網路錯誤，請稍後再試');
+    } finally {
+      setNineStarLoading(false);
+    }
+  }, [token, API_URL, nineStarLoaded]);
+
   const handleTabChange = (tab: Tab) => {
     setActiveTab(tab);
     if (tab === 'points') fetchPointHistory();
     if (tab === 'orders') fetchOrders();
+    if (tab === 'ninestar') fetchNineStarDaily();
   };
 
   const handleChangePassword = async (e: React.FormEvent) => {
@@ -280,6 +337,7 @@ export default function MemberPage() {
   const tabs: { id: Tab; label: string }[] = [
     { id: 'profile', label: '個人資料' },
     { id: 'subscription', label: '訂閱方案' },
+    { id: 'ninestar', label: '九星建議' },
     { id: 'points', label: '點數管理' },
     { id: 'orders', label: '購買記錄' },
     { id: 'security', label: '帳號安全' },
@@ -295,6 +353,12 @@ export default function MemberPage() {
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="w-12 h-12 border-4 border-amber-400 border-t-transparent rounded-full animate-spin mb-4"></div>
           <p className="text-amber-200 text-sm">玉洞子正在推算今日運勢...</p>
+        </div>
+      )}
+      {nineStarLoading && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="w-12 h-12 border-4 border-amber-400 border-t-transparent rounded-full animate-spin mb-4"></div>
+          <p className="text-amber-200 text-sm">推算九星今日建議中...</p>
         </div>
       )}
       <Header />
@@ -597,6 +661,92 @@ export default function MemberPage() {
                     </button>
                   </Link>
                 </div>
+              )}
+            </div>
+          )}
+
+          {/* ── 九星建議 ── */}
+          {activeTab === 'ninestar' && (
+            <div className="space-y-6">
+              <h2 className="text-lg font-bold text-gray-900 border-b pb-3">九星氣學 - 今日建議</h2>
+
+              {nineStarError && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                  <p className="text-amber-700 text-sm">{nineStarError}</p>
+                  <p className="text-amber-600 text-xs mt-1">請前往「排盤鑑定」填寫生辰資料後，即可查看個人化九星建議。</p>
+                  <Link href="/disk">
+                    <button className="mt-3 px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 transition-colors">
+                      前往填寫生辰
+                    </button>
+                  </Link>
+                </div>
+              )}
+
+              {nineStarDaily && (
+                <>
+                  {/* 本命星卡片 */}
+                  <div className="bg-gradient-to-br from-amber-800 to-amber-900 rounded-2xl p-5 text-white">
+                    <p className="text-amber-300 text-xs mb-1">您的本命星</p>
+                    <p className="text-2xl font-bold">{nineStarDaily.natalStar.name}</p>
+                    <p className="text-amber-200 text-xs mt-1">{nineStarDaily.date}</p>
+                  </div>
+
+                  {/* 今日四星 */}
+                  {nineStarTodayStars && (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {[
+                        { label: '流年星', star: nineStarTodayStars.yearStar },
+                        { label: '流月星', star: nineStarTodayStars.monthStar },
+                        { label: '流日星', star: nineStarTodayStars.dayStar },
+                        { label: '流時星', star: nineStarTodayStars.hourStar },
+                      ].map(({ label, star }) => (
+                        <div key={label} className="bg-white border border-gray-200 rounded-xl p-3 text-center shadow-sm">
+                          <p className="text-xs text-gray-500 mb-1">{label}</p>
+                          <p className="text-lg font-bold text-amber-700">{star.number}</p>
+                          <p className="text-xs text-gray-700">{star.name}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* 今日運勢 */}
+                  <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-4">
+                    <div>
+                      <p className="text-sm font-bold text-gray-700 mb-2">今日整體運勢</p>
+                      <p className="text-gray-700 text-sm leading-relaxed">{nineStarDaily.fortuneText}</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-gray-100">
+                      <div className="bg-green-50 border border-green-100 rounded-xl p-3">
+                        <p className="text-xs font-bold text-green-700 mb-1">今日宜</p>
+                        <p className="text-sm text-green-800">{nineStarDaily.auspicious || '-'}</p>
+                      </div>
+                      <div className="bg-red-50 border border-red-100 rounded-xl p-3">
+                        <p className="text-xs font-bold text-red-600 mb-1">今日忌</p>
+                        <p className="text-sm text-red-700">{nineStarDaily.avoid || '-'}</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 pt-3 border-t border-gray-100">
+                      <div className="bg-blue-50 border border-blue-100 rounded-xl p-3">
+                        <p className="text-xs font-bold text-blue-600 mb-1">今日吉方位</p>
+                        <p className="text-sm text-blue-700">{nineStarDaily.direction || '-'}</p>
+                      </div>
+                      <div className="bg-purple-50 border border-purple-100 rounded-xl p-3">
+                        <p className="text-xs font-bold text-purple-600 mb-1">今日吉顏色</p>
+                        <p className="text-sm text-purple-700">{nineStarDaily.color || '-'}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-gray-400 text-center">
+                    本命星 {nineStarDaily.natalStar.name} x 今日流日星 {nineStarDaily.dayStar.name} 組合推算
+                  </p>
+                </>
+              )}
+
+              {!nineStarLoaded && !nineStarError && (
+                <div className="text-center py-8 text-gray-400 text-sm">載入中...</div>
               )}
             </div>
           )}
