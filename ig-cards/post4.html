@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<style>
+  html { display:flex; justify-content:center; align-items:center; min-height:100vh; background:#111; }
+  .scale-wrapper { transform-origin: center center; }
+</style>
+<script>
+  window.addEventListener("load", function() {
+    var s = Math.min(window.innerWidth/1080, window.innerHeight/1080);
+    document.querySelector("body").style.transform = "scale(" + s + ")";
+    document.querySelector("body").style.transformOrigin = "top left";
+    document.querySelector("html").style.display = "flex";
+    document.querySelector("html").style.justifyContent = "center";
+    document.querySelector("html").style.alignItems = "center";
+    document.querySelector("html").style.minHeight = "100vh";
+    document.querySelector("html").style.background = "#111";
+  });
+</script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1080px;
+    height: 1080px;
+    background: linear-gradient(145deg, #1a1008 0%, #2d1e0a 40%, #1a1008 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Noto Serif TC', 'Microsoft JhengHei', serif;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .bg-circle {
+    position: absolute;
+    width: 700px; height: 700px;
+    border-radius: 50%;
+    border: 1px solid rgba(212,165,116,0.06);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .bg-circle-2 {
+    position: absolute;
+    width: 500px; height: 500px;
+    border-radius: 50%;
+    border: 1px solid rgba(212,165,116,0.05);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .card {
+    width: 860px;
+    padding: 70px 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  .top-label {
+    font-size: 20px;
+    color: #8a7055;
+    letter-spacing: 6px;
+    margin-bottom: 36px;
+  }
+
+  .main-quote {
+    font-size: 46px;
+    color: #f5ead8;
+    line-height: 1.75;
+    margin-bottom: 44px;
+    font-weight: 400;
+  }
+
+  .main-quote em {
+    font-style: normal;
+    color: #D4A574;
+  }
+
+  .points {
+    width: 100%;
+    margin-bottom: 50px;
+  }
+
+  .point-item {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 18px 30px;
+    border-bottom: 1px solid rgba(212,165,116,0.1);
+    text-align: left;
+  }
+
+  .point-icon {
+    font-size: 28px;
+    width: 40px;
+    flex-shrink: 0;
+  }
+
+  .point-text {
+    font-size: 28px;
+    color: #c4a882;
+  }
+
+  .point-text span {
+    color: #f5ead8;
+  }
+
+  .cta-btn {
+    font-size: 26px;
+    color: #1a1008;
+    background: linear-gradient(135deg, #D4A574, #b8874a);
+    padding: 20px 60px;
+    border-radius: 50px;
+    letter-spacing: 3px;
+    font-weight: 500;
+  }
+
+  .bottom-logo {
+    position: absolute;
+    bottom: 46px;
+    right: 80px;
+    font-size: 20px;
+    color: rgba(212,165,116,0.4);
+    letter-spacing: 2px;
+  }
+</style>
+</head>
+<body>
+  <div class="bg-circle"></div>
+  <div class="bg-circle-2"></div>
+
+  <div class="card">
+    <div class="top-label">知 命 ・ 用 命</div>
+
+    <div class="main-quote">
+      算命，不是讓你相信<br>
+      命運<em>無法改變</em><br><br>
+      而是讓你看清楚<br>
+      <em>用對力氣的方向</em>
+    </div>
+
+    <div class="points">
+      <div class="point-item">
+        <div class="point-icon">◆</div>
+        <div class="point-text">你的<span>優勢</span>在哪裡</div>
+      </div>
+      <div class="point-item">
+        <div class="point-icon">◆</div>
+        <div class="point-text">哪段時間適合<span>衝</span></div>
+      </div>
+      <div class="point-item">
+        <div class="point-icon">◆</div>
+        <div class="point-text">哪段時間應該<span>守</span></div>
+      </div>
+    </div>
+
+    <div class="cta-btn">預約鑑定 yudongzi.tw</div>
+  </div>
+
+  <div class="bottom-logo">玉洞子星相古學堂 ・ yudongzi.tw</div>
+</body>
+</html>

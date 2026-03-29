@@ -6,7 +6,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/components/AuthContext';
 
-type Tab = 'profile' | 'subscription' | 'ninestar' | 'points' | 'orders' | 'security';
+type Tab = 'profile' | 'subscription' | 'ninestar' | 'orders' | 'security';
 
 interface SubscriptionStatus {
   isSubscribed: boolean;
@@ -24,14 +24,6 @@ interface DailyFortune {
   cached: boolean;
 }
 
-interface PointRecord {
-  id: string;
-  type: string;
-  amount: number;
-  description: string;
-  createdAt: string;
-}
-
 interface Order {
   id: string;
   orderType: string;
@@ -41,12 +33,27 @@ interface Order {
   createdAt: string;
 }
 
+interface NineStarCombination {
+  pair: string;
+  starA: { number: number; name: string };
+  starB: { number: number; name: string };
+  title: string;
+  verdict: string;
+  modified: string;
+  description: string;
+}
+
 interface NineStarDaily {
   date: string;
   natalStar: { number: number; name: string };
+  yunStatus: string;
+  isProspering: boolean;
   yearStar: { number: number; name: string };
   monthStar: { number: number; name: string };
   dayStar: { number: number; name: string };
+  hourStar: { number: number; name: string };
+  combinations: NineStarCombination[];
+  overallVerdict: string;
   fortuneText: string;
   auspicious: string;
   avoid: string;
@@ -66,13 +73,9 @@ export default function MemberPage() {
   const { user, token } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('profile');
   const [paymentNotice, setPaymentNotice] = useState<'success' | 'cancelled' | null>(null);
-  const [points, setPoints] = useState<number | null>(null);
-  const [pointHistory, setPointHistory] = useState<PointRecord[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [historyLoaded, setHistoryLoaded] = useState(false);
   const [ordersLoaded, setOrdersLoaded] = useState(false);
-  const [purchaseLoading, setPurchaseLoading] = useState(false);
   const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
 
   const [dailyFortune, setDailyFortune] = useState<DailyFortune | null>(null);
@@ -101,27 +104,6 @@ export default function MemberPage() {
     ? 'http://localhost:5013/api'
     : 'https://ecanapi.fly.dev/api';
 
-  const fetchPoints = useCallback(async () => {
-    if (!token) return;
-    try {
-      const res = await fetch(`${API_URL}/Consultation/analyze`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ type: '同步查詢', chartRequest: { dateType: 'solar', name: '', gender: '1', year: 2000, month: 1, day: 1, hour: 0, minute: 0 } }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setPoints(data.remainingPoints ?? data.points ?? 0);
-      }
-    } catch {
-      // silent
-    }
-  }, [token, API_URL]);
-
-  useEffect(() => {
-    fetchPoints();
-  }, [fetchPoints]);
-
   useEffect(() => {
     if (!token) return;
     fetch(`${API_URL}/Subscription/status`, {
@@ -137,15 +119,14 @@ export default function MemberPage() {
     const payment = params.get('payment');
     if (payment === 'success') {
       setPaymentNotice('success');
-      setActiveTab('points');
-      fetchPoints();
+      setActiveTab('subscription');
       window.history.replaceState({}, '', '/member');
     } else if (payment === 'cancelled') {
       setPaymentNotice('cancelled');
-      setActiveTab('points');
+      setActiveTab('subscription');
       window.history.replaceState({}, '', '/member');
     }
-  }, [fetchPoints]);
+  }, []);
 
   const fetchDailyFortune = useCallback(async () => {
     if (!token) return;
@@ -194,25 +175,6 @@ export default function MemberPage() {
     if (!subscription.isSubscribed) return; // not subscribed - show upgrade card instead
     fetchDailyFortune();
   }, [subscription, fetchDailyFortune]);
-
-  const fetchPointHistory = async () => {
-    if (historyLoaded || !token) return;
-    setIsLoading(true);
-    try {
-      const res = await fetch(`${API_URL}/Points/history`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setPointHistory(data.records || data || []);
-      }
-    } catch {
-      // API endpoint might not be ready yet
-    } finally {
-      setIsLoading(false);
-      setHistoryLoaded(true);
-    }
-  };
 
   const fetchOrders = async () => {
     if (ordersLoaded || !token) return;
@@ -264,7 +226,6 @@ export default function MemberPage() {
 
   const handleTabChange = (tab: Tab) => {
     setActiveTab(tab);
-    if (tab === 'points') fetchPointHistory();
     if (tab === 'orders') fetchOrders();
     if (tab === 'ninestar') fetchNineStarDaily();
   };
@@ -304,41 +265,10 @@ export default function MemberPage() {
     }
   };
 
-  const [purchasingPackageId, setPurchasingPackageId] = useState<string | null>(null);
-
-  const [atmForm, setAtmForm] = useState({ packageId: 'popular', transferDate: '', accountLast5: '' });
-  const [atmLoading, setAtmLoading] = useState(false);
-  const [atmMsg, setAtmMsg] = useState<{ text: string; ok: boolean } | null>(null);
-  const [paymentMode, setPaymentMode] = useState<'card' | 'atm'>('card');
-
-  const handlePurchasePoints = async (packageId: string) => {
-    setPurchaseLoading(true);
-    setPurchasingPackageId(packageId);
-    try {
-      const res = await fetch(`${API_URL}/Payment/create-checkout-session`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ packageId }),
-      });
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        alert(data.message || '支付跳轉失敗，請稍後再試');
-      }
-    } catch {
-      alert('支付跳轉失敗，請稍後再試');
-    } finally {
-      setPurchaseLoading(false);
-      setPurchasingPackageId(null);
-    }
-  };
-
   const tabs: { id: Tab; label: string }[] = [
     { id: 'profile', label: '個人資料' },
     { id: 'subscription', label: '訂閱方案' },
     { id: 'ninestar', label: '九星建議' },
-    { id: 'points', label: '點數管理' },
     { id: 'orders', label: '購買記錄' },
     { id: 'security', label: '帳號安全' },
   ];
@@ -387,13 +317,6 @@ export default function MemberPage() {
                     一般會員
                   </span>
                 )}
-                <span className="text-amber-100 text-sm">
-                  點數餘額：
-                  <strong className="text-white text-base">
-                    {points !== null ? points : '---'}
-                  </strong>{' '}
-                  點
-                </span>
                 {subscription?.isSubscribed && subscription.daysRemaining !== undefined && (
                   <span className="text-amber-200 text-xs">
                     訂閱剩餘 {subscription.daysRemaining} 天
@@ -520,13 +443,6 @@ export default function MemberPage() {
                     </span>
                   )}
                 </div>
-                <div>
-                  <p className="text-xs font-medium text-gray-500 mb-1">點數餘額</p>
-                  <p className="text-2xl font-bold text-amber-600">
-                    {points !== null ? points : '---'}
-                    <span className="text-sm font-normal text-gray-500 ml-1">點</span>
-                  </p>
-                </div>
               </div>
 
               {mingGongStars && (
@@ -542,7 +458,7 @@ export default function MemberPage() {
                 <div className="bg-gradient-to-r from-amber-700 to-amber-900 rounded-xl p-5 text-white">
                   <p className="font-bold mb-1">尚未訂閱會員方案</p>
                   <p className="text-amber-200 text-xs leading-relaxed mb-3">
-                    訂閱後可享有每日個人化建議、命書折扣、祈福服務，年費 NT$1,200 起。
+                    訂閱後可享有每日建議、命書使用額度等專屬福利，年費 NT$1,000 起。
                   </p>
                   <Link href="/subscribe">
                     <button className="bg-white text-amber-800 px-4 py-2 rounded-lg text-sm font-bold hover:bg-amber-50 transition-colors">
@@ -560,12 +476,11 @@ export default function MemberPage() {
                       前往排盤鑑定
                     </button>
                   </Link>
-                  <button
-                    onClick={() => handleTabChange('points')}
-                    className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors"
-                  >
-                    儲值點數
-                  </button>
+                  <Link href="/subscribe">
+                    <button className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors">
+                      訂閱方案
+                    </button>
+                  </Link>
                   <Link href="/blessing">
                     <button className="px-4 py-2 border border-amber-300 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-50 transition-colors">
                       祈福服務
@@ -585,6 +500,19 @@ export default function MemberPage() {
           {activeTab === 'subscription' && (
             <div className="space-y-6">
               <h2 className="text-lg font-bold text-gray-900 border-b pb-3">訂閱方案</h2>
+
+              {paymentNotice === 'success' && (
+                <div className="bg-green-50 border border-green-200 text-green-700 rounded-xl p-4 text-sm flex items-start justify-between gap-3">
+                  <span>訂閱成功！方案已啟用，請確認下方狀態。</span>
+                  <button onClick={() => setPaymentNotice(null)} className="text-green-500 hover:text-green-700 flex-shrink-0">x</button>
+                </div>
+              )}
+              {paymentNotice === 'cancelled' && (
+                <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 rounded-xl p-4 text-sm flex items-start justify-between gap-3">
+                  <span>已取消付款，如需訂閱請重新選擇方案。</span>
+                  <button onClick={() => setPaymentNotice(null)} className="text-yellow-500 hover:text-yellow-700 flex-shrink-0">x</button>
+                </div>
+              )}
 
               {subscription?.isSubscribed ? (
                 <>
@@ -610,8 +538,13 @@ export default function MemberPage() {
                         {subscription.quotaStatus.map((q, i) => (
                           <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
                             <div>
-                              <p className="text-sm font-medium text-gray-800">{q.productCode}</p>
-                              <p className="text-xs text-gray-400">已使用 {q.used} / 共 {q.total}</p>
+                              <p className="text-sm font-medium text-gray-800">{
+                                q.productCode === 'BOOK_BAZI' ? '八字命書' :
+                                q.productCode === 'BOOK_LIUNIAN' ? '流年命書' :
+                                q.productCode === 'BOOK_DAIYUN' ? '大運命書' :
+                                q.productCode
+                              }</p>
+                              <p className="text-xs text-gray-400">已使用 {q.used} / 共 {q.total} 次（本年度）</p>
                             </div>
                             <span className={`text-sm font-bold ${q.remaining > 0 ? 'text-green-600' : 'text-gray-400'}`}>
                               剩餘 {q.remaining}
@@ -688,31 +621,68 @@ export default function MemberPage() {
                   <div className="bg-gradient-to-br from-amber-800 to-amber-900 rounded-2xl p-5 text-white">
                     <p className="text-amber-300 text-xs mb-1">您的本命星</p>
                     <p className="text-2xl font-bold">{nineStarDaily.natalStar.name}</p>
-                    <p className="text-amber-200 text-xs mt-1">{nineStarDaily.date}</p>
+                    <p className={`text-xs mt-2 px-2 py-1 rounded-full inline-block ${nineStarDaily.isProspering ? 'bg-green-600 text-green-100' : 'bg-gray-600 text-gray-200'}`}>
+                      目前運勢：{nineStarDaily.yunStatus}
+                    </p>
+                    <p className="text-amber-200 text-xs mt-2">{nineStarDaily.date}</p>
+                  </div>
+
+                  {/* 整體評語 */}
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                    <p className="text-xs font-bold text-amber-700 mb-1">今日綜合評語</p>
+                    <p className="text-sm text-amber-900 leading-relaxed">{nineStarDaily.overallVerdict}</p>
                   </div>
 
                   {/* 今日四星 */}
-                  {nineStarTodayStars && (
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      {[
-                        { label: '流年星', star: nineStarTodayStars.yearStar },
-                        { label: '流月星', star: nineStarTodayStars.monthStar },
-                        { label: '流日星', star: nineStarTodayStars.dayStar },
-                        { label: '流時星', star: nineStarTodayStars.hourStar },
-                      ].map(({ label, star }) => (
-                        <div key={label} className="bg-white border border-gray-200 rounded-xl p-3 text-center shadow-sm">
-                          <p className="text-xs text-gray-500 mb-1">{label}</p>
-                          <p className="text-lg font-bold text-amber-700">{star.number}</p>
-                          <p className="text-xs text-gray-700">{star.name}</p>
-                        </div>
-                      ))}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {[
+                      { label: '流年星', star: nineStarDaily.yearStar },
+                      { label: '流月星', star: nineStarDaily.monthStar },
+                      { label: '流日星', star: nineStarDaily.dayStar },
+                      { label: '流時星', star: nineStarDaily.hourStar },
+                    ].map(({ label, star }) => (
+                      <div key={label} className="bg-white border border-gray-200 rounded-xl p-3 text-center shadow-sm">
+                        <p className="text-xs text-gray-500 mb-1">{label}</p>
+                        <p className="text-lg font-bold text-amber-700">{star.number}</p>
+                        <p className="text-xs text-gray-700">{star.name}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* 五對組合分析 */}
+                  {nineStarDaily.combinations && nineStarDaily.combinations.length > 0 && (
+                    <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+                      <p className="text-sm font-bold text-gray-700 mb-3">星曜組合分析</p>
+                      <div className="space-y-2">
+                        {nineStarDaily.combinations.map((c, i) => {
+                          const verdictColor =
+                            c.modified.includes('最吉') || c.modified.includes('大吉') ? 'text-green-700 bg-green-50 border-green-200' :
+                            c.modified.startsWith('吉') ? 'text-green-600 bg-green-50 border-green-100' :
+                            c.modified.includes('偏吉') ? 'text-lime-700 bg-lime-50 border-lime-200' :
+                            c.modified.startsWith('平') ? 'text-gray-600 bg-gray-50 border-gray-200' :
+                            c.modified.includes('偏凶') ? 'text-orange-700 bg-orange-50 border-orange-200' :
+                            c.modified.startsWith('凶') ? 'text-red-600 bg-red-50 border-red-200' :
+                            c.modified.includes('大凶') || c.modified.includes('最凶') ? 'text-red-800 bg-red-100 border-red-300' :
+                            'text-gray-600 bg-gray-50 border-gray-200';
+                          return (
+                            <div key={i} className="flex items-start gap-3 text-sm">
+                              <span className="text-xs text-gray-400 w-20 flex-shrink-0 pt-0.5">{c.pair}</span>
+                              <span className="text-gray-600 w-24 flex-shrink-0">
+                                {c.starA.number}({c.starA.name.slice(0,2)}) x {c.starB.number}({c.starB.name.slice(0,2)})
+                              </span>
+                              <span className="text-gray-500 text-xs flex-1">{c.title || ''}{c.description ? `　${c.description}` : ''}</span>
+                              <span className={`text-xs px-2 py-0.5 rounded-full border flex-shrink-0 ${verdictColor}`}>{c.modified}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
 
                   {/* 今日運勢 */}
                   <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-4">
                     <div>
-                      <p className="text-sm font-bold text-gray-700 mb-2">今日整體運勢</p>
+                      <p className="text-sm font-bold text-gray-700 mb-2">今日運勢詳解</p>
                       <p className="text-gray-700 text-sm leading-relaxed">{nineStarDaily.fortuneText}</p>
                     </div>
 
@@ -740,7 +710,7 @@ export default function MemberPage() {
                   </div>
 
                   <p className="text-xs text-gray-400 text-center">
-                    本命星 {nineStarDaily.natalStar.name} x 今日流日星 {nineStarDaily.dayStar.name} 組合推算
+                    依三元九運 + 五行組合推算，運 &gt; 年 &gt; 月 &gt; 日 &gt; 時
                   </p>
                 </>
               )}
@@ -748,232 +718,6 @@ export default function MemberPage() {
               {!nineStarLoaded && !nineStarError && (
                 <div className="text-center py-8 text-gray-400 text-sm">載入中...</div>
               )}
-            </div>
-          )}
-
-          {/* ── 點數管理 ── */}
-          {activeTab === 'points' && (
-            <div className="space-y-6">
-              <h2 className="text-lg font-bold text-gray-900 border-b pb-3">點數管理</h2>
-
-              {/* 支付結果提示 */}
-              {paymentNotice === 'success' && (
-                <div className="bg-green-50 border border-green-200 text-green-700 rounded-xl p-4 text-sm flex items-start justify-between gap-3">
-                  <span>儲值成功！點數已入帳，請確認餘額。</span>
-                  <button onClick={() => setPaymentNotice(null)} className="text-green-500 hover:text-green-700 flex-shrink-0">x</button>
-                </div>
-              )}
-              {paymentNotice === 'cancelled' && (
-                <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 rounded-xl p-4 text-sm flex items-start justify-between gap-3">
-                  <span>已取消付款，如需儲值請重新選擇套餐。</span>
-                  <button onClick={() => setPaymentNotice(null)} className="text-yellow-500 hover:text-yellow-700 flex-shrink-0">x</button>
-                </div>
-              )}
-
-              {/* 餘額卡 */}
-              <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-5 border border-amber-100 flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-sm text-gray-600">目前點數餘額</p>
-                  <p className="text-4xl font-bold text-amber-600 mt-1">
-                    {points !== null ? points : '---'}
-                    <span className="text-lg font-normal text-gray-500 ml-2">點</span>
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">深度鑑定每次消耗 10 點</p>
-                </div>
-                <button
-                  onClick={() => handlePurchasePoints('popular')}
-                  disabled={purchaseLoading}
-                  className="flex-shrink-0 bg-amber-600 text-white px-5 py-3 rounded-xl font-bold hover:bg-amber-700 transition-colors shadow-sm disabled:opacity-50 text-center"
-                >
-                  {purchaseLoading && purchasingPackageId === 'popular' ? '處理中...' : (
-                    <>立即儲值<br /><span className="text-xs font-normal">NT$1,350 / 150點</span></>
-                  )}
-                </button>
-              </div>
-
-              {/* 點數套餐 */}
-              <div>
-                <p className="text-sm font-bold text-gray-700 mb-3">點數套餐</p>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {[
-                    { id: 'starter',  points: 50,   price: 500,  label: '入門', highlight: false },
-                    { id: 'popular',  points: 150,  price: 1350, label: '推薦', highlight: true  },
-                    { id: 'advanced', points: 400,  price: 3200, label: '進階', highlight: false },
-                    { id: 'vip',      points: 1000, price: 7000, label: 'VIP',  highlight: false },
-                  ].map(pkg => (
-                    <button
-                      key={pkg.id}
-                      onClick={() => handlePurchasePoints(pkg.id)}
-                      disabled={purchaseLoading}
-                      className={`p-4 rounded-xl border-2 text-center transition-all disabled:opacity-60 ${
-                        pkg.highlight
-                          ? 'border-amber-400 bg-amber-50 hover:bg-amber-100'
-                          : 'border-gray-200 bg-white hover:border-amber-300 hover:bg-amber-50'
-                      } ${purchasingPackageId === pkg.id ? 'opacity-60' : ''}`}
-                    >
-                      {pkg.highlight && (
-                        <span className="text-xs bg-amber-500 text-white px-2 py-0.5 rounded-full">
-                          最受歡迎
-                        </span>
-                      )}
-                      <p className="text-2xl font-bold text-amber-600 mt-2">{pkg.points}</p>
-                      <p className="text-xs text-gray-500">點數</p>
-                      <p className="text-sm font-bold text-gray-700 mt-1">
-                        NT${pkg.price.toLocaleString()}
-                      </p>
-                      <p className="text-xs text-green-600">
-                        {(pkg.price / pkg.points).toFixed(0)} 元/點
-                      </p>
-                      <p className="text-xs mt-2 font-medium text-amber-700">
-                        {purchasingPackageId === pkg.id ? '處理中...' : '點擊購買'}
-                      </p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* 付款方式切換 */}
-              <div>
-                <p className="text-sm font-bold text-gray-700 mb-3">付款方式</p>
-                <div className="flex gap-2 mb-4">
-                  {([['card', '信用卡 / Apple Pay'], ['atm', 'ATM 轉帳']] as const).map(([mode, label]) => (
-                    <button
-                      key={mode}
-                      onClick={() => setPaymentMode(mode)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
-                        paymentMode === mode
-                          ? 'bg-amber-600 text-white border-amber-600'
-                          : 'bg-white text-gray-600 border-gray-200 hover:border-amber-300'
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-
-                {paymentMode === 'atm' && (
-                  <div className="border border-amber-100 rounded-xl p-5 bg-amber-50 space-y-4">
-                    <div className="text-sm text-gray-700 space-y-1">
-                      <p className="font-bold text-gray-800 mb-2">匯款帳號資訊</p>
-                      <p>銀行：上海商業儲蓄銀行（分行代碼 011）</p>
-                      <p>帳號：<strong className="tracking-wider">0002203000720489</strong></p>
-                      <p>戶名：蔡嘉麟</p>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-600 mb-1">選擇套餐</label>
-                      <select
-                        value={atmForm.packageId}
-                        onChange={e => setAtmForm({ ...atmForm, packageId: e.target.value })}
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-amber-300 outline-none text-sm bg-white"
-                      >
-                        <option value="starter">入門 — 50 點 / NT$500</option>
-                        <option value="popular">推薦 — 150 點 / NT$1,350</option>
-                        <option value="advanced">進階 — 400 點 / NT$3,200</option>
-                        <option value="vip">VIP — 1,000 點 / NT$7,000</option>
-                      </select>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-600 mb-1">轉帳日期</label>
-                        <input
-                          type="date"
-                          value={atmForm.transferDate}
-                          onChange={e => setAtmForm({ ...atmForm, transferDate: e.target.value })}
-                          className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-amber-300 outline-none text-sm bg-white"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-600 mb-1">轉出帳號後 5 碼</label>
-                        <input
-                          type="text"
-                          value={atmForm.accountLast5}
-                          onChange={e => setAtmForm({ ...atmForm, accountLast5: e.target.value.replace(/\D/g, '').slice(0, 5) })}
-                          maxLength={5}
-                          placeholder="12345"
-                          className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-amber-300 outline-none text-sm"
-                        />
-                      </div>
-                    </div>
-
-                    {atmMsg && (
-                      <p className={`text-sm ${atmMsg.ok ? 'text-green-600' : 'text-red-500'}`}>{atmMsg.text}</p>
-                    )}
-
-                    <button
-                      onClick={async () => {
-                        if (!atmForm.transferDate || atmForm.accountLast5.length !== 5) {
-                          setAtmMsg({ text: '請填寫轉帳日期及完整帳號後 5 碼', ok: false }); return;
-                        }
-                        setAtmLoading(true);
-                        setAtmMsg(null);
-                        try {
-                          const res = await fetch(`${API_URL}/Payment/atm-request`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                            body: JSON.stringify(atmForm),
-                          });
-                          const data = await res.json();
-                          if (res.ok) {
-                            setAtmMsg({ text: data.message, ok: true });
-                            setAtmForm({ packageId: 'popular', transferDate: '', accountLast5: '' });
-                          } else {
-                            setAtmMsg({ text: data.message || '提交失敗，請稍後再試', ok: false });
-                          }
-                        } catch {
-                          setAtmMsg({ text: '連線失敗，請稍後再試', ok: false });
-                        } finally {
-                          setAtmLoading(false);
-                        }
-                      }}
-                      disabled={atmLoading}
-                      className="w-full py-3 bg-amber-600 text-white rounded-xl font-bold hover:bg-amber-700 disabled:opacity-50 transition-colors text-sm"
-                    >
-                      {atmLoading ? '提交中...' : '送出轉帳申請'}
-                    </button>
-                    <p className="text-xs text-gray-400 text-center">申請後由管理員人工審核，通常於 1 個工作日內入帳</p>
-                  </div>
-                )}
-              </div>
-
-              {/* 點數記錄 */}
-              <div>
-                <p className="text-sm font-bold text-gray-700 mb-3">點數記錄</p>
-                {isLoading ? (
-                  <div className="text-center py-8 text-gray-400">載入中...</div>
-                ) : pointHistory.length > 0 ? (
-                  <div className="space-y-2">
-                    {pointHistory.map(record => (
-                      <div
-                        key={record.id}
-                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                      >
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">{record.description}</p>
-                          <p className="text-xs text-gray-500">
-                            {new Date(record.createdAt).toLocaleDateString('zh-TW')}
-                          </p>
-                        </div>
-                        <span
-                          className={`font-bold ${
-                            record.amount > 0 ? 'text-green-600' : 'text-red-500'
-                          }`}
-                        >
-                          {record.amount > 0 ? '+' : ''}
-                          {record.amount} 點
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-10 text-gray-400 border-2 border-dashed border-gray-200 rounded-xl">
-                    <p className="text-3xl mb-2">📊</p>
-                    <p className="text-sm">尚無點數記錄</p>
-                    <p className="text-xs mt-1">購買點數或使用服務後，記錄將顯示於此</p>
-                  </div>
-                )}
-              </div>
             </div>
           )}
 
@@ -1035,12 +779,11 @@ export default function MemberPage() {
                 <div className="text-center py-10 text-gray-400 border-2 border-dashed border-gray-200 rounded-xl">
                   <p className="text-3xl mb-2">🛒</p>
                   <p className="text-sm">尚無購買記錄</p>
-                  <button
-                    onClick={() => handleTabChange('points')}
-                    className="mt-3 px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 transition-colors"
-                  >
-                    立即購買點數
-                  </button>
+                  <Link href="/subscribe">
+                    <button className="mt-3 px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 transition-colors">
+                      前往訂閱方案
+                    </button>
+                  </Link>
                 </div>
               )}
             </div>

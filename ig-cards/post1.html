@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<style>
+  html { display:flex; justify-content:center; align-items:center; min-height:100vh; background:#111; }
+  .scale-wrapper { transform-origin: center center; }
+</style>
+<script>
+  window.addEventListener("load", function() {
+    var s = Math.min(window.innerWidth/1080, window.innerHeight/1080);
+    document.querySelector("body").style.transform = "scale(" + s + ")";
+    document.querySelector("body").style.transformOrigin = "top left";
+    document.querySelector("html").style.display = "flex";
+    document.querySelector("html").style.justifyContent = "center";
+    document.querySelector("html").style.alignItems = "center";
+    document.querySelector("html").style.minHeight = "100vh";
+    document.querySelector("html").style.background = "#111";
+  });
+</script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1080px;
+    height: 1080px;
+    background: linear-gradient(145deg, #1a1008 0%, #2d1e0a 40%, #1a1008 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Noto Serif TC', 'Microsoft JhengHei', serif;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* 裝飾背景圓 */
+  .bg-circle-1 {
+    position: absolute;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    border: 1px solid rgba(212,165,116,0.08);
+    top: -100px; right: -100px;
+  }
+  .bg-circle-2 {
+    position: absolute;
+    width: 400px; height: 400px;
+    border-radius: 50%;
+    border: 1px solid rgba(212,165,116,0.06);
+    bottom: -80px; left: -80px;
+  }
+
+  .card {
+    width: 900px;
+    padding: 80px 90px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  .top-line {
+    width: 60px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #D4A574, transparent);
+    margin-bottom: 40px;
+  }
+
+  .label {
+    font-size: 22px;
+    color: #D4A574;
+    letter-spacing: 6px;
+    margin-bottom: 50px;
+    font-weight: 300;
+  }
+
+  .main-text {
+    font-size: 52px;
+    color: #f5ead8;
+    line-height: 1.7;
+    margin-bottom: 50px;
+    font-weight: 400;
+  }
+
+  .main-text em {
+    font-style: normal;
+    color: #D4A574;
+  }
+
+  .divider {
+    width: 120px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #D4A574, transparent);
+    margin: 20px auto 40px;
+  }
+
+  .sub-text {
+    font-size: 30px;
+    color: #c4a882;
+    line-height: 1.8;
+    margin-bottom: 60px;
+    font-weight: 300;
+  }
+
+  .cta {
+    font-size: 24px;
+    color: #1a1008;
+    background: linear-gradient(135deg, #D4A574, #b8874a);
+    padding: 18px 50px;
+    border-radius: 50px;
+    letter-spacing: 3px;
+    font-weight: 500;
+  }
+
+  .bottom-logo {
+    position: absolute;
+    bottom: 50px;
+    right: 80px;
+    font-size: 22px;
+    color: rgba(212,165,116,0.5);
+    letter-spacing: 2px;
+  }
+</style>
+</head>
+<body>
+  <div class="bg-circle-1"></div>
+  <div class="bg-circle-2"></div>
+
+  <div class="card">
+    <div class="top-line"></div>
+    <div class="label">命 理 ・ 智 慧</div>
+
+    <div class="main-text">
+      為什麼同樣努力，<br>
+      有人輕鬆成功，<br>
+      有人卻事倍功半？
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="sub-text">
+      答案，就藏在你的<em>八字・紫微</em>中<br><br>
+      玉洞子老師鑽研八字・紫微斗數逾三十年<br>
+      不算神秘・遵守古法・科學驗證<br>
+      以古談今，<em>開創彩色人生</em>
+    </div>
+
+    <div class="cta">每週分享命理知識，歡迎追蹤</div>
+  </div>
+
+  <div class="bottom-logo">玉洞子星相古學堂 ・ yudongzi.tw</div>
+</body>
+</html>

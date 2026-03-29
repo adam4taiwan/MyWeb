@@ -27,15 +27,13 @@ interface Plan {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://ecanapi.fly.dev/api';
 
-const PLAN_META: Record<string, { badge: string; color: string; border: string; btnClass: string; highlight: boolean; pointsValue: number; savingLabel: string }> = {
+const PLAN_META: Record<string, { badge: string; color: string; border: string; btnClass: string; highlight: boolean }> = {
   BRONZE: {
     badge: '銅會員',
     color: 'from-amber-700 to-amber-900',
     border: 'border-amber-300',
     btnClass: 'bg-amber-600 hover:bg-amber-700 text-white',
     highlight: false,
-    pointsValue: 1500,
-    savingLabel: '省 NT$300',
   },
   SILVER: {
     badge: '銀會員',
@@ -43,8 +41,6 @@ const PLAN_META: Record<string, { badge: string; color: string; border: string; 
     border: 'border-slate-400',
     btnClass: 'bg-slate-600 hover:bg-slate-700 text-white',
     highlight: true,
-    pointsValue: 2500,
-    savingLabel: '省 NT$700',
   },
   GOLD: {
     badge: '金會員',
@@ -52,8 +48,6 @@ const PLAN_META: Record<string, { badge: string; color: string; border: string; 
     border: 'border-yellow-400',
     btnClass: 'bg-yellow-500 hover:bg-yellow-600 text-white',
     highlight: false,
-    pointsValue: 4000,
-    savingLabel: '省 NT$1,500',
   },
 };
 
@@ -164,21 +158,6 @@ export default function SubscribePage() {
                       NT${plan.priceTwd.toLocaleString()}
                       <span className="text-sm font-normal opacity-80 ml-1">/ 年</span>
                     </p>
-                    {/* 點數對價區塊 */}
-                    <div className="mt-3 bg-white/15 rounded-lg px-3 py-2 space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs opacity-75">方案含點數</span>
-                        <span className="text-sm font-bold">{meta.pointsValue / 10} 點</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs opacity-75">點數市值（1點=NT$10）</span>
-                        <span className="text-sm font-bold">NT${meta.pointsValue.toLocaleString()}</span>
-                      </div>
-                      <div className="border-t border-white/20 pt-1 flex items-center justify-between">
-                        <span className="text-xs opacity-75">訂閱實付</span>
-                        <span className="text-sm font-bold text-green-300">{meta.savingLabel}</span>
-                      </div>
-                    </div>
                     {plan.description && (
                       <p className="text-xs opacity-70 mt-2">{plan.description}</p>
                     )}

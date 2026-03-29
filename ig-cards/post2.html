@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<style>
+  html { display:flex; justify-content:center; align-items:center; min-height:100vh; background:#111; }
+  .scale-wrapper { transform-origin: center center; }
+</style>
+<script>
+  window.addEventListener("load", function() {
+    var s = Math.min(window.innerWidth/1080, window.innerHeight/1080);
+    document.querySelector("body").style.transform = "scale(" + s + ")";
+    document.querySelector("body").style.transformOrigin = "top left";
+    document.querySelector("html").style.display = "flex";
+    document.querySelector("html").style.justifyContent = "center";
+    document.querySelector("html").style.alignItems = "center";
+    document.querySelector("html").style.minHeight = "100vh";
+    document.querySelector("html").style.background = "#111";
+  });
+</script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1080px;
+    height: 1080px;
+    background: linear-gradient(145deg, #1a1008 0%, #2d1e0a 40%, #1a1008 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Noto Serif TC', 'Microsoft JhengHei', serif;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .bg-circle-1 {
+    position: absolute;
+    width: 500px; height: 500px;
+    border-radius: 50%;
+    border: 1px solid rgba(212,165,116,0.08);
+    top: -80px; left: -80px;
+  }
+
+  .card {
+    width: 920px;
+    padding: 60px 80px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .title {
+    font-size: 48px;
+    color: #D4A574;
+    text-align: center;
+    letter-spacing: 4px;
+    margin-bottom: 16px;
+    font-weight: 500;
+  }
+
+  .title-sub {
+    font-size: 24px;
+    color: #8a7055;
+    text-align: center;
+    letter-spacing: 3px;
+    margin-bottom: 50px;
+  }
+
+  .compare-row {
+    display: flex;
+    gap: 30px;
+    margin-bottom: 40px;
+  }
+
+  .compare-box {
+    flex: 1;
+    background: rgba(212,165,116,0.06);
+    border: 1px solid rgba(212,165,116,0.2);
+    border-radius: 16px;
+    padding: 36px 30px;
+  }
+
+  .compare-box.highlight {
+    background: rgba(212,165,116,0.12);
+    border-color: rgba(212,165,116,0.4);
+  }
+
+  .box-title {
+    font-size: 34px;
+    color: #D4A574;
+    text-align: center;
+    margin-bottom: 24px;
+    font-weight: 500;
+  }
+
+  .box-item {
+    font-size: 24px;
+    color: #c4a882;
+    line-height: 1.8;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(212,165,116,0.1);
+  }
+
+  .box-item:last-child { border-bottom: none; }
+
+  .box-item span {
+    color: #f5ead8;
+  }
+
+  .conclusion {
+    text-align: center;
+    font-size: 28px;
+    color: #f5ead8;
+    line-height: 1.8;
+    padding: 30px;
+    background: rgba(212,165,116,0.08);
+    border-radius: 12px;
+    border-left: 3px solid #D4A574;
+  }
+
+  .conclusion em {
+    font-style: normal;
+    color: #D4A574;
+  }
+
+  .bottom-logo {
+    position: absolute;
+    bottom: 40px;
+    right: 80px;
+    font-size: 22px;
+    color: rgba(212,165,116,0.4);
+    letter-spacing: 2px;
+  }
+</style>
+</head>
+<body>
+  <div class="bg-circle-1"></div>
+
+  <div class="card">
+    <div class="title">八字 vs 紫微斗數</div>
+    <div class="title-sub">兩套系統，各有所長</div>
+
+    <div class="compare-row">
+      <div class="compare-box">
+        <div class="box-title">八字</div>
+        <div class="box-item"><span>定根基</span>、五行體質</div>
+        <div class="box-item">人生主軸與命運走向</div>
+        <div class="box-item">能量強弱・用神忌神</div>
+        <div class="box-item">適合論<span>人生整體方向</span></div>
+      </div>
+      <div class="compare-box highlight">
+        <div class="box-title">紫微斗數</div>
+        <div class="box-item"><span>論造化</span>、宮位</div>
+        <div class="box-item">人際關係・婚姻財運</div>
+        <div class="box-item">星曜四化・大限流年</div>
+        <div class="box-item">適合論<span>具體人生事件</span></div>
+      </div>
+    </div>
+
+    <div class="conclusion">
+      兩套<em>同時成立</em>才提出論斷<br>
+      這是玉洞子老師鑑定的核心方法
+    </div>
+  </div>
+
+  <div class="bottom-logo">玉洞子星相古學堂 ・ yudongzi.tw</div>
+</body>
+</html>

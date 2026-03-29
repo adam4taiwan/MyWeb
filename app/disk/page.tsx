@@ -58,7 +58,6 @@ export default function DiskPage() {
 
   const [report, setReport] = useState('');
   const [reportTitle, setReportTitle] = useState('命理鑑定書');
-  const [remainingPoints, setRemainingPoints] = useState<number | null>(null);
   const [lifelongCycles, setLifelongCycles] = useState<Array<{stem:string;branch:string;liuShen:string;startAge:number;endAge:number;score:number;level:string}> | null>(null);
   const [annualForecasts, setAnnualForecasts] = useState<Array<{year:number;age:number;stemBranch:string;daiyunStem:string;daiyunBranch:string;baziScore:number;ziweiScore:number;crossClass:string;summary:string}> | null>(null);
   const [monthlyForecasts, setMonthlyForecasts] = useState<Array<{month:number;label:string;stemBranch:string;season:string;flowStar:string;baziHint:string;crossClass:string;baziScore:number;ziweiScore:number;tip:string}> | null>(null);
@@ -69,7 +68,6 @@ export default function DiskPage() {
   } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingText, setLoadingText] = useState('命理鑑定計算中...');
-  const [purchaseLoading, setPurchaseLoading] = useState(false);
   const [profileSaving, setProfileSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState('');
 
@@ -110,7 +108,6 @@ export default function DiskPage() {
             minute: data.birthMinute ?? 0,
           });
         }
-        setRemainingPoints(data.points ?? 0);
         setIsAdmin(data.isAdmin === true);
         setProfileLoaded(true);
       }
@@ -163,67 +160,31 @@ export default function DiskPage() {
     } catch { setSaveMsg('儲存失敗，請稍後再試'); } finally { setProfileSaving(false); }
   };
 
-  const syncPoints = async () => {
-    try {
-      if (!token) return;
-      const res = await fetch(`${API_URL}/Consultation/analyze`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ type: '同步查詢', chartRequest: formData })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setRemainingPoints(data.remainingPoints ?? data.points ?? 0);
-      }
-    } catch (err) { console.error("同步失敗", err); }
-  };
-
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (token) loadProfile(); }, [token]);
 
-  // Subscription discount rates: book / consultation
-  const [subscriptionDiscount, setSubscriptionDiscount] = useState<{ book: number; consultation: number }>({ book: 1.0, consultation: 1.0 });
+  interface SubscriptionQuota {
+    productCode: string;
+    total: number;
+    used: number;
+    remaining: number;
+  }
+  interface SubStatus {
+    isSubscribed: boolean;
+    planCode?: string;
+    planName?: string;
+    expiryDate?: string;
+    quotaStatus?: SubscriptionQuota[];
+  }
+  const [subStatus, setSubStatus] = useState<SubStatus | null>(null);
 
   useEffect(() => {
     if (!token) return;
-    fetch(`${API_URL}/Subscription/status`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    fetch(`${API_URL}/Subscription/status`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        if (data?.isSubscribed && data.benefits) {
-          const bookB = data.benefits.find((b: { benefitType: string; productType: string | null; benefitValue: string }) =>
-            b.benefitType === 'discount' && b.productType === 'book'
-          );
-          const consultB = data.benefits.find((b: { benefitType: string; productType: string | null; benefitValue: string }) =>
-            b.benefitType === 'discount' && b.productType === 'consultation'
-          );
-          setSubscriptionDiscount({
-            book: bookB ? parseFloat(bookB.benefitValue) : 1.0,
-            consultation: consultB ? parseFloat(consultB.benefitValue) : 1.0,
-          });
-        }
-      })
+      .then(data => { if (data) setSubStatus(data); })
       .catch(() => {});
   }, [token, API_URL]);
-
-  const getEffectiveCost = (baseCost: number, productType: 'book' | 'consultation'): number => {
-    const rate = subscriptionDiscount[productType];
-    return rate < 1.0 ? Math.ceil(baseCost * rate) : baseCost;
-  };
-
-  const renderCostBadge = (baseCost: number, productType: 'book' | 'consultation', isSelected: boolean) => {
-    const effective = getEffectiveCost(baseCost, productType);
-    const hasDiscount = effective < baseCost;
-    const badgeClass = isSelected ? 'bg-amber-600 text-white' : 'bg-amber-50 text-amber-700';
-    return (
-      <span className={`text-xs font-bold px-2 py-1 rounded-full ${badgeClass}`}>
-        {hasDiscount ? (
-          <><span className="line-through opacity-60 mr-0.5">{baseCost}</span>{effective}</>
-        ) : baseCost} 點
-      </span>
-    );
-  };
 
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   useEffect(() => {
@@ -330,11 +291,6 @@ export default function DiskPage() {
     if ((reportType === '八字命書' || reportType === '大運命書' || reportType === '流年命書' || reportType === '問事') && !profileLoaded) {
       return alert(`${reportType === '問事' ? '主題命書' : reportType}需要先儲存生辰資料，請先填寫並儲存您的生辰。`);
     }
-    const selectedProductType = reportType === '問事' ? 'consultation' : 'book';
-    const selectedEffectiveCost = getEffectiveCost(selected.cost, selectedProductType);
-    if (remainingPoints !== null && remainingPoints < selectedEffectiveCost) {
-      return alert(`點數不足，此功能需要 ${selectedEffectiveCost} 點`);
-    }
     setLoadingText((reportType === '綜合性命書' || reportType === '八字命書') && profileLoaded
       ? '知識庫命書生成中，請稍候...'
       : reportType === '大運命書' && profileLoaded
@@ -401,7 +357,6 @@ export default function DiskPage() {
       const data = await res.json();
       if (res.ok) {
         setReport(cleanReport(data.result || data.analysis || ''));
-        setRemainingPoints(data.remainingPoints);
         if (data.luckCycles) setLifelongCycles(data.luckCycles);
         else setLifelongCycles(null);
         if (data.baziTable) setBaziTable(data.baziTable);
@@ -620,7 +575,6 @@ ${bodyHtml}
       if (data.yongJiTable) setYongJiTable(data.yongJiTable); else setYongJiTable(null);
       if (data.luckCycles) setLifelongCycles(data.luckCycles); else setLifelongCycles(null);
       setReportTitle('玉洞子命書（內部版）');
-      if (data.remainingPoints !== undefined) setRemainingPoints(data.remainingPoints);
     } catch (err: unknown) {
       if (err instanceof Error && err.name === 'AbortError') alert('請求逾時，請稍後再試。');
       else alert('玉洞子命書生成失敗：' + String(err));
@@ -683,33 +637,6 @@ ${bodyHtml}
     return () => { cancelled = true; };
   }, [captureMode]);
 
-  const handlePurchase = async (packageId = 'starter') => {
-    setPurchaseLoading(true);
-    try {
-      const res = await fetch(`${API_URL}/Payment/create-ecpay-checkout`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ packageId })
-      });
-      const data = await res.json();
-      if (data.actionUrl && data.parameters) {
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = data.actionUrl;
-        Object.entries(data.parameters).forEach(([key, value]) => {
-          const input = document.createElement('input');
-          input.type = 'hidden';
-          input.name = key;
-          input.value = String(value);
-          form.appendChild(input);
-        });
-        document.body.appendChild(form);
-        form.submit();
-      } else {
-        alert(data.message || '儲值失敗，請稍後再試');
-      }
-    } catch { alert("支付跳轉失敗"); } finally { setPurchaseLoading(false); }
-  };
 
   const selected = getSelectedType();
 
@@ -720,7 +647,7 @@ ${bodyHtml}
       {paymentSuccess && (
         <div className="fixed top-16 left-0 right-0 z-[90] flex justify-center px-4 pointer-events-none">
           <div className="bg-green-600 text-white px-6 py-3 rounded-2xl shadow-lg text-sm font-bold flex items-center gap-2">
-            <span>儲值成功！點數已入帳</span>
+            <span>訂閱成功！已啟用會員方案</span>
             <button className="pointer-events-auto text-white/80 hover:text-white ml-2" onClick={() => setPaymentSuccess(false)}>x</button>
           </div>
         </div>
@@ -755,16 +682,11 @@ ${bodyHtml}
                   <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-3 py-1.5 rounded-xl border border-gray-200 outline-none focus:border-amber-500" />
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 items-end">
-                  <div>
-                    <label className="block text-gray-600 mb-1 font-bold text-xs">性別</label>
-                    <select value={formData.gender} onChange={(e) => setFormData({ ...formData, gender: e.target.value })} className="w-full px-3 py-1.5 rounded-xl border border-gray-200">
-                      <option value="1">乾造 (男)</option><option value="2">坤造 (女)</option>
-                    </select>
-                  </div>
-                  <div className="text-amber-700 font-bold bg-amber-50 px-3 py-1.5 rounded-xl text-center text-xs border border-amber-100">
-                    餘額：{remainingPoints !== null ? remainingPoints : '--'} 點
-                  </div>
+                <div>
+                  <label className="block text-gray-600 mb-1 font-bold text-xs">性別</label>
+                  <select value={formData.gender} onChange={(e) => setFormData({ ...formData, gender: e.target.value })} className="w-full px-3 py-1.5 rounded-xl border border-gray-200">
+                    <option value="1">乾造 (男)</option><option value="2">坤造 (女)</option>
+                  </select>
                 </div>
 
                 <div className="grid grid-cols-3 gap-2">
@@ -825,7 +747,6 @@ ${bodyHtml}
                         <div className="font-bold text-sm">{rt.label}</div>
                         <div className={`text-xs mt-0.5 ${reportType === rt.key ? 'text-amber-200' : 'text-gray-400'}`}>{rt.desc}</div>
                       </div>
-                      {renderCostBadge(rt.cost, rt.key === '問事' ? 'consultation' : 'book', reportType === rt.key)}
                     </div>
                   </button>
                 ))}
@@ -846,7 +767,6 @@ ${bodyHtml}
                           }`}
                       >
                         <span>{d.label}</span>
-                        {renderCostBadge(d.cost, 'book', fortuneDuration === d.value)}
                       </button>
                     ))}
                   </div>
@@ -868,8 +788,7 @@ ${bodyHtml}
                     ))}
                   </select>
                   <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-xs text-amber-800">
-                    <div className="font-bold mb-0.5">流年命書計費說明</div>
-                    <div>每選擇一個年份消耗 <span className="font-bold text-amber-900">{getEffectiveCost(100, 'book')} 點</span>{getEffectiveCost(100, 'book') < 100 && <span className="line-through opacity-60 ml-1 text-xs">100</span>}</div>
+                    <div className="font-bold mb-0.5">流年命書（訂閱 SILVER 以上）</div>
                     <div className="text-amber-600 mt-0.5">包含：八字·太歲·生肖·盲派·紫微四化 + 逐月分析</div>
                   </div>
                 </div>
@@ -893,7 +812,7 @@ ${bodyHtml}
                 onClick={handleAnalysis}
                 className="mt-4 w-full bg-amber-800 text-white font-bold py-3 rounded-2xl text-sm shadow-md hover:bg-amber-900 transition-all"
               >
-                啟動{selected.label} ({getEffectiveCost(selected.cost, reportType === '問事' ? 'consultation' : 'book')} 點)
+                啟動{selected.label}
               </button>
 
               {isAdmin && (
@@ -919,10 +838,30 @@ ${bodyHtml}
 
           {/* 右側：命書結果 */}
           <div className="md:col-span-8">
-            <div className="mb-4 bg-gradient-to-r from-amber-800 to-amber-950 p-4 rounded-[2rem] text-white flex justify-between items-center shadow-lg">
-              <div><p className="text-xs text-white/80">PREMIUM CREDITS</p><p className="font-bold text-white">NT$ 500 / 50 點</p></div>
-              <button onClick={() => handlePurchase('starter')} disabled={purchaseLoading} className="bg-white text-amber-900 px-6 py-2 rounded-full font-bold text-sm shadow-sm active:scale-95 transition-all">{purchaseLoading ? "處理中..." : "立即儲值"}</button>
-            </div>
+            {subStatus ? (
+              subStatus.isSubscribed ? (
+                <div className="mb-4 bg-gradient-to-r from-amber-800 to-amber-950 p-4 rounded-[2rem] text-white flex justify-between items-center shadow-lg">
+                  <div>
+                    <p className="text-xs text-white/80">訂閱方案</p>
+                    <p className="font-bold text-white">{subStatus.planName}</p>
+                  </div>
+                  <div className="text-right text-xs text-white/80 space-y-0.5">
+                    {subStatus.quotaStatus?.map(q => (
+                      <div key={q.productCode}>{
+                        q.productCode === 'BOOK_BAZI' ? '八字命書' :
+                        q.productCode === 'BOOK_LIUNIAN' ? '流年命書' :
+                        q.productCode === 'BOOK_DAIYUN' ? '大運命書' : q.productCode
+                      }：剩餘 {q.remaining}/{q.total}</div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="mb-4 bg-gray-100 border border-amber-200 p-4 rounded-[2rem] flex justify-between items-center">
+                  <p className="text-sm text-gray-600">尚未訂閱，無法使用命書功能</p>
+                  <a href="/subscribe" className="bg-amber-700 text-white px-5 py-2 rounded-full font-bold text-sm">訂閱方案</a>
+                </div>
+              )
+            ) : null}
 
             {report ? (
               <div className="space-y-4">
