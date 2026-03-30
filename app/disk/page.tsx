@@ -21,13 +21,6 @@ const REPORT_TYPES = [
   { key: '流年命書', label: '流年命書', desc: '五術合一年度全方位推演' },
 ] as const;
 
-const FORTUNE_DURATIONS = [
-  { value: 5, label: '5年大運' },
-  { value: 10, label: '10年大運' },
-  { value: 20, label: '20年大運' },
-  { value: 30, label: '30年大運' },
-  { value: 0, label: '終身大運' },
-];
 
 type ReportTypeKey = typeof REPORT_TYPES[number]['key'];
 
@@ -56,8 +49,7 @@ export default function DiskPage() {
   const [isAdmin, setIsAdmin] = useState(false);
 
   const [reportType, setReportType] = useState<ReportTypeKey>('綜合性命書');
-  const [targetYear, setTargetYear] = useState(currentYear);
-  const [fortuneDuration, setFortuneDuration] = useState(5);
+  const targetYear = currentYear;
 
   const [report, setReport] = useState('');
   const [reportTitle, setReportTitle] = useState('命理鑑定書');
@@ -283,8 +275,7 @@ export default function DiskPage() {
   const getSelectedType = () => {
     const base = REPORT_TYPES.find(t => t.key === reportType)!;
     if (reportType === '大運命書') {
-      const dur = FORTUNE_DURATIONS.find(d => d.value === fortuneDuration)!;
-      return { ...base, label: dur.label };
+      return { ...base, label: '5年大運' };
     }
     return base;
   };
@@ -304,8 +295,8 @@ export default function DiskPage() {
     const confirmMessages: Record<string, string> = {
       '綜合性命書': '綜合命書本訂閱週期僅可使用 1 次。\n\n確認後即扣除本期使用次數，命書產生後可重複下載，但離開頁面後需再扣一次才可重新產生。\n\n確定要執行嗎？',
       '八字命書': '八字命書本訂閱週期僅可使用 1 次。\n\n確認後即扣除本期使用次數，命書產生後可重複下載，但離開頁面後需再扣一次才可重新產生。\n\n確定要執行嗎？',
-      '大運命書': `大運命書（${fortuneDuration === 0 ? '終身' : fortuneDuration + '年'}）本訂閱週期僅可使用 1 次。\n\n確認後即扣除本期使用次數，命書產生後可重複下載，但離開頁面後需再扣一次才可重新產生。\n\n確定要執行嗎？`,
-      '流年命書': `流年命書本訂閱週期僅可使用 1 次。\n選擇年份：${targetYear} 年\n\n確認後即扣除本期使用次數，命書產生後可重複下載，但離開頁面後需再扣一次才可重新產生。\n\n確定要執行嗎？`,
+      '大運命書': `大運命書（5年大運）本訂閱週期僅可使用 1 次。\n\n確認後即扣除本期使用次數，命書產生後可重複下載，但離開頁面後需再扣一次才可重新產生。\n\n確定要執行嗎？`,
+      '流年命書': `流年命書本訂閱週期僅可使用 1 次。\n鑑定年份：${targetYear} 年（今年）\n\n確認後即扣除本期使用次數，命書產生後可重複下載，但離開頁面後需再扣一次才可重新產生。\n\n確定要執行嗎？`,
     };
     if (!window.confirm(confirmMessages[reportType] ?? '確定要執行嗎？')) return;
 
@@ -315,7 +306,7 @@ export default function DiskPage() {
     setLoadingText((reportType === '綜合性命書' || reportType === '八字命書') && profileLoaded
       ? '知識庫命書生成中，請稍候...'
       : reportType === '大運命書' && profileLoaded
-      ? `大運命書（${fortuneDuration === 0 ? '終身' : fortuneDuration + '年'}）生成中，請稍候...`
+      ? '大運命書（5年大運）生成中，請稍候...'
       : reportType === '流年命書'
       ? `流年命書（${targetYear} 年，五術合一）生成中，請稍候...`
       : '命理鑑定計算中，複雜命書需 1-2 分鐘，請耐心等候...');
@@ -326,7 +317,6 @@ export default function DiskPage() {
         chartRequest: formData,
       };
       if (reportType === '流年命書') body.targetYear = targetYear;
-      if (reportType === '大運命書') body.fortuneDuration = fortuneDuration;
 
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 5 * 60 * 1000);
@@ -346,7 +336,7 @@ export default function DiskPage() {
           signal: controller.signal
         });
       } else if (reportType === '大運命書' && profileLoaded) {
-        res = await fetch(`${API_URL}/Consultation/analyze-daiyun?years=${fortuneDuration}`, {
+        res = await fetch(`${API_URL}/Consultation/analyze-daiyun?years=5`, {
           method: 'GET',
           headers: { 'Authorization': `Bearer ${token}` },
           signal: controller.signal
@@ -380,11 +370,10 @@ export default function DiskPage() {
         if (data.monthlyForecasts) setMonthlyForecasts(data.monthlyForecasts);
         else setMonthlyForecasts(null);
         // 設定報告標題
-        const durLabel = FORTUNE_DURATIONS.find(d => d.value === fortuneDuration)?.label ?? '大運';
         const titles: Record<ReportTypeKey, string> = {
           '綜合性命書': '綜合命理鑑定書',
           '八字命書': '八字命書',
-          '大運命書': `${durLabel}鑑定書`,
+          '大運命書': '5年大運鑑定書',
           '流年命書': `${targetYear} 年流年鑑定書`,
         };
         setReportTitle(titles[reportType]);
@@ -739,43 +728,21 @@ ${bodyHtml}
                 })}
               </div>
 
-              {/* 大運命書：年數選擇 */}
+              {/* 大運命書：固定 5年大運 */}
               {reportType === '大運命書' && (
                 <div className="mt-3 pt-3 border-t border-gray-100">
-                  <label className="block text-gray-600 mb-2 font-bold text-xs">鑑定年限（以目前年齡起算）</label>
-                  <div className="grid grid-cols-1 gap-1.5">
-                    {FORTUNE_DURATIONS.map(d => (
-                      <button
-                        key={d.value}
-                        onClick={() => setFortuneDuration(d.value)}
-                        className={`flex justify-between items-center px-3 py-2 rounded-xl border text-xs font-bold transition-all ${fortuneDuration === d.value
-                          ? 'bg-amber-700 text-white border-amber-700'
-                          : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-amber-300'
-                          }`}
-                      >
-                        <span>{d.label}</span>
-                      </button>
-                    ))}
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-xs text-amber-800">
+                    <div className="font-bold mb-0.5">大運命書（5年大運）</div>
+                    <div className="text-amber-600 mt-0.5">逐月依干支合沖刑害破、神煞、六神、紫微四化分析</div>
                   </div>
-                  <p className="text-[10px] text-gray-400 mt-2">逐月依干支合沖刑害破、神煞、六神、紫微四化分析</p>
                 </div>
               )}
 
-              {/* 流年命書：年份選擇 */}
+              {/* 流年命書：固定今年 */}
               {reportType === '流年命書' && (
                 <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
-                  <label className="block text-gray-600 font-bold text-xs">指定年份（僅限當年及未來）</label>
-                  <select
-                    value={targetYear}
-                    onChange={(e) => setTargetYear(parseInt(e.target.value))}
-                    className="w-full px-3 py-1.5 rounded-xl border border-gray-200 text-sm"
-                  >
-                    {Array.from({ length: 6 }, (_, i) => currentYear + i).map(y => (
-                      <option key={y} value={y}>{y} 年{y === currentYear ? '（今年）' : ''}</option>
-                    ))}
-                  </select>
                   <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-xs text-amber-800">
-                    <div className="font-bold mb-0.5">流年命書（訂閱 SILVER 以上）</div>
+                    <div className="font-bold mb-0.5">流年命書（{currentYear} 年 · 今年）</div>
                     <div className="text-amber-600 mt-0.5">包含：八字·太歲·生肖·盲派·紫微四化 + 逐月分析</div>
                   </div>
                 </div>
