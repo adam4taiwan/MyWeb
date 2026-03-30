@@ -11,7 +11,7 @@ interface Testimonial {
 const testimonials: Testimonial[] = [
   {
     rating: 5,
-    text: '玉洞子的分析太準確了！特別是對我事業發展的建議，直接改變了我的人生方向。強烈推薦所有需要命理指引的人！',
+    text: '玉洞子的分析！特別是對我事業發展的建議，直接改變了我的人生方向。強烈推薦所有需要命理指引的人！',
     author: '王小姐',
     role: '企業高管',
     age: '40 歲',
