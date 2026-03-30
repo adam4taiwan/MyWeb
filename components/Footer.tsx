@@ -78,8 +78,6 @@ export default function Footer() {
             <ul className="space-y-2 text-gray-400">
               <li><Link href="/books" className="hover:text-white transition-colors cursor-pointer">古籍典藏</Link></li>
               <li><Link href="/bookstore" className="hover:text-white transition-colors cursor-pointer">二手書交易</Link></li>
-              <li><Link href="/heritage" className="hover:text-white transition-colors cursor-pointer">在線課程</Link></li>
-              <li><Link href="/heritage" className="hover:text-white transition-colors cursor-pointer">圖形化教學</Link></li>
             </ul>
           </div>
           
