@@ -43,8 +43,8 @@ export default function HeroSection({ showSubscribeNudge = false }: { showSubscr
             <p className="text-sm text-brand-100 mt-2">活躍用戶</p>
           </div>
           <div className="text-center">
-            <p className="text-3xl md:text-4xl font-bold text-brand-300">95%</p>
-            <p className="text-sm text-brand-100 mt-2">滿意度</p>
+            <p className="text-3xl md:text-4xl font-bold text-brand-300">90%</p>
+            <p className="text-sm text-brand-100 mt-2">信賴度</p>
           </div>
           <div className="text-center">
             <p className="text-3xl md:text-4xl font-bold text-brand-300">30年</p>
