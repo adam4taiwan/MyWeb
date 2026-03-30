@@ -168,7 +168,9 @@ export default function DiskPage() {
     isSubscribed: boolean;
     planCode?: string;
     planName?: string;
+    startDate?: string;
     expiryDate?: string;
+    birthdateLocked?: boolean;
     quotaStatus?: SubscriptionQuota[];
   }
   const [subStatus, setSubStatus] = useState<SubStatus | null>(null);
@@ -181,8 +183,13 @@ export default function DiskPage() {
       .catch(() => {});
   }, [token, API_URL]);
 
-  const canUseService = (key: ReportTypeKey): 'available' | 'used' | 'locked' | 'no_subscription' => {
+  const canUseService = (key: ReportTypeKey): 'available' | 'used' | 'locked' | 'no_subscription' | 'cross_year' => {
     if (!subStatus || !subStatus.isSubscribed) return 'no_subscription';
+    // Cross-year check for 流年 and 大運: subscription must have started in the current year
+    if ((key === '流年命書' || key === '大運命書') && subStatus.startDate) {
+      const subStartYear = new Date(subStatus.startDate).getFullYear();
+      if (subStartYear < currentYear) return 'cross_year';
+    }
     const productCode = PRODUCT_CODE_MAP[key];
     if (!productCode) return 'available';
     const quota = subStatus.quotaStatus?.find(q => q.productCode === productCode);
@@ -292,11 +299,14 @@ export default function DiskPage() {
     }
 
     // 執行前確認（扣配額不可逆）
+    const lockWarning = !subStatus?.birthdateLocked
+      ? '\n\n【重要提醒】命書列印啟動成功後，出生時辰將永久鎖定，不可再更改，請確認出生日時正確無誤。'
+      : '';
     const confirmMessages: Record<string, string> = {
-      '綜合性命書': '綜合命書本訂閱週期僅可使用 1 次。\n\n確認後即扣除本期使用次數，命書產生後可重複下載，但離開頁面後需再扣一次才可重新產生。\n\n確定要執行嗎？',
-      '八字命書': '八字命書本訂閱週期僅可使用 1 次。\n\n確認後即扣除本期使用次數，命書產生後可重複下載，但離開頁面後需再扣一次才可重新產生。\n\n確定要執行嗎？',
-      '大運命書': `大運命書（5年大運）本訂閱週期僅可使用 1 次。\n\n確認後即扣除本期使用次數，命書產生後可重複下載，但離開頁面後需再扣一次才可重新產生。\n\n確定要執行嗎？`,
-      '流年命書': `流年命書本訂閱週期僅可使用 1 次。\n鑑定年份：${targetYear} 年（今年）\n\n確認後即扣除本期使用次數，命書產生後可重複下載，但離開頁面後需再扣一次才可重新產生。\n\n確定要執行嗎？`,
+      '綜合性命書': `綜合命書本訂閱週期僅可使用 1 次。\n\n確認後即扣除本期使用次數，命書產生後可重複下載，但離開頁面後需再扣一次才可重新產生。${lockWarning}\n\n確定要執行嗎？`,
+      '八字命書': `八字命書本訂閱週期僅可使用 1 次。\n\n確認後即扣除本期使用次數，命書產生後可重複下載，但離開頁面後需再扣一次才可重新產生。${lockWarning}\n\n確定要執行嗎？`,
+      '大運命書': `大運命書（5年大運）本訂閱週期僅可使用 1 次。\n\n確認後即扣除本期使用次數，命書產生後可重複下載，但離開頁面後需再扣一次才可重新產生。${lockWarning}\n\n確定要執行嗎？`,
+      '流年命書': `流年命書本訂閱週期僅可使用 1 次。\n鑑定年份：${targetYear} 年（今年）\n\n確認後即扣除本期使用次數，命書產生後可重複下載，但離開頁面後需再扣一次才可重新產生。${lockWarning}\n\n確定要執行嗎？`,
     };
     if (!window.confirm(confirmMessages[reportType] ?? '確定要執行嗎？')) return;
 
@@ -641,38 +651,43 @@ ${bodyHtml}
           <div className="md:col-span-4 space-y-4">
             <div className="bg-white p-5 rounded-3xl shadow-sm border border-orange-100 text-sm">
               <h2 className="text-lg font-bold text-amber-950 mb-4">命主資料</h2>
+              {subStatus?.birthdateLocked && (
+                <div className="mb-3 px-3 py-2 bg-gray-100 border border-gray-300 rounded-xl text-xs text-gray-500 text-center">
+                  命書已產生，生辰資料已鎖定，不可更改
+                </div>
+              )}
               <div className="space-y-3">
                 <div>
                   <label className="block text-gray-600 mb-1 font-bold text-xs">姓名</label>
-                  <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-3 py-1.5 rounded-xl border border-gray-200 outline-none focus:border-amber-500" />
+                  <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} disabled={subStatus?.birthdateLocked} className="w-full px-3 py-1.5 rounded-xl border border-gray-200 outline-none focus:border-amber-500 disabled:bg-gray-50 disabled:text-gray-400" />
                 </div>
 
                 <div>
                   <label className="block text-gray-600 mb-1 font-bold text-xs">性別</label>
-                  <select value={formData.gender} onChange={(e) => setFormData({ ...formData, gender: e.target.value })} className="w-full px-3 py-1.5 rounded-xl border border-gray-200">
+                  <select value={formData.gender} onChange={(e) => setFormData({ ...formData, gender: e.target.value })} disabled={subStatus?.birthdateLocked} className="w-full px-3 py-1.5 rounded-xl border border-gray-200 disabled:bg-gray-50 disabled:text-gray-400">
                     <option value="1">乾造 (男)</option><option value="2">坤造 (女)</option>
                   </select>
                 </div>
 
                 <div className="grid grid-cols-3 gap-2">
-                  <div><label className="text-[10px] text-gray-400">西元年</label><select value={formData.year} onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })} className="w-full border rounded p-1 text-xs">{generateYears().map(y => <option key={y} value={y}>{y}年</option>)}</select></div>
-                  <div><label className="text-[10px] text-gray-400">月</label><select value={formData.month} onChange={(e) => setFormData({ ...formData, month: parseInt(e.target.value) })} className="w-full border rounded p-1 text-xs">{months.map(m => <option key={m} value={m}>{m}月</option>)}</select></div>
-                  <div><label className="text-[10px] text-gray-400">日</label><select value={formData.day} onChange={(e) => setFormData({ ...formData, day: parseInt(e.target.value) })} className="w-full border rounded p-1 text-xs">{days.map(d => <option key={d} value={d}>{d}日</option>)}</select></div>
+                  <div><label className="text-[10px] text-gray-400">西元年</label><select value={formData.year} onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })} disabled={subStatus?.birthdateLocked} className="w-full border rounded p-1 text-xs disabled:bg-gray-50 disabled:text-gray-400">{generateYears().map(y => <option key={y} value={y}>{y}年</option>)}</select></div>
+                  <div><label className="text-[10px] text-gray-400">月</label><select value={formData.month} onChange={(e) => setFormData({ ...formData, month: parseInt(e.target.value) })} disabled={subStatus?.birthdateLocked} className="w-full border rounded p-1 text-xs disabled:bg-gray-50 disabled:text-gray-400">{months.map(m => <option key={m} value={m}>{m}月</option>)}</select></div>
+                  <div><label className="text-[10px] text-gray-400">日</label><select value={formData.day} onChange={(e) => setFormData({ ...formData, day: parseInt(e.target.value) })} disabled={subStatus?.birthdateLocked} className="w-full border rounded p-1 text-xs disabled:bg-gray-50 disabled:text-gray-400">{days.map(d => <option key={d} value={d}>{d}日</option>)}</select></div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
-                  <div><label className="text-[10px] text-gray-400">小時</label><select value={formData.hour} onChange={(e) => setFormData({ ...formData, hour: parseInt(e.target.value) })} className="w-full border rounded p-1 text-xs">{hours.map(h => <option key={h} value={h}>{h}時</option>)}</select></div>
-                  <div><label className="text-[10px] text-gray-400">分鐘</label><select value={formData.minute} onChange={(e) => setFormData({ ...formData, minute: parseInt(e.target.value) })} className="w-full border rounded p-1 text-xs">{minutes.map(m => <option key={m} value={m}>{m}分</option>)}</select></div>
+                  <div><label className="text-[10px] text-gray-400">小時</label><select value={formData.hour} onChange={(e) => setFormData({ ...formData, hour: parseInt(e.target.value) })} disabled={subStatus?.birthdateLocked} className="w-full border rounded p-1 text-xs disabled:bg-gray-50 disabled:text-gray-400">{hours.map(h => <option key={h} value={h}>{h}時</option>)}</select></div>
+                  <div><label className="text-[10px] text-gray-400">分鐘</label><select value={formData.minute} onChange={(e) => setFormData({ ...formData, minute: parseInt(e.target.value) })} disabled={subStatus?.birthdateLocked} className="w-full border rounded p-1 text-xs disabled:bg-gray-50 disabled:text-gray-400">{minutes.map(m => <option key={m} value={m}>{m}分</option>)}</select></div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
                   <button onClick={handleExportXLS} className="w-full bg-emerald-700 text-white font-bold py-2 rounded-xl text-xs shadow-md">下載命盤 XLS</button>
                   <button
                     onClick={saveProfile}
-                    disabled={profileSaving}
-                    className="w-full bg-sky-700 text-white font-bold py-2 rounded-xl text-xs shadow-md disabled:opacity-60"
+                    disabled={profileSaving || subStatus?.birthdateLocked}
+                    className="w-full bg-sky-700 text-white font-bold py-2 rounded-xl text-xs shadow-md disabled:opacity-40 disabled:cursor-not-allowed"
                   >
-                    {profileLoaded ? '更新生辰' : '儲存生辰'}
+                    {subStatus?.birthdateLocked ? '生辰已鎖定' : profileLoaded ? '更新生辰' : '儲存生辰'}
                   </button>
                 </div>
                 {saveMsg && (
@@ -688,7 +703,7 @@ ${bodyHtml}
                     執行下載玉洞子命書docx
                   </button>
                 )}
-                {profileLoaded && (
+                {profileLoaded && !subStatus?.birthdateLocked && (
                   <p className="text-[10px] text-green-600 text-center">已載入會員生辰資料</p>
                 )}
               </div>
@@ -704,6 +719,8 @@ ${bodyHtml}
                     ? <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full shrink-0">可用</span>
                     : svcStatus === 'used'
                     ? <span className="text-[10px] bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full shrink-0">已使用</span>
+                    : svcStatus === 'cross_year'
+                    ? <span className="text-[10px] bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full shrink-0">跨年需重訂</span>
                     : svcStatus === 'locked'
                     ? <span className="text-[10px] bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full shrink-0">升級解鎖</span>
                     : <span className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full shrink-0">需訂閱</span>;
@@ -751,17 +768,19 @@ ${bodyHtml}
 
               {(() => {
                 const btnStatus = canUseService(reportType);
-                const isBlocked = btnStatus === 'used' || btnStatus === 'locked' || btnStatus === 'no_subscription';
+                const isDisabled = btnStatus === 'used' || btnStatus === 'cross_year';
+                const isRedirect = btnStatus === 'locked' || btnStatus === 'no_subscription' || btnStatus === 'cross_year';
                 const btnLabel = btnStatus === 'used' ? '本期已使用'
+                  : btnStatus === 'cross_year' ? '訂閱已跨年，請重新訂閱'
                   : btnStatus === 'locked' ? '升級方案解鎖'
                   : btnStatus === 'no_subscription' ? '訂閱後使用'
                   : `啟動${selected.label}`;
                 return (
                   <button
-                    onClick={isBlocked ? () => { window.location.href = '/subscribe'; } : handleAnalysis}
-                    disabled={btnStatus === 'used'}
+                    onClick={isDisabled ? undefined : isRedirect ? () => { window.location.href = '/subscribe'; } : handleAnalysis}
+                    disabled={isDisabled}
                     className={`mt-4 w-full font-bold py-3 rounded-2xl text-sm shadow-md transition-all ${
-                      btnStatus === 'used'
+                      isDisabled
                         ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                         : btnStatus === 'locked' || btnStatus === 'no_subscription'
                         ? 'bg-amber-600 text-white hover:bg-amber-700'
@@ -772,6 +791,12 @@ ${bodyHtml}
                   </button>
                 );
               })()}
+
+              {!subStatus?.birthdateLocked && subStatus?.isSubscribed && (
+                <p className="mt-2 text-[10px] text-gray-400 text-center leading-relaxed">
+                  請先確認出生日時正確。命書列印啟動成功後，出生時辰將永久鎖定不可更改。
+                </p>
+              )}
 
               {isAdmin && (
                 <button
