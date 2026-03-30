@@ -749,12 +749,29 @@ ${bodyHtml}
               )}
 
 
-              <button
-                onClick={handleAnalysis}
-                className="mt-4 w-full bg-amber-800 text-white font-bold py-3 rounded-2xl text-sm shadow-md hover:bg-amber-900 transition-all"
-              >
-                啟動{selected.label}
-              </button>
+              {(() => {
+                const btnStatus = canUseService(reportType);
+                const isBlocked = btnStatus === 'used' || btnStatus === 'locked' || btnStatus === 'no_subscription';
+                const btnLabel = btnStatus === 'used' ? '本期已使用'
+                  : btnStatus === 'locked' ? '升級方案解鎖'
+                  : btnStatus === 'no_subscription' ? '訂閱後使用'
+                  : `啟動${selected.label}`;
+                return (
+                  <button
+                    onClick={isBlocked ? () => { window.location.href = '/subscribe'; } : handleAnalysis}
+                    disabled={btnStatus === 'used'}
+                    className={`mt-4 w-full font-bold py-3 rounded-2xl text-sm shadow-md transition-all ${
+                      btnStatus === 'used'
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : btnStatus === 'locked' || btnStatus === 'no_subscription'
+                        ? 'bg-amber-600 text-white hover:bg-amber-700'
+                        : 'bg-amber-800 text-white hover:bg-amber-900'
+                    }`}
+                  >
+                    {btnLabel}
+                  </button>
+                );
+              })()}
 
               {isAdmin && (
                 <button
