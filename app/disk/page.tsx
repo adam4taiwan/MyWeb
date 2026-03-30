@@ -300,6 +300,15 @@ export default function DiskPage() {
       return alert('本訂閱週期此服務已使用完畢，請升級方案或等待下一週期。');
     }
 
+    // 執行前確認（扣配額不可逆）
+    const confirmMessages: Record<string, string> = {
+      '綜合性命書': '綜合命書本訂閱週期僅可使用 1 次。\n\n確認後即扣除本期使用次數，命書產生後可重複下載，但離開頁面後需再扣一次才可重新產生。\n\n確定要執行嗎？',
+      '八字命書': '八字命書本訂閱週期僅可使用 1 次。\n\n確認後即扣除本期使用次數，命書產生後可重複下載，但離開頁面後需再扣一次才可重新產生。\n\n確定要執行嗎？',
+      '大運命書': `大運命書（${fortuneDuration === 0 ? '終身' : fortuneDuration + '年'}）本訂閱週期僅可使用 1 次。\n\n確認後即扣除本期使用次數，命書產生後可重複下載，但離開頁面後需再扣一次才可重新產生。\n\n確定要執行嗎？`,
+      '流年命書': `流年命書本訂閱週期僅可使用 1 次。\n選擇年份：${targetYear} 年\n\n確認後即扣除本期使用次數，命書產生後可重複下載，但離開頁面後需再扣一次才可重新產生。\n\n確定要執行嗎？`,
+    };
+    if (!window.confirm(confirmMessages[reportType] ?? '確定要執行嗎？')) return;
+
     if ((reportType === '八字命書' || reportType === '大運命書' || reportType === '流年命書') && !profileLoaded) {
       return alert(`${reportType}需要先儲存生辰資料，請先填寫並儲存您的生辰。`);
     }
