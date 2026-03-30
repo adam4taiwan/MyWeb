@@ -15,24 +15,28 @@ const hours = Array.from({ length: 24 }, (_, i) => i);
 const minutes = Array.from({ length: 60 }, (_, i) => i);
 
 const REPORT_TYPES = [
-  { key: '綜合性命書', label: '綜合命書', cost: 50, desc: '八字紫微全面鑑定' },
-  { key: '八字命書', label: '八字命書', cost: 50, desc: '12章科學化一生命運剖析' },
-  { key: '大運命書', label: '大運命書', cost: 150, desc: '逐年吉凶大運推演' },
-  { key: '流年命書', label: '流年命書', cost: 100, desc: '五術合一年度全方位推演' },
-  { key: '問事', label: '主題命書', cost: 20, desc: '針對特定人生課題深度命書鑑定' },
+  { key: '綜合性命書', label: '綜合命書', desc: '八字紫微全面鑑定' },
+  { key: '八字命書', label: '八字命書', desc: '12章科學化一生命運剖析' },
+  { key: '大運命書', label: '大運命書', desc: '逐年吉凶大運推演' },
+  { key: '流年命書', label: '流年命書', desc: '五術合一年度全方位推演' },
 ] as const;
 
 const FORTUNE_DURATIONS = [
-  { value: 5, label: '5年大運', cost: 200 },
-  { value: 10, label: '10年大運', cost: 250 },
-  { value: 20, label: '20年大運', cost: 300 },
-  { value: 30, label: '30年大運', cost: 400 },
-  { value: 0, label: '終身大運', cost: 600 },
+  { value: 5, label: '5年大運' },
+  { value: 10, label: '10年大運' },
+  { value: 20, label: '20年大運' },
+  { value: 30, label: '30年大運' },
+  { value: 0, label: '終身大運' },
 ];
 
-const TOPICS = ['事業', '婚姻', '財運', '健康', '子女', '父母', '兄妹', '學業', '買房', '投資', '住宅風水', '合夥', '出國', '開店'];
-
 type ReportTypeKey = typeof REPORT_TYPES[number]['key'];
+
+const PRODUCT_CODE_MAP: Partial<Record<ReportTypeKey, string>> = {
+  '綜合性命書': 'BOOK_BAZI',
+  '八字命書': 'BOOK_BAZI',
+  '大運命書': 'BOOK_DAIYUN',
+  '流年命書': 'BOOK_LIUNIAN',
+};
 
 export default function DiskPage() {
   const { token } = useAuth();
@@ -53,7 +57,6 @@ export default function DiskPage() {
 
   const [reportType, setReportType] = useState<ReportTypeKey>('綜合性命書');
   const [targetYear, setTargetYear] = useState(currentYear);
-  const [topic, setTopic] = useState('事業');
   const [fortuneDuration, setFortuneDuration] = useState(5);
 
   const [report, setReport] = useState('');
@@ -186,15 +189,15 @@ export default function DiskPage() {
       .catch(() => {});
   }, [token, API_URL]);
 
-  const [paymentSuccess, setPaymentSuccess] = useState(false);
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('payment') === 'success') {
-      setPaymentSuccess(true);
-      window.history.replaceState({}, '', '/disk');
-      setTimeout(() => setPaymentSuccess(false), 5000);
-    }
-  }, []);
+  const canUseService = (key: ReportTypeKey): 'available' | 'used' | 'locked' | 'no_subscription' => {
+    if (!subStatus || !subStatus.isSubscribed) return 'no_subscription';
+    const productCode = PRODUCT_CODE_MAP[key];
+    if (!productCode) return 'available';
+    const quota = subStatus.quotaStatus?.find(q => q.productCode === productCode);
+    if (!quota) return 'locked';
+    if (quota.remaining <= 0) return 'used';
+    return 'available';
+  };
 
   const cleanReport = (text: string) => {
     return text.replace(/[#*]/g, '').replace(/\n\s*\n/g, '\n')
@@ -281,15 +284,24 @@ export default function DiskPage() {
     const base = REPORT_TYPES.find(t => t.key === reportType)!;
     if (reportType === '大運命書') {
       const dur = FORTUNE_DURATIONS.find(d => d.value === fortuneDuration)!;
-      return { ...base, cost: dur.cost, label: dur.label };
+      return { ...base, label: dur.label };
     }
     return base;
   };
 
   const handleAnalysis = async () => {
-    const selected = getSelectedType();
-    if ((reportType === '八字命書' || reportType === '大運命書' || reportType === '流年命書' || reportType === '問事') && !profileLoaded) {
-      return alert(`${reportType === '問事' ? '主題命書' : reportType}需要先儲存生辰資料，請先填寫並儲存您的生辰。`);
+    // 訂閱驗證
+    const serviceStatus = canUseService(reportType);
+    if (serviceStatus === 'no_subscription' || serviceStatus === 'locked') {
+      window.location.href = '/subscribe';
+      return;
+    }
+    if (serviceStatus === 'used') {
+      return alert('本訂閱週期此服務已使用完畢，請升級方案或等待下一週期。');
+    }
+
+    if ((reportType === '八字命書' || reportType === '大運命書' || reportType === '流年命書') && !profileLoaded) {
+      return alert(`${reportType}需要先儲存生辰資料，請先填寫並儲存您的生辰。`);
     }
     setLoadingText((reportType === '綜合性命書' || reportType === '八字命書') && profileLoaded
       ? '知識庫命書生成中，請稍候...'
@@ -297,8 +309,6 @@ export default function DiskPage() {
       ? `大運命書（${fortuneDuration === 0 ? '終身' : fortuneDuration + '年'}）生成中，請稍候...`
       : reportType === '流年命書'
       ? `流年命書（${targetYear} 年，五術合一）生成中，請稍候...`
-      : reportType === '問事'
-      ? `${topic} 主題命書生成中，請稍候...`
       : '命理鑑定計算中，複雜命書需 1-2 分鐘，請耐心等候...');
     setIsLoading(true);
     try {
@@ -307,7 +317,6 @@ export default function DiskPage() {
         chartRequest: formData,
       };
       if (reportType === '流年命書') body.targetYear = targetYear;
-      if (reportType === '問事') body.topic = topic;
       if (reportType === '大運命書') body.fortuneDuration = fortuneDuration;
 
       const controller = new AbortController();
@@ -335,12 +344,6 @@ export default function DiskPage() {
         });
       } else if (reportType === '流年命書') {
         res = await fetch(`${API_URL}/Consultation/analyze-liunian?year=${targetYear}`, {
-          method: 'GET',
-          headers: { 'Authorization': `Bearer ${token}` },
-          signal: controller.signal
-        });
-      } else if (reportType === '問事') {
-        res = await fetch(`${API_URL}/Consultation/analyze-topic?topic=${encodeURIComponent(topic)}`, {
           method: 'GET',
           headers: { 'Authorization': `Bearer ${token}` },
           signal: controller.signal
@@ -374,7 +377,6 @@ export default function DiskPage() {
           '八字命書': '八字命書',
           '大運命書': `${durLabel}鑑定書`,
           '流年命書': `${targetYear} 年流年鑑定書`,
-          '問事': `${topic} 主題命書`,
         };
         setReportTitle(titles[reportType]);
       } else {
@@ -528,32 +530,6 @@ ${bodyHtml}
     } catch { alert("下載失敗"); } finally { setIsLoading(false); }
   };
 
-  /* 專家命書功能暫停使用
-  const handleExpertReport = async () => {
-    if (!token) return alert("請先登入");
-    if (remainingPoints !== null && remainingPoints < 200) return alert("點數不足，專家命書需要 200 點");
-    setLoadingText('正在產製專家命書...');
-    setIsLoading(true);
-    try {
-      const response = await fetch(`${API_URL}/Astrology/analyze`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify(formData)
-      });
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = `${formData.name}_專家命書.docx`;
-        document.body.appendChild(a); a.click(); a.remove();
-        setRemainingPoints(prev => prev !== null ? prev - 200 : null);
-      } else {
-        const data = await response.json().catch(() => ({}));
-        alert(data.error || '專家命書產製失敗');
-      }
-    } catch (err) { alert('下載失敗：' + String(err)); } finally { setIsLoading(false); }
-  };
-  */
 
   const handleYudongziReport = async () => {
     if (!profileLoaded) return alert('玉洞子命書需要先儲存生辰資料。');
@@ -644,15 +620,6 @@ ${bodyHtml}
     <div className="min-h-screen bg-[#FDFBF7] flex flex-col relative">
       <div className="fixed top-0 left-0 right-0 z-[100] bg-white shadow-md"><Header /></div>
 
-      {paymentSuccess && (
-        <div className="fixed top-16 left-0 right-0 z-[90] flex justify-center px-4 pointer-events-none">
-          <div className="bg-green-600 text-white px-6 py-3 rounded-2xl shadow-lg text-sm font-bold flex items-center gap-2">
-            <span>訂閱成功！已啟用會員方案</span>
-            <button className="pointer-events-auto text-white/80 hover:text-white ml-2" onClick={() => setPaymentSuccess(false)}>x</button>
-          </div>
-        </div>
-      )}
-
       {isLoading && (
         <div className="fixed inset-0 bg-black/30 z-[9999] flex items-center justify-center backdrop-blur-sm">
           <div className="bg-white p-8 rounded-3xl shadow-2xl flex flex-col items-center">
@@ -733,23 +700,34 @@ ${bodyHtml}
             <div className="bg-white p-5 rounded-3xl shadow-sm border border-orange-100 text-sm">
               <h2 className="text-lg font-bold text-amber-950 mb-3">命書類型</h2>
               <div className="space-y-2">
-                {REPORT_TYPES.map(rt => (
-                  <button
-                    key={rt.key}
-                    onClick={() => setReportType(rt.key)}
-                    className={`w-full text-left px-4 py-3 rounded-2xl border transition-all ${reportType === rt.key
-                      ? 'bg-amber-800 text-white border-amber-800 shadow-md'
-                      : 'bg-white text-gray-700 border-gray-200 hover:border-amber-300'
-                      }`}
-                  >
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <div className="font-bold text-sm">{rt.label}</div>
-                        <div className={`text-xs mt-0.5 ${reportType === rt.key ? 'text-amber-200' : 'text-gray-400'}`}>{rt.desc}</div>
+                {REPORT_TYPES.map(rt => {
+                  const svcStatus = canUseService(rt.key);
+                  const badge = svcStatus === 'available'
+                    ? <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full shrink-0">可用</span>
+                    : svcStatus === 'used'
+                    ? <span className="text-[10px] bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full shrink-0">已使用</span>
+                    : svcStatus === 'locked'
+                    ? <span className="text-[10px] bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full shrink-0">升級解鎖</span>
+                    : <span className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full shrink-0">需訂閱</span>;
+                  return (
+                    <button
+                      key={rt.key}
+                      onClick={() => setReportType(rt.key)}
+                      className={`w-full text-left px-4 py-3 rounded-2xl border transition-all ${reportType === rt.key
+                        ? 'bg-amber-800 text-white border-amber-800 shadow-md'
+                        : 'bg-white text-gray-700 border-gray-200 hover:border-amber-300'
+                        }`}
+                    >
+                      <div className="flex justify-between items-center gap-2">
+                        <div className="min-w-0">
+                          <div className="font-bold text-sm">{rt.label}</div>
+                          <div className={`text-xs mt-0.5 ${reportType === rt.key ? 'text-amber-200' : 'text-gray-400'}`}>{rt.desc}</div>
+                        </div>
+                        {badge}
                       </div>
-                    </div>
-                  </button>
-                ))}
+                    </button>
+                  );
+                })}
               </div>
 
               {/* 大運命書：年數選擇 */}
@@ -794,19 +772,6 @@ ${bodyHtml}
                 </div>
               )}
 
-              {/* 主題命書：主題選擇 */}
-              {reportType === '問事' && (
-                <div className="mt-3 pt-3 border-t border-gray-100">
-                  <label className="block text-gray-600 mb-1 font-bold text-xs">分析主題</label>
-                  <select
-                    value={topic}
-                    onChange={(e) => setTopic(e.target.value)}
-                    className="w-full px-3 py-1.5 rounded-xl border border-gray-200 text-sm"
-                  >
-                    {TOPICS.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                </div>
-              )}
 
               <button
                 onClick={handleAnalysis}
