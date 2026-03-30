@@ -165,7 +165,9 @@ export default function SubscribePage() {
 
                   {/* Benefits */}
                   <div className="flex-grow p-5 space-y-2.5">
-                    {plan.benefits.map((b, i) => (
+                    {plan.benefits
+                      .filter(b => b.productType !== 'consultation' && !(b.productCode ?? '').startsWith('CONSULT'))
+                      .map((b, i) => (
                       <div key={i} className="flex items-start gap-2 text-sm text-gray-700">
                         <span className="text-green-500 font-bold mt-0.5 flex-shrink-0">v</span>
                         <span>{benefitLabel(b)}</span>
@@ -236,7 +238,7 @@ export default function SubscribePage() {
           {[
             ['訂閱後何時生效？', '付款完成後立即生效，有效期 365 天。'],
             ['可以升級方案嗎？', '可以。升級後新方案到期日從購買日起算 365 天，並與現有訂閱合計。'],
-            ['祈福服務如何使用？', '銀會員及金會員每年可領取 1 項免費祈福服務（安太歲、光明燈、補財庫、祈福服務擇一）。前往會員中心點選兌換後，由玉洞子代辦，並寄送電子收據。'],
+            ['祈福服務如何使用？', '銀會員及金會員每年可領取 1 項免費祈福服務（安太歲、光明燈、補財庫、祈福服務擇一），由玉洞子代辦。'],
             ['命書折扣如何計算？', '訂閱後購買命書時，系統自動套用折扣點數，無需手動輸入折扣碼。'],
             ['如何取消訂閱？', '訂閱為一次性年費，到期後不自動續訂。如需繼續享有福利，請在到期前手動續訂。'],
           ].map(([q, a]) => (
