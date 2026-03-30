@@ -41,7 +41,6 @@ const pricingPlans: PricingPlan[] = [
       '每日建議無限存取',
       '八字命書 1次/年',
       '流年命書 1次/年',
-      '問事命書可用',
       '九星建議無限',
     ],
     cta: '訂閱銀會員',
@@ -60,7 +59,6 @@ const pricingPlans: PricingPlan[] = [
       '八字命書 1次/年',
       '流年命書 1次/年',
       '大運命書 1次/年',
-      '問事命書可用',
       '九星建議無限',
     ],
     cta: '訂閱金會員',
@@ -161,7 +159,7 @@ export default function PricingSection() {
               <p className="text-4xl font-bold text-yellow-300 mt-3">NT$6,000<span className="text-sm font-normal text-gray-400 ml-1">/ 年</span></p>
             </div>
             <div className="flex-grow grid grid-cols-2 md:grid-cols-3 gap-2">
-              {['每日個人化建議', '終身命書(8大運) x1', '玉洞子解說 x1', '流年命書六折優惠', '問事六折優惠', '課程八折優惠', '贈送祈福服務 x1'].map((f, i) => (
+              {['每日個人化建議', '終身命書(8大運) x1', '玉洞子解說 x1', '流年命書六折優惠', '課程八折優惠', '贈送祈福服務 x1'].map((f, i) => (
                 <div key={i} className="flex items-center gap-2 text-sm text-gray-300">
                   <span className="text-yellow-400 font-bold">✓</span>
                   <span>{f}</span>

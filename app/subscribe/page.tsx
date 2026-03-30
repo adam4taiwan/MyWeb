@@ -213,7 +213,7 @@ export default function SubscribePage() {
                   <p className="text-gray-400 text-xs mt-1">頂級尊榮，一次擁有最完整服務</p>
                 </div>
                 <div className="flex-grow grid grid-cols-2 gap-2">
-                  {['每日個人化建議', '終身命書(8大運) x1', '玉洞子解說 x1', '流年命書六折優惠', '問事六折優惠', '課程八折優惠', '贈送祈福服務 x1'].map((f, i) => (
+                  {['每日個人化建議', '終身命書(8大運) x1', '玉洞子解說 x1', '流年命書六折優惠', '課程八折優惠', '贈送祈福服務 x1'].map((f, i) => (
                     <div key={i} className="flex items-center gap-2 text-sm text-gray-300">
                       <span className="text-yellow-400 font-bold">✓</span>
                       <span>{f}</span>
