@@ -166,7 +166,11 @@ export default function SubscribePage() {
                   {/* Benefits */}
                   <div className="flex-grow p-5 space-y-2.5">
                     {plan.benefits
-                      .filter(b => b.productType !== 'consultation' && !(b.productCode ?? '').startsWith('CONSULT'))
+                      .filter(b =>
+                        b.productType !== 'consultation' &&
+                        !(b.productCode ?? '').startsWith('CONSULT') &&
+                        !benefitLabel(b).includes('問事')
+                      )
                       .map((b, i) => (
                       <div key={i} className="flex items-start gap-2 text-sm text-gray-700">
                         <span className="text-green-500 font-bold mt-0.5 flex-shrink-0">v</span>
