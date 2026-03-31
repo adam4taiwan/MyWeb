@@ -540,6 +540,28 @@ ${bodyHtml}
   };
 
 
+  const handlePushNow = async () => {
+    if (!confirm('確定立即觸發每日 LINE 推播？（九星 + 訂閱會員）')) return;
+    setIsLoading(true);
+    setLoadingText('推播中...');
+    try {
+      const res = await fetch(`${API_URL}/NineStar/push-now`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(`推播完成\n成功：${data.pushedCount} 人\n失敗：${data.errorCount} 人\n\n${data.pushed.map((p: {type:string; name?:string; lineUserId?:string}) => `[${p.type}] ${p.name ?? p.lineUserId}`).join('\n')}`);
+      } else {
+        alert('推播失敗：' + (data.message ?? JSON.stringify(data)));
+      }
+    } catch (err) {
+      alert('推播失敗：' + String(err));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleYudongziReport = async () => {
     if (!profileLoaded) return alert('玉洞子命書需要先儲存生辰資料。');
     setLoadingText('玉洞子命書生成中，請稍候...');
@@ -805,6 +827,14 @@ ${bodyHtml}
                   className="mt-2 w-full bg-stone-800 text-amber-200 font-bold py-2.5 rounded-2xl text-xs shadow-md hover:bg-stone-900 transition-all border border-amber-700"
                 >
                   玉洞子命書（內部版）
+                </button>
+              )}
+              {isAdmin && (
+                <button
+                  onClick={handlePushNow}
+                  className="mt-1 w-full bg-blue-900 text-blue-100 font-bold py-2.5 rounded-2xl text-xs shadow-md hover:bg-blue-950 transition-all border border-blue-700"
+                >
+                  立即觸發 LINE 推播測試
                 </button>
               )}
               {/* 原玉洞子命書DOCX按鈕（已移至左上方，此處暫停）
