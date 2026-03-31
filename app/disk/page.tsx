@@ -184,6 +184,7 @@ export default function DiskPage() {
   }, [token, API_URL]);
 
   const canUseService = (key: ReportTypeKey): 'available' | 'used' | 'locked' | 'no_subscription' | 'cross_year' => {
+    if (isAdmin) return 'available';
     if (!subStatus || !subStatus.isSubscribed) return 'no_subscription';
     // Cross-year check for 流年 and 大運: subscription must have started in the current year
     if ((key === '流年命書' || key === '大運命書') && subStatus.startDate) {

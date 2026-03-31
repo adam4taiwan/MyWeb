@@ -77,6 +77,8 @@ export default function MemberPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [ordersLoaded, setOrdersLoaded] = useState(false);
   const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [hasLineLinked, setHasLineLinked] = useState(false);
 
   const [dailyFortune, setDailyFortune] = useState<DailyFortune | null>(null);
   const [fortuneLoading, setFortuneLoading] = useState(false);
@@ -111,6 +113,17 @@ export default function MemberPage() {
     })
       .then(r => r.ok ? r.json() : null)
       .then(data => { if (data) setSubscription(data); })
+      .catch(() => {});
+    fetch(`${API_URL}/Auth/profile`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data) {
+          setIsAdmin(data.isAdmin === true);
+          setHasLineLinked(data.hasLineLinked === true);
+        }
+      })
       .catch(() => {});
   }, [token, API_URL]);
 
@@ -169,12 +182,12 @@ export default function MemberPage() {
     }
   }, [token, API_URL]);
 
-  // Only fetch daily fortune for subscribed members
+  // Only fetch daily fortune for subscribed members (admin always allowed)
   useEffect(() => {
-    if (subscription === null) return; // subscription not loaded yet
-    if (!subscription.isSubscribed) return; // not subscribed - show upgrade card instead
+    if (subscription === null) return;
+    if (!subscription.isSubscribed && !isAdmin) return;
     fetchDailyFortune();
-  }, [subscription, fetchDailyFortune]);
+  }, [subscription, isAdmin, fetchDailyFortune]);
 
   const fetchOrders = async () => {
     if (ordersLoaded || !token) return;
@@ -361,7 +374,7 @@ export default function MemberPage() {
               <div className="inline-block w-6 h-6 border-2 border-amber-400 border-t-transparent rounded-full animate-spin mb-2"></div>
               <p className="text-sm text-gray-400">載入中...</p>
             </div>
-          ) : !subscription.isSubscribed ? (
+          ) : !subscription.isSubscribed && !isAdmin ? (
             <div className="py-4 text-center space-y-3">
               <p className="text-sm text-gray-500 leading-relaxed">
                 每日個人化運勢為<span className="font-bold text-amber-700">訂閱會員</span>專屬服務。
@@ -529,6 +542,28 @@ export default function MemberPage() {
                       （剩餘 {subscription.daysRemaining} 天）
                     </p>
                   </div>
+
+                  {/* LINE 每日推播提示 */}
+                  {!hasLineLinked && (
+                    <div className="bg-green-50 border border-green-200 rounded-xl p-4 space-y-2">
+                      <p className="text-sm font-bold text-green-800">開啟每日 LINE 推播運勢</p>
+                      <p className="text-xs text-green-700 leading-relaxed">
+                        訂閱會員可享每天早上 7:30 自動推播個人化八字運勢到 LINE，無需手動查詢。
+                      </p>
+                      <p className="text-xs text-green-700 leading-relaxed">
+                        完成以下兩步驟即可自動收到：
+                      </p>
+                      <ol className="text-xs text-green-800 space-y-1 list-decimal list-inside">
+                        <li>在排盤工具填寫生辰資料</li>
+                        <li>以 LINE 帳號重新登入本平台（綁定 LINE ID）</li>
+                      </ol>
+                      <Link href="/login">
+                        <button className="mt-1 px-4 py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold hover:bg-green-700 transition-colors">
+                          用 LINE 登入以開啟推播
+                        </button>
+                      </Link>
+                    </div>
+                  )}
 
                   {/* 額度使用狀況 */}
                   {subscription.quotaStatus && subscription.quotaStatus.length > 0 && (
