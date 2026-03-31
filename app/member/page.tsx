@@ -79,6 +79,8 @@ export default function MemberPage() {
   const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [hasLineLinked, setHasLineLinked] = useState(false);
+  const [notifyEnabled, setNotifyEnabled] = useState(false);
+  const [notifyLoading, setNotifyLoading] = useState(false);
 
   const [dailyFortune, setDailyFortune] = useState<DailyFortune | null>(null);
   const [fortuneLoading, setFortuneLoading] = useState(false);
@@ -124,6 +126,12 @@ export default function MemberPage() {
           setHasLineLinked(data.hasLineLinked === true);
         }
       })
+      .catch(() => {});
+    fetch(`${API_URL}/NineStar/notify`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data) setNotifyEnabled(data.notifyEnabled === true); })
       .catch(() => {});
   }, [token, API_URL]);
 
@@ -236,6 +244,20 @@ export default function MemberPage() {
       setNineStarLoading(false);
     }
   }, [token, API_URL, nineStarLoaded]);
+
+  const handleToggleNotify = async () => {
+    if (!token || !hasLineLinked) return;
+    setNotifyLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/NineStar/notify`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ enabled: !notifyEnabled }),
+      });
+      if (res.ok) setNotifyEnabled(v => !v);
+    } catch { /* ignore */ }
+    finally { setNotifyLoading(false); }
+  };
 
   const handleTabChange = (tab: Tab) => {
     setActiveTab(tab);
@@ -543,27 +565,55 @@ export default function MemberPage() {
                     </p>
                   </div>
 
-                  {/* LINE 每日推播提示 */}
-                  {!hasLineLinked && (
-                    <div className="bg-green-50 border border-green-200 rounded-xl p-4 space-y-2">
-                      <p className="text-sm font-bold text-green-800">開啟每日 LINE 推播運勢</p>
-                      <p className="text-xs text-green-700 leading-relaxed">
-                        訂閱會員可享每天早上 7:30 自動推播個人化八字運勢到 LINE，無需手動查詢。
-                      </p>
-                      <p className="text-xs text-green-700 leading-relaxed">
-                        完成以下兩步驟即可自動收到：
-                      </p>
-                      <ol className="text-xs text-green-800 space-y-1 list-decimal list-inside">
-                        <li>在排盤工具填寫生辰資料</li>
-                        <li>以 LINE 帳號重新登入本平台（綁定 LINE ID）</li>
-                      </ol>
-                      <Link href="/login">
-                        <button className="mt-1 px-4 py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold hover:bg-green-700 transition-colors">
-                          用 LINE 登入以開啟推播
+                  {/* LINE 每日推播設定 */}
+                  <div className="bg-green-50 border border-green-200 rounded-xl p-4 space-y-3">
+                    <p className="text-sm font-bold text-green-800">每日 LINE 推播運勢</p>
+                    <p className="text-xs text-green-700 leading-relaxed">
+                      每天早上 7:30 自動推播個人化八字運勢到 LINE，無需手動查詢。
+                    </p>
+
+                    {!hasLineLinked ? (
+                      // 未綁 LINE：引導步驟
+                      <div className="space-y-2">
+                        <p className="text-xs font-medium text-green-800">完成以下步驟即可啟用：</p>
+                        <ol className="text-xs text-green-700 space-y-1.5 list-decimal list-inside">
+                          <li>
+                            加入官方 LINE 帳號
+                            <a
+                              href="https://line.me/R/ti/p/@213qrysy"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="ml-1 underline font-medium text-green-900"
+                            >
+                              點此加入 @213qrysy
+                            </a>
+                          </li>
+                          <li>在排盤工具填寫並儲存生辰資料</li>
+                          <li>
+                            <Link href="/login" className="underline font-medium text-green-900">
+                              用 LINE 帳號登入本平台
+                            </Link>
+                            （綁定 LINE ID）
+                          </li>
+                        </ol>
+                      </div>
+                    ) : (
+                      // 已綁 LINE：顯示通知開關
+                      <div className="flex items-center justify-between pt-1">
+                        <div>
+                          <p className="text-xs font-medium text-green-800">LINE 帳號已綁定</p>
+                          <p className="text-xs text-green-600">{notifyEnabled ? '推播已開啟，每日 7:30 自動發送' : '推播已關閉'}</p>
+                        </div>
+                        <button
+                          onClick={handleToggleNotify}
+                          disabled={notifyLoading}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${notifyEnabled ? 'bg-green-500' : 'bg-gray-300'} ${notifyLoading ? 'opacity-50' : ''}`}
+                        >
+                          <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${notifyEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
                         </button>
-                      </Link>
-                    </div>
-                  )}
+                      </div>
+                    )}
+                  </div>
 
                   {/* 額度使用狀況 */}
                   {subscription.quotaStatus && subscription.quotaStatus.length > 0 && (
