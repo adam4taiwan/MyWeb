@@ -540,6 +540,28 @@ ${bodyHtml}
   };
 
 
+  const handleIgPostNow = async () => {
+    if (!confirm('確定立即觸發 Instagram 發文測試？')) return;
+    setIsLoading(true);
+    setLoadingText('Instagram 發文中...');
+    try {
+      const res = await fetch(`${API_URL}/NineStar/ig-post-now`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert('Instagram 發文成功！');
+      } else {
+        alert('Instagram 發文失敗：' + (data.message ?? JSON.stringify(data)));
+      }
+    } catch (err) {
+      alert('Instagram 發文失敗：' + String(err));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handlePushNow = async () => {
     if (!confirm('確定立即觸發每日 LINE 推播？（九星 + 訂閱會員）')) return;
     setIsLoading(true);
@@ -835,6 +857,14 @@ ${bodyHtml}
                   className="mt-1 w-full bg-blue-900 text-blue-100 font-bold py-2.5 rounded-2xl text-xs shadow-md hover:bg-blue-950 transition-all border border-blue-700"
                 >
                   立即觸發 LINE 推播測試
+                </button>
+              )}
+              {isAdmin && (
+                <button
+                  onClick={handleIgPostNow}
+                  className="mt-1 w-full bg-pink-900 text-pink-100 font-bold py-2.5 rounded-2xl text-xs shadow-md hover:bg-pink-950 transition-all border border-pink-700"
+                >
+                  立即觸發 Instagram 發文測試
                 </button>
               )}
               {/* 原玉洞子命書DOCX按鈕（已移至左上方，此處暫停）
