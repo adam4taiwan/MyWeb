@@ -863,7 +863,7 @@ ${bodyHtml}
               )}
               {isAdmin && (
                 <button
-                  onClick={() => handleIgPostNow('https://picsum.photos/1080/1080.jpg')}
+                  onClick={() => handleIgPostNow('https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Camponotus_flavomarginatus_ant.jpg/1200px-Camponotus_flavomarginatus_ant.jpg')}
                   className="mt-1 w-full bg-pink-800 text-pink-100 font-bold py-2.5 rounded-2xl text-xs shadow-md hover:bg-pink-900 transition-all border border-pink-600"
                 >
                   IG API 連線測試（小圖+正文）
