@@ -807,7 +807,7 @@ ${bodyHtml}
                 <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
                   <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-xs text-amber-800">
                     <div className="font-bold mb-0.5">流年命書（{currentYear} 年 · 今年）</div>
-                    <div className="text-amber-600 mt-0.5">包含：八字·太歲·生肖·盲派·紫微四化 + 逐月分析</div>
+                    <div className="text-amber-600 mt-0.5">包含：八字·太歲·生肖·流星·紫微四化 + 逐月分析</div>
                   </div>
                 </div>
               )}
