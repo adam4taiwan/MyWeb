@@ -863,6 +863,22 @@ ${bodyHtml}
               )}
               {isAdmin && (
                 <button
+                  onClick={async () => {
+                    setIsLoading(true); setLoadingText('IG 帳號診斷中...');
+                    try {
+                      const res = await fetch(`${API_URL}/NineStar/ig-check`, { headers: { Authorization: `Bearer ${token}` } });
+                      const data = await res.json();
+                      alert('IG 帳號診斷結果：\n\n' + JSON.stringify(data, null, 2));
+                    } catch(e) { alert('診斷失敗：' + String(e)); }
+                    finally { setIsLoading(false); }
+                  }}
+                  className="mt-1 w-full bg-purple-900 text-purple-100 font-bold py-2.5 rounded-2xl text-xs shadow-md hover:bg-purple-950 transition-all border border-purple-700"
+                >
+                  IG 帳號診斷
+                </button>
+              )}
+              {isAdmin && (
+                <button
                   onClick={() => handleIgPostNow('https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Camponotus_flavomarginatus_ant.jpg/1200px-Camponotus_flavomarginatus_ant.jpg')}
                   className="mt-1 w-full bg-pink-800 text-pink-100 font-bold py-2.5 rounded-2xl text-xs shadow-md hover:bg-pink-900 transition-all border border-pink-600"
                 >
