@@ -13,8 +13,8 @@ export async function GET(
   { params }: { params: Promise<{ filename: string }> }
 ) {
   const { filename } = await params
-  // Extract date from filename like "2026-04-03.png"
-  const date = filename.replace(/\.png$/i, '')
+  // Extract date from filename like "2026-04-03.jpg" or "2026-04-03.png"
+  const date = filename.replace(/\.(jpg|jpeg|png)$/i, '')
 
   // Build a new request with the date param
   const url = new URL(req.url)

@@ -1,5 +1,6 @@
 import { ImageResponse } from 'next/og'
 import { NextRequest } from 'next/server'
+import sharp from 'sharp'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -277,15 +278,20 @@ export async function GET(req: NextRequest) {
     }
   )
 
-  // Buffer the image and return with explicit Content-Length + clean headers
-  // (Instagram CDN requires Content-Length and rejects Next.js Vary headers)
-  const buf = await imgRes.arrayBuffer()
-  return new Response(buf, {
+  // Convert PNG (RGBA) -> JPEG (RGB) so Instagram CDN accepts it
+  // Instagram officially only supports JPEG; RGBA PNG is rejected
+  const pngBuf = Buffer.from(await imgRes.arrayBuffer())
+  const jpegBuf = await sharp(pngBuf)
+    .flatten({ background: '#1a1008' })  // fill alpha with dark background color
+    .jpeg({ quality: 92 })
+    .toBuffer()
+
+  return new Response(jpegBuf.buffer as ArrayBuffer, {
     status: 200,
     headers: {
-      'Content-Type': 'image/png',
-      'Content-Length': String(buf.byteLength),
-      'Cache-Control': 'public, max-age=3600, s-maxage=3600',
+      'Content-Type': 'image/jpeg',
+      'Content-Length': String(jpegBuf.byteLength),
+      'Cache-Control': 'public, max-age=3600',
     },
   })
 }
