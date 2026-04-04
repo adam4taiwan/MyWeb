@@ -1,7 +1,17 @@
 
 'use client';
 
+import { useState } from 'react';
+
 export default function ContactMethods() {
+  const [wechatCopied, setWechatCopied] = useState(false);
+
+  const copyWechatId = (id: string) => {
+    navigator.clipboard.writeText(id).then(() => {
+      setWechatCopied(true);
+      setTimeout(() => setWechatCopied(false), 2000);
+    });
+  };
   const socialContacts = [
     {
       platform: 'LINE',
@@ -90,7 +100,16 @@ export default function ContactMethods() {
                     立即加入
                   </a>
                 ) : (
-                  <p className="mt-4 text-sm text-gray-500">長按或掃描 QR Code</p>
+                  <div className="mt-4 space-y-2">
+                    <p className="text-sm text-gray-500 hidden md:block">長按或掃描 QR Code</p>
+                    <button
+                      onClick={() => copyWechatId(contact.id)}
+                      className={`inline-block ${contact.color} text-white px-6 py-2 rounded-full transition-colors whitespace-nowrap cursor-pointer`}
+                    >
+                      {wechatCopied ? '已複製！' : '複製微信 ID'}
+                    </button>
+                    <p className="text-xs text-gray-400 md:hidden">複製後開啟微信搜尋加好友</p>
+                  </div>
                 )}
               </div>
             ))}

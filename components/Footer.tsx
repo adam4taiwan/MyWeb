@@ -4,8 +4,19 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
 
+const WECHAT_ID = 'wxid_22io062y9j1952';
+
 export default function Footer() {
   const [qr, setQr] = useState<'line' | 'wechat' | null>(null);
+  const [wechatCopied, setWechatCopied] = useState(false);
+
+  const copyWechatId = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(WECHAT_ID).then(() => {
+      setWechatCopied(true);
+      setTimeout(() => setWechatCopied(false), 2000);
+    });
+  };
 
   return (
     <footer className="bg-gray-900 text-white">
@@ -31,10 +42,17 @@ export default function Footer() {
                 </div>
                 {qr === 'wechat' && (
                   <div className="absolute bottom-10 left-0 bg-white rounded-xl shadow-2xl p-3 w-44 text-center z-50">
-                    <p className="text-xs font-bold text-gray-700 mb-2">微信掃碼</p>
-                    <div className="relative w-full aspect-square rounded-lg overflow-hidden">
+                    <p className="text-xs font-bold text-gray-700 mb-2">微信加我好友</p>
+                    <div className="relative w-full aspect-square rounded-lg overflow-hidden hidden md:block">
                       <Image src="/image/WeChatID.jpg" alt="WeChat QR" fill className="object-contain" />
                     </div>
+                    <p className="text-xs text-gray-500 mt-1">ID：{WECHAT_ID}</p>
+                    <button
+                      onClick={copyWechatId}
+                      className="mt-1.5 inline-block w-full py-1.5 bg-emerald-500 text-white text-xs rounded-lg font-medium hover:bg-emerald-600 transition-colors"
+                    >
+                      {wechatCopied ? '已複製！' : '複製微信 ID'}
+                    </button>
                   </div>
                 )}
               </div>

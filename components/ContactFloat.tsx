@@ -5,8 +5,18 @@ import Image from 'next/image';
 
 type Panel = 'line' | 'wechat' | null;
 
+const WECHAT_ID = 'wxid_22io062y9j1952';
+
 export default function ContactFloat() {
   const [open, setOpen] = useState<Panel>(null);
+  const [wechatCopied, setWechatCopied] = useState(false);
+
+  const copyWechatId = () => {
+    navigator.clipboard.writeText(WECHAT_ID).then(() => {
+      setWechatCopied(true);
+      setTimeout(() => setWechatCopied(false), 2000);
+    });
+  };
 
   const toggle = (panel: Panel) => setOpen(prev => prev === panel ? null : panel);
 
@@ -50,8 +60,8 @@ export default function ContactFloat() {
         {/* WeChat QR Panel */}
         {open === 'wechat' && (
           <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-4 w-52 text-center animate-fade-in">
-            <p className="text-xs font-bold text-gray-700 mb-2">微信掃碼加我好友</p>
-            <div className="relative w-full aspect-square rounded-xl overflow-hidden border border-gray-100">
+            <p className="text-xs font-bold text-gray-700 mb-2">微信加我好友</p>
+            <div className="relative w-full aspect-square rounded-xl overflow-hidden border border-gray-100 hidden md:block">
               <Image
                 src="/image/WeChatID.jpg"
                 alt="WeChat QR Code"
@@ -59,7 +69,15 @@ export default function ContactFloat() {
                 className="object-contain"
               />
             </div>
-            <p className="text-xs text-gray-500 mt-2">長按或掃描 QR Code</p>
+            <p className="text-xs text-gray-500 mt-2 hidden md:block">長按或掃描 QR Code</p>
+            <p className="text-xs text-gray-500 mt-1 mb-2 md:mt-2">ID：{WECHAT_ID}</p>
+            <button
+              onClick={copyWechatId}
+              className="inline-block w-full py-2 bg-emerald-500 text-white text-sm rounded-lg font-medium hover:bg-emerald-600 transition-colors"
+            >
+              {wechatCopied ? '已複製！' : '複製微信 ID'}
+            </button>
+            <p className="text-xs text-gray-400 mt-1.5 md:hidden">複製後開啟微信搜尋加好友</p>
           </div>
         )}
 
