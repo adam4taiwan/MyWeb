@@ -133,7 +133,7 @@ export async function GET(req: NextRequest) {
     fontData = new ArrayBuffer(0)
   }
 
-  const opts = fontData.byteLength > 0
+  const imgOpts = fontData.byteLength > 0
     ? { fonts: [{ name: 'NotoSerifTC', data: fontData, style: 'normal' as const }] }
     : {}
 
@@ -159,7 +159,7 @@ export async function GET(req: NextRequest) {
 
   const titleLines = title.split('\n')
 
-  return new ImageResponse(
+  const imgRes = new ImageResponse(
     (
       <div
         style={{
@@ -273,7 +273,19 @@ export async function GET(req: NextRequest) {
     {
       width: 1080,
       height: 1080,
-      ...opts
+      ...imgOpts
     }
   )
+
+  // Buffer the image and return with explicit Content-Length + clean headers
+  // (Instagram CDN requires Content-Length and rejects Next.js Vary headers)
+  const buf = await imgRes.arrayBuffer()
+  return new Response(buf, {
+    status: 200,
+    headers: {
+      'Content-Type': 'image/png',
+      'Content-Length': String(buf.byteLength),
+      'Cache-Control': 'public, max-age=3600, s-maxage=3600',
+    },
+  })
 }
