@@ -10,6 +10,7 @@ export default function ContactMethods() {
       id: 'adam4taiwan',
       description: '即時訊息諮詢，快速回覆',
       qrImage: '/image/lineID.jpg',
+      link: 'https://line.me/ti/p/adam4taiwan',
     },
     {
       platform: '微信',
@@ -18,6 +19,7 @@ export default function ContactMethods() {
       id: 'wxid_22io062y9j1952',
       description: '語音文字皆可，24小時內回覆',
       qrImage: '/image/WeChatID.jpg',
+      link: null,
     },
   ];
 
@@ -62,7 +64,7 @@ export default function ContactMethods() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-2xl mx-auto">
             {socialContacts.map((contact, index) => (
               <div key={index} className="bg-gradient-to-br from-gray-50 to-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow text-center">
-                <div className="mb-4">
+                <div className="mb-4 hidden md:block">
                   <img
                     src={contact.qrImage}
                     alt={`${contact.platform} QR Code`}
@@ -78,9 +80,18 @@ export default function ContactMethods() {
                 <p className="text-amber-600 font-semibold mb-2">{contact.id}</p>
                 <p className="text-gray-600 text-sm leading-relaxed">{contact.description}</p>
 
-                <button className={`mt-4 ${contact.color} text-white px-6 py-2 rounded-full transition-colors whitespace-nowrap cursor-pointer`}>
-                  立即聯繫
-                </button>
+                {contact.link ? (
+                  <a
+                    href={contact.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`mt-4 inline-block ${contact.color} text-white px-6 py-2 rounded-full transition-colors whitespace-nowrap cursor-pointer`}
+                  >
+                    立即加入
+                  </a>
+                ) : (
+                  <p className="mt-4 text-sm text-gray-500">長按或掃描 QR Code</p>
+                )}
               </div>
             ))}
           </div>

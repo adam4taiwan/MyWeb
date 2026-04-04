@@ -49,11 +49,19 @@ export default function Footer() {
                 </div>
                 {qr === 'line' && (
                   <div className="absolute bottom-10 left-0 bg-white rounded-xl shadow-2xl p-3 w-44 text-center z-50">
-                    <p className="text-xs font-bold text-gray-700 mb-2">LINE 掃碼</p>
-                    <div className="relative w-full aspect-square rounded-lg overflow-hidden">
+                    <p className="text-xs font-bold text-gray-700 mb-2">LINE 加我好友</p>
+                    <div className="relative w-full aspect-square rounded-lg overflow-hidden hidden md:block">
                       <Image src="/image/lineID.jpg" alt="Line QR" fill className="object-contain" />
                     </div>
                     <p className="text-xs text-gray-500 mt-1">ID：adam4taiwan</p>
+                    <a
+                      href="https://line.me/ti/p/adam4taiwan"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 inline-block w-full py-1.5 bg-green-500 text-white text-xs rounded-lg font-medium hover:bg-green-600 transition-colors"
+                    >
+                      點擊加入 LINE
+                    </a>
                   </div>
                 )}
               </div>

@@ -25,8 +25,8 @@ export default function ContactFloat() {
         {/* Line QR Panel */}
         {open === 'line' && (
           <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-4 w-52 text-center animate-fade-in">
-            <p className="text-xs font-bold text-gray-700 mb-2">LINE 掃碼加我好友</p>
-            <div className="relative w-full aspect-square rounded-xl overflow-hidden border border-gray-100">
+            <p className="text-xs font-bold text-gray-700 mb-2">LINE 加我好友</p>
+            <div className="relative w-full aspect-square rounded-xl overflow-hidden border border-gray-100 hidden md:block">
               <Image
                 src="/image/lineID.jpg"
                 alt="Line QR Code"
@@ -34,14 +34,15 @@ export default function ContactFloat() {
                 className="object-contain"
               />
             </div>
-            <p className="text-xs text-gray-500 mt-2">ID：adam4taiwan</p>
+            <p className="text-xs text-gray-500 mt-2 hidden md:block">ID：adam4taiwan</p>
+            <p className="text-xs text-gray-500 md:hidden mb-2">ID：adam4taiwan</p>
             <a
               href="https://line.me/ti/p/adam4taiwan"
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-2 inline-block w-full py-1.5 bg-green-500 text-white text-xs rounded-lg font-medium hover:bg-green-600 transition-colors"
+              className="mt-2 inline-block w-full py-2 bg-green-500 text-white text-sm rounded-lg font-medium hover:bg-green-600 transition-colors"
             >
-              直接開啟 LINE
+              點擊加入 LINE
             </a>
           </div>
         )}
