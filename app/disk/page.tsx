@@ -1285,8 +1285,8 @@ ${bodyHtml}
                   <p className="text-sm text-amber-700 mb-3">以下為命盤結構視覺圖，完整命書報告需訂閱後使用</p>
                   <a href="/subscribe" className="inline-block bg-amber-700 text-white px-8 py-2.5 rounded-full font-bold text-sm hover:bg-amber-800">訂閱解鎖完整命書</a>
                 </div>
-                {/* Chart visual displayed for free */}
-                {baziTable && baziTable.pillars && (
+                {/* Bazi + Ziwei chart visual displayed for free */}
+                {exportChart?.bazi && (
                   <div className="bg-white p-4 rounded-2xl border border-amber-100 shadow-sm overflow-x-auto">
                     <h3 className="text-base font-bold text-amber-900 mb-3">八字命盤</h3>
                     <table className="w-full border-collapse text-sm text-center">
@@ -1298,25 +1298,24 @@ ${bodyHtml}
                         </tr>
                       </thead>
                       <tbody>
-                        {(() => { const rp = [...baziTable.pillars].reverse(); return (<>
                         <tr>
-                          {rp.map((p,i) => (
-                            <td key={i} className="border border-amber-200 px-3 py-2 text-xl font-bold text-gray-800">{p.stem}</td>
+                          {[exportChart.bazi.timePillar, exportChart.bazi.dayPillar, exportChart.bazi.monthPillar, exportChart.bazi.yearPillar].map((p,i) => (
+                            <td key={i} className="border border-amber-200 px-3 py-2 text-xl font-bold text-gray-800">{p.heavenlyStem}</td>
                           ))}
                         </tr>
                         <tr>
-                          {rp.map((p,i) => (
-                            <td key={i} className="border border-amber-200 px-3 py-2 text-xl font-bold text-gray-800">{p.branch}</td>
+                          {[exportChart.bazi.timePillar, exportChart.bazi.dayPillar, exportChart.bazi.monthPillar, exportChart.bazi.yearPillar].map((p,i) => (
+                            <td key={i} className="border border-amber-200 px-3 py-2 text-xl font-bold text-gray-800">{p.earthlyBranch}</td>
                           ))}
                         </tr>
-                        <tr className="bg-amber-50/30">
-                          {rp.map((p,i) => (
-                            <td key={i} className="border border-amber-200 px-3 py-1 text-xs text-gray-500">{p.naYin}</td>
-                          ))}
-                        </tr>
-                        </>); })()}
                       </tbody>
                     </table>
+                  </div>
+                )}
+                {exportChart?.palaces && (
+                  <div className="bg-white rounded-2xl border border-amber-100 shadow-sm overflow-hidden">
+                    <h3 className="text-base font-bold text-amber-900 px-4 pt-4 mb-2">紫微斗數命盤</h3>
+                    <ZiweiGrid chartData={exportChart} gridRef={{ current: null }} />
                   </div>
                 )}
                 <div className="relative bg-white rounded-2xl border border-amber-100 shadow-sm overflow-hidden">
