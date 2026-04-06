@@ -171,9 +171,14 @@ export default function DiskPage() {
     startDate?: string;
     expiryDate?: string;
     birthdateLocked?: boolean;
+    isInTrial?: boolean;
+    trialDaysRemaining?: number;
     quotaStatus?: SubscriptionQuota[];
   }
   const [subStatus, setSubStatus] = useState<SubStatus | null>(null);
+
+  // Preview chart state (free access for all users)
+  const [previewChartData, setPreviewChartData] = useState<{ bazi: unknown; ziwei: unknown } | null>(null);
 
   useEffect(() => {
     if (!token) return;
@@ -183,9 +188,25 @@ export default function DiskPage() {
       .catch(() => {});
   }, [token, API_URL]);
 
+  // Auto-activate trial on first visit for logged-in users
+  useEffect(() => {
+    if (!token) return;
+    fetch(`${API_URL}/Subscription/activate-trial`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` }
+    }).then(r => r.ok ? r.json() : null).then(data => {
+      if (data && !data.alreadyActivated) {
+        // Refresh subscription status to show trial info
+        fetch(`${API_URL}/Subscription/status`, { headers: { Authorization: `Bearer ${token}` } })
+          .then(r => r.ok ? r.json() : null).then(d => { if (d) setSubStatus(d); }).catch(() => {});
+      }
+    }).catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
+
   const canUseService = (key: ReportTypeKey): 'available' | 'used' | 'locked' | 'no_subscription' | 'cross_year' => {
     if (isAdmin) return 'available';
-    if (!subStatus || !subStatus.isSubscribed) return 'no_subscription';
+    if (!token || !subStatus || !subStatus.isSubscribed) return 'no_subscription';
     // Cross-year check for 流年 and 大運: subscription must have started in the current year
     if ((key === '流年命書' || key === '大運命書') && subStatus.startDate) {
       const subStartYear = new Date(subStatus.startDate).getFullYear();
@@ -370,6 +391,7 @@ export default function DiskPage() {
       const data = await res.json();
       if (res.ok) {
         setReport(cleanReport(data.result || data.analysis || ''));
+        setPreviewChartData(null);
         if (data.luckCycles) setLifelongCycles(data.luckCycles);
         else setLifelongCycles(null);
         if (data.baziTable) setBaziTable(data.baziTable);
@@ -517,6 +539,29 @@ ${bodyHtml}
     a.download = `${formData.name}_${docTitle}.doc`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  // Free chart preview (no auth required, no subscription needed)
+  const handlePreviewChart = async () => {
+    setLoadingText('命盤計算中...');
+    setIsLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/Astrology/calculate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      if (!res.ok) { alert('命盤計算失敗'); return; }
+      const chartData = await res.json();
+      setPreviewChartData(chartData);
+      setReport('');
+      setBaziTable(chartData.baziTable ?? null);
+      setLifelongCycles(null);
+      setAnnualForecasts(null);
+      setMonthlyForecasts(null);
+      setYongJiTable(null);
+      setExportChart(chartData);
+    } catch (err) { alert('命盤計算失敗：' + String(err)); } finally { setIsLoading(false); }
   };
 
   const handleExportXLS = async () => {
@@ -727,14 +772,20 @@ ${bodyHtml}
                   <div><label className="text-[10px] text-gray-400">分鐘</label><select value={formData.minute} onChange={(e) => setFormData({ ...formData, minute: parseInt(e.target.value) })} disabled={subStatus?.birthdateLocked} className="w-full border rounded p-1 text-xs disabled:bg-gray-50 disabled:text-gray-400">{minutes.map(m => <option key={m} value={m}>{m}分</option>)}</select></div>
                 </div>
 
+                <button
+                  onClick={handlePreviewChart}
+                  className="w-full bg-teal-700 text-white font-bold py-2 rounded-xl text-xs shadow-md hover:bg-teal-800 transition-all"
+                >
+                  免費預覽命盤（不消耗配額）
+                </button>
                 <div className="grid grid-cols-2 gap-2">
                   <button onClick={handleExportXLS} className="w-full bg-emerald-700 text-white font-bold py-2 rounded-xl text-xs shadow-md">下載命盤 XLS</button>
                   <button
                     onClick={saveProfile}
-                    disabled={profileSaving || subStatus?.birthdateLocked}
+                    disabled={profileSaving || subStatus?.birthdateLocked || !token}
                     className="w-full bg-sky-700 text-white font-bold py-2 rounded-xl text-xs shadow-md disabled:opacity-40 disabled:cursor-not-allowed"
                   >
-                    {subStatus?.birthdateLocked ? '生辰已鎖定' : profileLoaded ? '更新生辰' : '儲存生辰'}
+                    {!token ? '請先登入' : subStatus?.birthdateLocked ? '生辰已鎖定' : profileLoaded ? '更新生辰' : '儲存生辰'}
                   </button>
                 </div>
                 {saveMsg && (
@@ -908,30 +959,44 @@ ${bodyHtml}
 
           {/* 右側：命書結果 */}
           <div className="md:col-span-8">
-            {subStatus ? (
-              subStatus.isSubscribed ? (
-                <div className="mb-4 bg-gradient-to-r from-amber-800 to-amber-950 p-4 rounded-[2rem] text-white flex justify-between items-center shadow-lg">
-                  <div>
-                    <p className="text-xs text-white/80">訂閱方案</p>
-                    <p className="font-bold text-white">{subStatus.planName}</p>
-                  </div>
-                  <div className="text-right text-xs text-white/80 space-y-0.5">
-                    {subStatus.quotaStatus?.map(q => (
-                      <div key={q.productCode}>{
-                        q.productCode === 'BOOK_BAZI' ? '八字命書' :
-                        q.productCode === 'BOOK_LIUNIAN' ? '流年命書' :
-                        q.productCode === 'BOOK_DAIYUN' ? '大運命書' : q.productCode
-                      }：剩餘 {q.remaining}/{q.total}</div>
-                    ))}
-                  </div>
+            {!token && (
+              <div className="mb-4 bg-amber-50 border border-amber-200 p-4 rounded-[2rem] flex justify-between items-center">
+                <p className="text-sm text-amber-800">登入後可儲存生辰、使用試用期及訂閱命書功能</p>
+                <a href="/login?redirect=/disk" className="bg-amber-700 text-white px-5 py-2 rounded-full font-bold text-sm">登入</a>
+              </div>
+            )}
+            {token && subStatus && !subStatus.isSubscribed && subStatus.isInTrial && (
+              <div className="mb-4 bg-gradient-to-r from-teal-700 to-teal-900 p-4 rounded-[2rem] text-white flex justify-between items-center shadow-lg">
+                <div>
+                  <p className="text-xs text-white/80">7 天免費試用中</p>
+                  <p className="font-bold text-white">剩餘 {subStatus.trialDaysRemaining} 天</p>
                 </div>
-              ) : (
-                <div className="mb-4 bg-gray-100 border border-amber-200 p-4 rounded-[2rem] flex justify-between items-center">
-                  <p className="text-sm text-gray-600">尚未訂閱，無法使用命書功能</p>
-                  <a href="/subscribe" className="bg-amber-700 text-white px-5 py-2 rounded-full font-bold text-sm">訂閱方案</a>
+                <a href="/subscribe" className="bg-white text-teal-800 px-4 py-2 rounded-full font-bold text-sm hover:bg-teal-50">訂閱解鎖全功能</a>
+              </div>
+            )}
+            {token && subStatus && subStatus.isSubscribed && (
+              <div className="mb-4 bg-gradient-to-r from-amber-800 to-amber-950 p-4 rounded-[2rem] text-white flex justify-between items-center shadow-lg">
+                <div>
+                  <p className="text-xs text-white/80">訂閱方案</p>
+                  <p className="font-bold text-white">{subStatus.planName}</p>
                 </div>
-              )
-            ) : null}
+                <div className="text-right text-xs text-white/80 space-y-0.5">
+                  {subStatus.quotaStatus?.map(q => (
+                    <div key={q.productCode}>{
+                      q.productCode === 'BOOK_BAZI' ? '八字命書' :
+                      q.productCode === 'BOOK_LIUNIAN' ? '流年命書' :
+                      q.productCode === 'BOOK_DAIYUN' ? '大運命書' : q.productCode
+                    }：剩餘 {q.remaining}/{q.total}</div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {token && subStatus && !subStatus.isSubscribed && !subStatus.isInTrial && (
+              <div className="mb-4 bg-gray-100 border border-amber-200 p-4 rounded-[2rem] flex justify-between items-center">
+                <p className="text-sm text-gray-600">試用期已結束，訂閱後可使用命書功能</p>
+                <a href="/subscribe" className="bg-amber-700 text-white px-5 py-2 rounded-full font-bold text-sm">訂閱方案</a>
+              </div>
+            )}
 
             {report ? (
               <div className="space-y-4">
@@ -1213,9 +1278,67 @@ ${bodyHtml}
                   </div>
                 )}
               </div>
+            ) : previewChartData ? (
+              <div className="space-y-4">
+                <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 text-center">
+                  <p className="text-amber-900 font-bold text-lg mb-1">命盤已計算完成</p>
+                  <p className="text-sm text-amber-700 mb-3">以下為命盤結構視覺圖，完整命書報告需訂閱後使用</p>
+                  <a href="/subscribe" className="inline-block bg-amber-700 text-white px-8 py-2.5 rounded-full font-bold text-sm hover:bg-amber-800">訂閱解鎖完整命書</a>
+                </div>
+                {/* Chart visual displayed for free */}
+                {baziTable && baziTable.pillars && (
+                  <div className="bg-white p-4 rounded-2xl border border-amber-100 shadow-sm overflow-x-auto">
+                    <h3 className="text-base font-bold text-amber-900 mb-3">八字命盤</h3>
+                    <table className="w-full border-collapse text-sm text-center">
+                      <thead>
+                        <tr className="bg-amber-50">
+                          {['時柱','日柱','月柱','年柱'].map(l => (
+                            <th key={l} className="border border-amber-300 px-3 py-1 font-bold text-amber-900">{l}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(() => { const rp = [...baziTable.pillars].reverse(); return (<>
+                        <tr>
+                          {rp.map((p,i) => (
+                            <td key={i} className="border border-amber-200 px-3 py-2 text-xl font-bold text-gray-800">{p.stem}</td>
+                          ))}
+                        </tr>
+                        <tr>
+                          {rp.map((p,i) => (
+                            <td key={i} className="border border-amber-200 px-3 py-2 text-xl font-bold text-gray-800">{p.branch}</td>
+                          ))}
+                        </tr>
+                        <tr className="bg-amber-50/30">
+                          {rp.map((p,i) => (
+                            <td key={i} className="border border-amber-200 px-3 py-1 text-xs text-gray-500">{p.naYin}</td>
+                          ))}
+                        </tr>
+                        </>); })()}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+                <div className="relative bg-white rounded-2xl border border-amber-100 shadow-sm overflow-hidden">
+                  <div className="p-8 text-center blur-sm select-none pointer-events-none opacity-40">
+                    <p className="text-lg text-gray-700">命書內容計算完成...</p>
+                    <p className="text-sm text-gray-500 mt-2">格局判斷 · 核心特質 · 關鍵斷語 · 具體建議</p>
+                    <p className="text-sm text-gray-500 mt-1">一、格局判斷 · 二、核心特質 · 三、關鍵斷語 · 四、具體建議</p>
+                  </div>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm">
+                    <p className="text-amber-900 font-bold text-xl mb-2">命書報告已鎖定</p>
+                    <p className="text-sm text-amber-700 mb-4">訂閱會員方案後可查看完整命書</p>
+                    <a href="/subscribe" className="bg-amber-700 text-white px-8 py-3 rounded-full font-bold hover:bg-amber-800 transition-all shadow-lg">立即訂閱解鎖</a>
+                    {!token && <a href="/login?redirect=/disk" className="mt-3 text-sm text-gray-500 underline hover:text-gray-700">已有帳號？登入</a>}
+                  </div>
+                </div>
+              </div>
             ) : (
-              <div className="h-[500px] border-2 border-dashed border-amber-100 rounded-[3rem] flex items-center justify-center bg-white/40">
-                <div className="text-amber-200 text-xl italic tracking-widest font-bold">請輸入資料後開啟鑑定</div>
+              <div className="space-y-4">
+                <div className="h-[400px] border-2 border-dashed border-amber-100 rounded-[3rem] flex flex-col items-center justify-center bg-white/40 gap-4">
+                  <div className="text-amber-200 text-xl italic tracking-widest font-bold">請輸入資料後開啟鑑定</div>
+                  <p className="text-sm text-amber-400">或點擊「免費預覽命盤」查看八字命盤結構</p>
+                </div>
               </div>
             )}
           </div>

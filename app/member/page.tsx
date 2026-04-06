@@ -6,7 +6,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/components/AuthContext';
 
-type Tab = 'profile' | 'subscription' | 'ninestar' | 'orders' | 'security';
+type Tab = 'profile' | 'subscription' | 'ninestar' | 'orders' | 'reports' | 'security';
 
 interface SubscriptionStatus {
   isSubscribed: boolean;
@@ -14,8 +14,25 @@ interface SubscriptionStatus {
   planName?: string;
   expiryDate?: string;
   daysRemaining?: number;
+  isInTrial?: boolean;
+  trialDaysRemaining?: number;
   benefits?: { productCode: string | null; productType: string | null; benefitType: string; benefitValue: string; description: string | null }[];
   quotaStatus?: { productCode: string; productType: string | null; total: number; used: number; remaining: number }[];
+}
+
+interface UserReport {
+  id: string;
+  reportType: string;
+  title: string;
+  createdAt: string;
+}
+
+interface UserReportDetail {
+  id: string;
+  reportType: string;
+  title: string;
+  content: string;
+  createdAt: string;
 }
 
 interface DailyFortune {
@@ -101,6 +118,11 @@ export default function MemberPage() {
   });
   const [passwordMsg, setPasswordMsg] = useState('');
   const [passwordLoading, setPasswordLoading] = useState(false);
+
+  const [userReports, setUserReports] = useState<UserReport[]>([]);
+  const [reportsLoaded, setReportsLoaded] = useState(false);
+  const [selectedReport, setSelectedReport] = useState<UserReportDetail | null>(null);
+  const [reportLoading, setReportLoading] = useState(false);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL
     ? process.env.NEXT_PUBLIC_API_URL
@@ -259,10 +281,35 @@ export default function MemberPage() {
     finally { setNotifyLoading(false); }
   };
 
+  const fetchReports = async () => {
+    if (!token || reportsLoaded) return;
+    try {
+      const res = await fetch(`${API_URL}/Reports/my`, { headers: { Authorization: `Bearer ${token}` } });
+      if (res.ok) {
+        const data = await res.json();
+        setUserReports(data);
+        setReportsLoaded(true);
+      }
+    } catch { /* ignore */ }
+  };
+
+  const fetchReportDetail = async (id: string) => {
+    if (!token) return;
+    setReportLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/Reports/my/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+      if (res.ok) {
+        const data = await res.json();
+        setSelectedReport(data);
+      }
+    } catch { /* ignore */ } finally { setReportLoading(false); }
+  };
+
   const handleTabChange = (tab: Tab) => {
     setActiveTab(tab);
     if (tab === 'orders') fetchOrders();
     if (tab === 'ninestar') fetchNineStarDaily();
+    if (tab === 'reports') fetchReports();
   };
 
   const handleChangePassword = async (e: React.FormEvent) => {
@@ -304,6 +351,7 @@ export default function MemberPage() {
     { id: 'profile', label: '個人資料' },
     { id: 'subscription', label: '訂閱方案' },
     { id: 'ninestar', label: '九星建議' },
+    { id: 'reports', label: '命書記錄' },
     { id: 'orders', label: '購買記錄' },
     { id: 'security', label: '帳號安全' },
   ];
@@ -665,19 +713,30 @@ export default function MemberPage() {
                 </>
               ) : (
                 /* 未訂閱 */
-                <div className="text-center py-8">
-                  <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-2xl text-amber-400">*</span>
+                <div className="space-y-4">
+                  {subscription?.isInTrial && (
+                    <div className="bg-teal-50 border border-teal-200 rounded-xl p-4">
+                      <p className="text-teal-800 font-bold text-sm mb-1">7 天免費試用中</p>
+                      <p className="text-teal-700 text-sm">剩餘 <span className="font-bold text-lg">{subscription.trialDaysRemaining}</span> 天</p>
+                      <p className="text-teal-600 text-xs mt-1">試用期間可免費預覽命盤結構，訂閱後可查看完整命書報告</p>
+                    </div>
+                  )}
+                  {!subscription?.isInTrial && (
+                    <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 text-sm text-amber-700">
+                      免費試用期已結束，訂閱會員即可使用全部功能
+                    </div>
+                  )}
+                  <div className="text-center py-4">
+                    <p className="text-gray-700 font-medium mb-1">尚未訂閱任何方案</p>
+                    <p className="text-sm text-gray-500 mb-6 leading-relaxed">
+                      訂閱會員即可享有每日建議、命書折扣、祈福服務等專屬福利。
+                    </p>
+                    <Link href="/subscribe">
+                      <button className="px-6 py-3 bg-amber-600 text-white rounded-xl font-bold hover:bg-amber-700 transition-colors">
+                        查看訂閱方案
+                      </button>
+                    </Link>
                   </div>
-                  <p className="text-gray-700 font-medium mb-1">尚未訂閱任何方案</p>
-                  <p className="text-sm text-gray-500 mb-6 leading-relaxed">
-                    訂閱會員即可享有每日建議、命書折扣、祈福服務等專屬福利。
-                  </p>
-                  <Link href="/subscribe">
-                    <button className="px-6 py-3 bg-amber-600 text-white rounded-xl font-bold hover:bg-amber-700 transition-colors">
-                      查看訂閱方案
-                    </button>
-                  </Link>
                 </div>
               )}
             </div>
@@ -870,6 +929,72 @@ export default function MemberPage() {
                     </button>
                   </Link>
                 </div>
+              )}
+            </div>
+          )}
+
+          {/* ── 命書記錄 ── */}
+          {activeTab === 'reports' && (
+            <div className="space-y-4">
+              <h2 className="text-lg font-bold text-gray-900 border-b pb-3">命書記錄</h2>
+
+              {reportLoading && (
+                <div className="text-center py-8 text-amber-600">載入中...</div>
+              )}
+
+              {selectedReport ? (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setSelectedReport(null)}
+                      className="text-sm text-amber-700 underline hover:text-amber-900"
+                    >
+                      &lt; 返回列表
+                    </button>
+                    <span className="text-sm text-gray-500">{selectedReport.title}</span>
+                  </div>
+                  <div className="bg-[#F9F3E9] border-2 border-amber-200 rounded-2xl p-6">
+                    <h3 className="text-xl font-bold text-amber-900 mb-4 text-center">{selectedReport.title}</h3>
+                    <p className="text-xs text-gray-400 text-center mb-4">
+                      {new Date(selectedReport.createdAt).toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    </p>
+                    <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap font-serif">
+                      {selectedReport.content}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {reportsLoaded && userReports.length === 0 && (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500 text-sm mb-3">尚無命書記錄</p>
+                      <Link href="/disk">
+                        <button className="px-6 py-2.5 bg-amber-600 text-white rounded-xl font-bold text-sm hover:bg-amber-700 transition-colors">
+                          前往產生命書
+                        </button>
+                      </Link>
+                    </div>
+                  )}
+                  {userReports.length > 0 && (
+                    <div className="space-y-2">
+                      {userReports.map(r => (
+                        <button
+                          key={r.id}
+                          onClick={() => fetchReportDetail(r.id)}
+                          className="w-full text-left flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100 hover:border-amber-300 hover:bg-amber-50 transition-all shadow-sm"
+                        >
+                          <div>
+                            <p className="font-medium text-gray-800">{r.title}</p>
+                            <p className="text-xs text-gray-400 mt-0.5">
+                              {new Date(r.createdAt).toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' })}
+                            </p>
+                          </div>
+                          <span className="text-amber-600 text-sm font-medium">查看</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}
