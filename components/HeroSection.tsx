@@ -54,19 +54,11 @@ export default function HeroSection({ showSubscribeNudge = false }: { showSubscr
 
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
-          {isAuthenticated ? (
-            <Link href="/disk" className="inline-block">
-              <button className="btn-primary w-full sm:w-auto">
-                開始排盤分析
-              </button>
-            </Link>
-          ) : (
-            <Link href="/login" className="inline-block">
-              <button className="btn-primary w-full sm:w-auto">
-                立即加入會員
-              </button>
-            </Link>
-          )}
+          <Link href="/disk" className="inline-block">
+            <button className="btn-primary w-full sm:w-auto">
+              {isAuthenticated ? '開始排盤分析' : '免費命盤預覽'}
+            </button>
+          </Link>
 
           <Link href="#features" className="inline-block">
             <button className="btn-secondary w-full sm:w-auto">
