@@ -4,7 +4,17 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthContext';
 
-type Tab = 'info' | 'password' | 'points';
+type Tab = 'info' | 'subscription' | 'password' | 'points';
+
+interface AdminSubscription {
+  planCode: string;
+  planName: string;
+  status: string;
+  expiryDate?: string;
+  isInTrial: boolean;
+  trialStartDate?: string;
+  trialDaysRemaining?: number;
+}
 
 interface AdminUser {
   id: string;
@@ -15,6 +25,12 @@ interface AdminUser {
   address: string;
   taxId: string;
   points: number;
+  birthYear?: number;
+  birthMonth?: number;
+  birthDay?: number;
+  birthHour?: number;
+  birthGender?: number;
+  subscription?: AdminSubscription;
 }
 
 export default function AdminUserDetailPage() {
@@ -132,9 +148,10 @@ export default function AdminUserDetailPage() {
   if (!user) return <div className="text-gray-400">載入中...</div>;
 
   const tabs: { id: Tab; label: string }[] = [
-    { id: 'info',     label: '基本資料' },
-    { id: 'password', label: '強制改密碼' },
-    { id: 'points',   label: '點數調整' },
+    { id: 'info',         label: '基本資料' },
+    { id: 'subscription', label: '訂閱狀態' },
+    { id: 'password',     label: '強制改密碼' },
+    { id: 'points',       label: '點數調整' },
   ];
 
   return (
@@ -155,6 +172,12 @@ export default function AdminUserDetailPage() {
             <h1 className="text-lg font-bold text-gray-800">{user.name}</h1>
             <p className="text-sm text-gray-500">{user.email}</p>
             <p className="text-sm text-amber-600 font-medium">點數餘額：{user.points} 點</p>
+          {user.birthYear && (
+            <p className="text-sm text-gray-500">
+              生辰：{user.birthYear}/{user.birthMonth}/{user.birthDay} {user.birthHour}時
+              （{user.birthGender === 1 ? '乾造' : '坤造'}）
+            </p>
+          )}
           </div>
         </div>
       </div>
@@ -214,6 +237,61 @@ export default function AdminUserDetailPage() {
               {loading ? '儲存中...' : '儲存變更'}
             </button>
           </form>
+        )}
+
+        {/* Subscription Status */}
+        {activeTab === 'subscription' && (
+          <div className="space-y-4">
+            <h2 className="font-bold text-gray-700 border-b pb-3">訂閱狀態</h2>
+            {user.subscription ? (
+              <div className="space-y-3">
+                <div className="bg-amber-50 rounded-lg p-4 space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-500">方案</span>
+                    <span className="text-sm font-medium text-gray-800">{user.subscription.planName}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-500">狀態</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                      user.subscription.status === 'active' ? 'bg-green-100 text-green-700' :
+                      user.subscription.status === 'trial' ? 'bg-blue-100 text-blue-700' :
+                      'bg-gray-100 text-gray-500'
+                    }`}>
+                      {user.subscription.status === 'active' ? '訂閱中' :
+                       user.subscription.status === 'trial' ? '試用中' :
+                       user.subscription.status === 'trial_expired' ? '試用已到期' : user.subscription.status}
+                    </span>
+                  </div>
+                  {user.subscription.expiryDate && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-500">到期日</span>
+                      <span className="text-sm font-medium text-gray-800">
+                        {new Date(user.subscription.expiryDate).toLocaleDateString('zh-TW')}
+                      </span>
+                    </div>
+                  )}
+                  {user.subscription.isInTrial && user.subscription.trialDaysRemaining !== undefined && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-500">試用剩餘</span>
+                      <span className="text-sm font-medium text-blue-700">{user.subscription.trialDaysRemaining} 天</span>
+                    </div>
+                  )}
+                  {user.subscription.trialStartDate && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-500">試用開始</span>
+                      <span className="text-sm text-gray-600">
+                        {new Date(user.subscription.trialStartDate).toLocaleDateString('zh-TW')}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-400 border-2 border-dashed border-gray-200 rounded-xl">
+                <p className="text-sm">無訂閱紀錄，未使用過試用</p>
+              </div>
+            )}
+          </div>
         )}
 
         {/* Force Change Password */}
