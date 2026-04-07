@@ -620,7 +620,8 @@ ${bodyHtml}
       });
       const data = await res.json();
       if (res.ok) {
-        alert(`推播完成\n成功：${data.pushedCount} 人\n失敗：${data.errorCount} 人\n\n${data.pushed.map((p: {type:string; name?:string; lineUserId?:string}) => `[${p.type}] ${p.name ?? p.lineUserId}`).join('\n')}`);
+        const errDetail = data.errors?.map((e: {type:string; error:string; lineUserId?:string; userId?:string}) => `[${e.type}] ${e.lineUserId ?? e.userId}: ${e.error}`).join('\n') ?? '';
+        alert(`推播完成\n成功：${data.pushedCount} 人\n失敗：${data.errorCount} 人\n\n${data.pushed.map((p: {type:string; name?:string; lineUserId?:string}) => `[${p.type}] ${p.name ?? p.lineUserId}`).join('\n')}${errDetail ? '\n\n錯誤詳情：\n' + errDetail : ''}`);
       } else {
         alert('推播失敗：' + (data.message ?? JSON.stringify(data)));
       }
