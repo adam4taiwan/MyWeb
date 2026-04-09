@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
 import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 import Header from '@/components/Header';
 import { useAuth } from '@/components/AuthContext';
 
@@ -418,128 +417,6 @@ export default function DiskPage() {
     } catch (err) { alert('鑑定失敗：' + String(err)); } finally { setIsLoading(false); }
   };
 
-  const generateDOC = () => {
-    if (!report) return;
-    const lines = report.split('\n');
-    const bodyLines: string[] = [];
-
-    const thDocStyle = 'border:1px solid #c8a96e;background:#fef3c7;padding:3pt 5pt;text-align:center;font-weight:bold;color:#7B3F00;font-size:9pt;';
-    const tdDocStyle = 'border:1px solid #c8a96e;padding:3pt 5pt;text-align:center;font-size:9pt;';
-    let tableBuffer: string[][] = [];
-
-    const flushDocTable = () => {
-      if (tableBuffer.length === 0) return;
-      const rows = tableBuffer.map((cells, i) =>
-        `<tr>${cells.map(c => `<${i === 0 ? 'th' : 'td'} style="${i === 0 ? thDocStyle : tdDocStyle}">${c}</${i === 0 ? 'th' : 'td'}>`).join('')}</tr>`
-      ).join('');
-      bodyLines.push(`<table style="border-collapse:collapse;margin:4pt 0 6pt;">${rows}</table>`);
-      tableBuffer = [];
-    };
-
-    lines.forEach((line) => {
-      const trimmed = line.trim();
-      const isTableRow = trimmed.startsWith('|') && trimmed.endsWith('|');
-      const isSeparator = /^\|[\s:\-|]+\|$/.test(trimmed);
-
-      if (isSeparator) return;
-
-      if (isTableRow) {
-        tableBuffer.push(trimmed.slice(1, -1).split('|').map(c => c.trim()));
-        return;
-      }
-
-      flushDocTable();
-
-      if (!trimmed) { bodyLines.push('<p style="margin:2pt 0">&nbsp;</p>'); return; }
-      if (trimmed.startsWith('===') && trimmed.endsWith('===')) {
-        const title = trimmed.replace(/^=+\s*/, '').replace(/\s*=+$/, '');
-        bodyLines.push(`<h2 style="font-size:14pt;color:#7B3F00;border-bottom:1px solid #c8a96e;margin:12pt 0 4pt;page-break-before:always">${title}</h2>`);
-        return;
-      }
-      if (trimmed.startsWith('---') && trimmed.endsWith('---')) {
-        const sub = trimmed.replace(/^-+\s*/, '').replace(/\s*-+$/, '');
-        bodyLines.push(`<h3 style="font-size:12pt;color:#5C3317;margin:8pt 0 2pt">${sub}</h3>`);
-        return;
-      }
-      const escaped = trimmed.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-      bodyLines.push(`<p style="margin:3pt 0;line-height:1.6">${escaped}</p>`);
-    });
-    flushDocTable();
-
-    // 第一章不要 page-break-before
-    const bodyHtml = bodyLines.join('\n').replace('page-break-before:always', 'page-break-before:auto');
-
-    // 八字命盤表格 HTML（僅八字命書有）
-    let baziTableHtml = '';
-    if (baziTable && baziTable.pillars) {
-      const ps = [...baziTable.pillars].reverse(); // 時日月年
-      const thStyle = 'border:1px solid #c8a96e;background:#fef3c7;padding:4pt 8pt;text-align:center;font-weight:bold;color:#7B3F00;';
-      const tdStyle = 'border:1px solid #c8a96e;padding:4pt 8pt;text-align:center;';
-      const tdLgStyle = 'border:1px solid #c8a96e;padding:6pt 8pt;text-align:center;font-size:14pt;font-weight:bold;';
-      const tdSmStyle = 'border:1px solid #c8a96e;padding:3pt 8pt;text-align:center;font-size:9pt;color:#555;';
-      const maxHidden = Math.max(...ps.map(p => p.hiddenPairs.length));
-      const hiddenRows = Array.from({length: maxHidden}, (_, row) =>
-        `<tr>${ps.map(p => {
-          const hp = p.hiddenPairs[row];
-          return hp ? `<td style="${tdSmStyle}"><span style="color:#7B3F00">${hp.ss}</span>${hp.stem}</td>` : `<td style="${tdSmStyle}"></td>`;
-        }).join('')}</tr>`
-      ).join('');
-      baziTableHtml = `
-<h3 style="font-size:12pt;color:#5C3317;margin:8pt 0 4pt">八字命盤結構</h3>
-<table style="border-collapse:collapse;width:100%;margin-bottom:8pt;">
-  <tr><th style="${thStyle}">時柱</th><th style="${thStyle}">日柱</th><th style="${thStyle}">月柱</th><th style="${thStyle}">年柱</th></tr>
-  <tr>${ps.map(p=>`<td style="${tdStyle}color:#92400e">${p.stemSS||'-'}</td>`).join('')}</tr>
-  <tr>${ps.map(p=>`<td style="${tdLgStyle}">${p.stem}</td>`).join('')}</tr>
-  <tr>${ps.map(p=>`<td style="${tdLgStyle}">${p.branch}</td>`).join('')}</tr>
-  ${hiddenRows}
-  <tr>${ps.map(p=>`<td style="${tdSmStyle}color:#888">${p.naYin}</td>`).join('')}</tr>
-</table>`;
-
-      if (lifelongCycles && lifelongCycles.length > 0) {
-        const cycles = [...lifelongCycles].reverse();
-        baziTableHtml += `
-<h3 style="font-size:12pt;color:#5C3317;margin:8pt 0 4pt">大運</h3>
-<table style="border-collapse:collapse;width:100%;margin-bottom:12pt;">
-  <tr>${cycles.map(c=>`<td style="${thStyle}font-size:9pt;">${c.startAge}</td>`).join('')}</tr>
-  <tr>${cycles.map(c=>`<td style="${tdSmStyle}color:#92400e">${c.liuShen}</td>`).join('')}</tr>
-  <tr>${cycles.map(c=>`<td style="${tdStyle}font-weight:bold">${c.stem}</td>`).join('')}</tr>
-  <tr>${cycles.map(c=>`<td style="${tdStyle}font-weight:bold">${c.branch}</td>`).join('')}</tr>
-</table>`;
-      }
-    }
-
-    const docTitle = reportTitle.replace('終身命書（科學化規則版）', '八字命書');
-
-    const docHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
-<head>
-<meta charset="utf-8">
-<title>${formData.name} ${docTitle}</title>
-<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument></xml><![endif]-->
-<style>
-  @page { size: A4; margin: 2cm 2.5cm; }
-  body { font-family: "Microsoft JhengHei","PMingLiU",serif; font-size: 11pt; color: #2c1810; line-height: 1.6; }
-  h2 { font-size: 14pt; color: #7B3F00; }
-  h3 { font-size: 12pt; color: #5C3317; }
-  p { margin: 3pt 0; }
-</style>
-</head>
-<body>
-<p style="text-align:center;font-size:18pt;font-weight:bold;color:#7B3F00;margin-bottom:6pt">${formData.name} ${docTitle}</p>
-<p style="text-align:center;font-size:10pt;color:#888;margin-bottom:16pt">命理鑑定大師：玉洞子  |  修身齊家，命在人心。  v3.0</p>
-${baziTableHtml}
-${baziTableHtml ? '<p style="page-break-before:always;margin:0">&nbsp;</p>' : ''}
-${bodyHtml}
-</body>
-</html>`;
-
-    const blob = new Blob(['\ufeff', docHtml], { type: 'application/msword;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${formData.name}_${docTitle}.doc`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
 
   // Free chart preview (no auth required, no subscription needed)
   const handlePreviewChart = async () => {
