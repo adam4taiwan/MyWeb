@@ -334,13 +334,11 @@ export default function DiskPage() {
     if ((reportType === '八字命書' || reportType === '大運命書' || reportType === '流年命書') && !profileLoaded) {
       return alert(`${reportType}需要先儲存生辰資料，請先填寫並儲存您的生辰。`);
     }
-    setLoadingText((reportType === '綜合性命書' || reportType === '八字命書') && profileLoaded
-      ? '知識庫命書生成中，請稍候...'
-      : reportType === '大運命書' && profileLoaded
+    setLoadingText(reportType === '大運命書' && profileLoaded
       ? '大運命書（5年大運）生成中，請稍候...'
       : reportType === '流年命書'
-      ? `流年命書（${targetYear} 年，五術合一）生成中，請稍候...`
-      : '命理鑑定計算中，複雜命書需 1-2 分鐘，請耐心等候...');
+      ? `流年命書（${targetYear} 年）生成中，請稍候...`
+      : `${reportType}生成中，請稍候...`);
     setIsLoading(true);
     try {
       const body: Record<string, unknown> = {
