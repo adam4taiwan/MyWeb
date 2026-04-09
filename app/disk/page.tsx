@@ -660,6 +660,32 @@ ${bodyHtml}
     }
   };
 
+  const handleExportDocx = async () => {
+    if (!report) return;
+    const bookTitleMap: Record<string, string> = {
+      '八字命書':  '八 字 命 書',
+      '大運命書':  '大 運 命 書',
+      '流年命書':  '流 年 命 書',
+    };
+    const bookTitle = bookTitleMap[reportType] ?? '命書';
+    try {
+      setIsLoading(true);
+      setLoadingText('生成命書 DOCX...');
+      const res = await fetch(`${API_URL}/Consultation/export-generic-docx`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ reportText: report, personName: formData.name, bookTitle }),
+      });
+      if (!res.ok) { const d = await res.json().catch(() => ({})); alert(d.error || 'DOCX 生成失敗'); return; }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `${formData.name}_${bookTitle.replace(/ /g, '')}.docx`;
+      document.body.appendChild(a); a.click(); a.remove();
+    } catch (err) { alert('DOCX 生成失敗：' + String(err)); }
+    finally { setIsLoading(false); }
+  };
+
   const handleYudongziDocx = async () => {
     if (!profileLoaded) return alert('需要先儲存生辰資料。');
     setLoadingText('準備先天元神圖...');
@@ -1001,10 +1027,16 @@ ${bodyHtml}
 
             {report ? (
               <div className="space-y-4">
-                <div className="flex justify-end">
-                  <button onClick={generateDOC} className="bg-amber-100 text-amber-900 border border-amber-300 px-5 py-2 rounded-full text-xs font-bold hover:bg-amber-200 transition-all shadow-sm">
-                    儲存 DOC 鑑定書
-                  </button>
+                <div className="flex justify-end gap-2">
+                  {(reportType === '八字命書' || reportType === '大運命書' || reportType === '流年命書') ? (
+                    <button onClick={handleExportDocx} className="bg-amber-700 text-white border border-amber-600 px-5 py-2 rounded-full text-xs font-bold hover:bg-amber-800 transition-all shadow-sm">
+                      下載命書 DOCX
+                    </button>
+                  ) : (
+                    <button onClick={generateDOC} className="bg-amber-100 text-amber-900 border border-amber-300 px-5 py-2 rounded-full text-xs font-bold hover:bg-amber-200 transition-all shadow-sm">
+                      儲存 DOC 鑑定書
+                    </button>
+                  )}
                 </div>
                 {/* 命盤結構表格（八字命書/大運命書共用，顯示在報告之前） */}
                 {baziTable && baziTable.pillars && (
