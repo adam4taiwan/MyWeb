@@ -539,26 +539,36 @@ export default function DiskPage() {
 
   const handleExportDocx = async () => {
     if (!report) return;
+    // 封面顯示標題
     const bookTitleMap: Record<string, string> = {
       '八字命書':  '八 字 命 書',
       '大運命書':  '大 運 命 書',
       '流年命書':  '流 年 命 書',
-      '綜合性命書': '玉 洞 子 命 書',
+      '綜合性命書': '命 理 鑑 定 書',
+    };
+    // report body 裡要略過的標題行（綜合命書內容來自 LfBuildReport，標題是「八 字 命 書」）
+    const skipTitleMap: Record<string, string> = {
+      '八字命書':  '八 字 命 書',
+      '大運命書':  '大 運 命 書',
+      '流年命書':  '流 年 命 書',
+      '綜合性命書': '八 字 命 書',
     };
     const bookTitle = bookTitleMap[reportType] ?? '命書';
+    const skipTitle = skipTitleMap[reportType] ?? bookTitle;
     try {
       setIsLoading(true);
       setLoadingText('生成命書 DOCX...');
       const res = await fetch(`${API_URL}/Consultation/export-generic-docx`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ reportText: report, personName: formData.name, bookTitle }),
+        body: JSON.stringify({ reportText: report, personName: formData.name, bookTitle, skipTitle }),
       });
       if (!res.ok) { const d = await res.json().catch(() => ({})); alert(d.error || 'DOCX 生成失敗'); return; }
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url; a.download = `${formData.name}_${bookTitle.replace(/ /g, '')}.docx`;
+      const safeTitle = reportTitle.replace(/[\s/\\:*?"<>|]/g, '_');
+      a.href = url; a.download = `${formData.name}_${safeTitle}.docx`;
       document.body.appendChild(a); a.click(); a.remove();
     } catch (err) { alert('DOCX 生成失敗：' + String(err)); }
     finally { setIsLoading(false); }
