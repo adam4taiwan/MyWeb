@@ -58,8 +58,17 @@ export default function SubscribePage() {
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState<string | null>(null);
 
+  function planDisplayName(code: string): string {
+    const key = `planName_${code}` as Parameters<typeof t>[0];
+    return t(key);
+  }
+
   function benefitLabel(b: PlanBenefit): string {
-    if (b.description) return b.description;
+    // Use productCode-based translation key first
+    if (b.productCode) {
+      const codeKey = `benefit_${b.productCode}` as Parameters<typeof t>[0];
+      try { const v = t(codeKey); if (v) return v; } catch { /* fallthrough */ }
+    }
     if (b.benefitType === 'access') return t('benefitAccess');
     if (b.benefitType === 'quota') return t('benefitQuota', { value: b.benefitValue });
     if (b.benefitType === 'discount') {
@@ -160,7 +169,7 @@ export default function SubscribePage() {
                         {t('mostPopular')}
                       </div>
                     )}
-                    <p className="text-sm font-medium opacity-80 mb-1">{plan.name}</p>
+                    <p className="text-sm font-medium opacity-80 mb-1">{planDisplayName(plan.code)}</p>
                     <p className="text-4xl font-bold">
                       NT${plan.priceTwd.toLocaleString()}
                       <span className="text-sm font-normal opacity-80 ml-1">{t('perYear')}</span>
@@ -193,7 +202,7 @@ export default function SubscribePage() {
                       disabled={purchasing !== null}
                       className={`w-full py-3 rounded-xl font-bold text-sm transition-colors disabled:opacity-50 ${meta.btnClass}`}
                     >
-                      {purchasing === plan.code ? t('processing') : t('subscribePlan', { name: plan.name })}
+                      {purchasing === plan.code ? t('processing') : t('subscribePlan', { name: planDisplayName(plan.code) })}
                     </button>
                   </div>
                 </div>

@@ -288,7 +288,21 @@
     "benefitDiscountBook": "命式書{pct}%割引",
     "benefitDiscountBlessing": "祈福サービス{pct}%割引",
     "benefitDiscountConsultation": "ご相談{pct}%割引",
-    "benefitDiscountCourse": "講座{pct}%割引"
+    "benefitDiscountCourse": "講座{pct}%割引",
+    "planName_BRONZE": "ブロンズ会員",
+    "planName_SILVER": "シルバー会員",
+    "planName_GOLD": "ゴールド会員",
+    "benefit_BOOK_BAZI": "八字命式書 年1回",
+    "benefit_BOOK_DAIYUN": "大運命式書 年1回",
+    "benefit_BOOK_LIUNIAN": "流年命式書 年1回",
+    "benefit_DAILY_FORTUNE": "毎日アドバイス無制限アクセス",
+    "benefit_BLESSING_ANTAISUI": "太歳除け x1",
+    "benefit_BLESSING_LIGHT": "光明灯 x1",
+    "benefit_BLESSING_WEALTH": "財庫補填 x1",
+    "benefit_BLESSING_PRAYER": "供養祈祷 x1",
+    "benefit_CONSULT_VIDEO": "ビデオ相談 x1",
+    "benefit_COURSE_BASIC": "基礎コース x1",
+    "benefit_LECTURE_FREE": "無料講座 x1"
   },
   "Member": {
     "loadingFortune": "玉洞子が今日の運勢を推算中...",

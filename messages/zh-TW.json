@@ -288,7 +288,21 @@
     "benefitDiscountBook": "命書享 {pct} 折",
     "benefitDiscountBlessing": "祈福服務享 {pct} 折",
     "benefitDiscountConsultation": "問事享 {pct} 折",
-    "benefitDiscountCourse": "課程享 {pct} 折"
+    "benefitDiscountCourse": "課程享 {pct} 折",
+    "planName_BRONZE": "銅會員",
+    "planName_SILVER": "銀會員",
+    "planName_GOLD": "金會員",
+    "benefit_BOOK_BAZI": "八字命書 1次/年",
+    "benefit_BOOK_DAIYUN": "大運命書 1次/年",
+    "benefit_BOOK_LIUNIAN": "流年命書 1次/年",
+    "benefit_DAILY_FORTUNE": "每日建議無限存取",
+    "benefit_BLESSING_ANTAISUI": "安太歲 x1",
+    "benefit_BLESSING_LIGHT": "光明燈 x1",
+    "benefit_BLESSING_WEALTH": "補財庫 x1",
+    "benefit_BLESSING_PRAYER": "超渡祈禱 x1",
+    "benefit_CONSULT_VIDEO": "視訊問事 x1",
+    "benefit_COURSE_BASIC": "基礎課程 x1",
+    "benefit_LECTURE_FREE": "免費講座 x1"
   },
   "Member": {
     "loadingFortune": "玉洞子正在推算今日運勢...",

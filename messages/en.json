@@ -288,7 +288,21 @@
     "benefitDiscountBook": "{pct}% off fortune books",
     "benefitDiscountBlessing": "{pct}% off blessing services",
     "benefitDiscountConsultation": "{pct}% off consultation",
-    "benefitDiscountCourse": "{pct}% off courses"
+    "benefitDiscountCourse": "{pct}% off courses",
+    "planName_BRONZE": "Bronze Member",
+    "planName_SILVER": "Silver Member",
+    "planName_GOLD": "Gold Member",
+    "benefit_BOOK_BAZI": "BaZi Fortune Book x1/yr",
+    "benefit_BOOK_DAIYUN": "Major Cycle Fortune Book x1/yr",
+    "benefit_BOOK_LIUNIAN": "Annual Fortune Book x1/yr",
+    "benefit_DAILY_FORTUNE": "Unlimited Daily Guidance",
+    "benefit_BLESSING_ANTAISUI": "Tai Sui Protection x1",
+    "benefit_BLESSING_LIGHT": "Light Blessing x1",
+    "benefit_BLESSING_WEALTH": "Wealth Blessing x1",
+    "benefit_BLESSING_PRAYER": "Prayer Service x1",
+    "benefit_CONSULT_VIDEO": "Video Consultation x1",
+    "benefit_COURSE_BASIC": "Basic Course x1",
+    "benefit_LECTURE_FREE": "Free Lecture x1"
   },
   "Member": {
     "loadingFortune": "Yudongzi is calculating today's fortune...",
