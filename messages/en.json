@@ -7,5 +7,223 @@
     "save": "Save",
     "close": "Close"
   },
-  "report_language_notice": "Fortune reports are presented in Traditional Chinese"
+  "report_language_notice": "Fortune reports are presented in Traditional Chinese",
+  "Header": {
+    "brand": "Yudongzi Ancient Astrology Academy",
+    "home": "Home",
+    "heritage": "Divination Heritage",
+    "blog": "Astrology Blog",
+    "disk": "Chart Reading",
+    "blessing": "Blessing Services",
+    "appointment": "Consultation Booking",
+    "consultation": "Online Consultation",
+    "consultationMobile": "Services",
+    "member": "Member Center",
+    "login": "Login / Register",
+    "logout": "Logout",
+    "langSwitcher": {
+      "zhTW": "繁中",
+      "en": "EN",
+      "ja": "日本語"
+    }
+  },
+  "Footer": {
+    "brand": "Yudongzi",
+    "tagline": "Thirty years of divination experience, preserving classical wisdom, providing professional guidance for modern life.",
+    "wechatFriend": "Add me on WeChat",
+    "wechatCopied": "Copied!",
+    "wechatCopy": "Copy WeChat ID",
+    "lineFriend": "Add me on LINE",
+    "lineJoin": "Join on LINE",
+    "services": "Services",
+    "personalConsult": "Personal Divination Consultation",
+    "heritageTeaching": "Divination Heritage Teaching",
+    "corporateLecture": "Corporate Lecture Services",
+    "remoteService": "Remote Online Services",
+    "resources": "Learning Resources",
+    "ancientBooks": "Ancient Texts Collection",
+    "usedBooks": "Used Book Exchange",
+    "contact": "Contact",
+    "hours": "Mon–Fri 9:00–18:00",
+    "copyright": "© 1993 Yudongzi. All rights reserved | 30 years of professional experience, trusted by thousands"
+  },
+  "Hero": {
+    "headline": "Know Your Destiny, Enrich Your Life",
+    "subheading": "BaZi (Four Pillars) and Zi Wei Dou Shu analysis from a 30-year master. Guiding 5000+ users on their life journey.",
+    "stat1Value": "5000+",
+    "stat1Label": "Active Users",
+    "stat2Value": "90%",
+    "stat2Label": "Trust Rate",
+    "stat3Value": "30 Yrs",
+    "stat3Label": "Experience",
+    "ctaAuthenticated": "Start Chart Analysis",
+    "ctaGuest": "Free Chart Preview",
+    "ctaLearnMore": "Learn More",
+    "ctaSubscribe": "Subscribe to Membership",
+    "trustSignal1": "Members enjoy daily personalized fortune insights",
+    "trustSignal2": "Please review service details before purchasing"
+  },
+  "Features": {
+    "sectionTitle": "Why Choose Yudongzi Ancient Astrology Academy",
+    "learnMore": "Learn More →",
+    "items": [
+      {
+        "title": "Precise Chart Calculation",
+        "description": "Combining astronomical calendars with modern computation to deliver millisecond-precise BaZi (Four Pillars) and Zi Wei Dou Shu birth charts."
+      },
+      {
+        "title": "In-Depth Analysis Reports",
+        "description": "Drawing on decades of divination experience, we generate detailed Word reports covering chart patterns, fortune cycles, and annual forecasts."
+      },
+      {
+        "title": "Life Wisdom Guidance",
+        "description": "More than prediction — we provide actionable advice to help you seize opportunities and navigate life's challenges."
+      }
+    ]
+  },
+  "Pricing": {
+    "sectionTitle": "Membership Plans",
+    "sectionDesc": "Annual subscriptions with daily guidance, fortune book discounts, blessing services, and exclusive member benefits. No auto-renewal upon expiry.",
+    "perYear": "/ yr",
+    "recommended": "Best Seller",
+    "comingSoon": "Coming Soon",
+    "comingSoonBtn": "Stay Tuned",
+    "vipName": "VIP Member",
+    "vipDesc": "Ultimate prestige — the most complete service package",
+    "vipFeatures": ["Daily personalized guidance", "Lifelong fortune book (8 cycles) x1", "Yudongzi personal reading x1", "40% off annual fortune book", "20% off courses", "Free blessing service x1"],
+    "trustTitle": "Secure ECPay Credit Card Payment: ",
+    "trustBody": "Transactions are processed by ECPay. We never store your credit card information.",
+    "trustNote": "This is a digital content service. Once generated, refunds are not available. Please review the service details before purchasing.",
+    "plans": [
+      {
+        "name": "Bronze Member",
+        "description": "Entry-level subscription with essential member benefits",
+        "features": ["Unlimited daily guidance", "BaZi (Four Pillars) book 1x/year", "Unlimited nine-star guidance", "Annual plan, no auto-renewal"],
+        "cta": "Subscribe Bronze"
+      },
+      {
+        "name": "Silver Member",
+        "description": "Advanced plan with annual fortune book included",
+        "features": ["Unlimited daily guidance", "BaZi (Four Pillars) book 1x/year", "Annual fortune book 1x/year", "Unlimited nine-star guidance"],
+        "cta": "Subscribe Silver"
+      },
+      {
+        "name": "Gold Member",
+        "description": "Premium plan with major cycle fortune book included",
+        "features": ["Unlimited daily guidance", "BaZi (Four Pillars) book 1x/year", "Annual fortune book 1x/year", "Major cycle fortune book 1x/year", "Unlimited nine-star guidance"],
+        "cta": "Subscribe Gold"
+      }
+    ]
+  },
+  "Testimonials": {
+    "benefitsTitle": "What Your Fortune Book Can Illuminate",
+    "benefitsDesc": "Every fortune book is a deep journey into your own life. Here are the four core questions your book most often answers.",
+    "booksTitle": "Choose the Right Fortune Book for You",
+    "booksDesc": "Each book has a different focus — choose the depth of analysis that suits your needs.",
+    "ctaPrompt": "Ready to explore your birth chart in depth?",
+    "ctaBtn": "Launch My Fortune Book",
+    "learnMore": "Learn More",
+    "benefits": [
+      {
+        "icon": "Career",
+        "title": "Career & Talents",
+        "question": "Which industry suits me? When is my career turning point?",
+        "insight": "The fortune book identifies your innate talent direction from your birth chart, pinpoints career peaks and transition timing so every decision has a foundation."
+      },
+      {
+        "icon": "Love",
+        "title": "Romance & Marriage",
+        "question": "When will love arrive? What are the hidden marriage challenges?",
+        "insight": "Cross-validated through BaZi (Four Pillars) and Zi Wei Dou Shu, we assess relationship timing, compatibility traits, and areas that need cultivation — not vague fortune telling."
+      },
+      {
+        "icon": "Wealth",
+        "title": "Wealth & Timing",
+        "question": "What type of wealth luck do I have? When to invest or consolidate?",
+        "insight": "We distinguish innate versus luck-based wealth, identifying the key annual turning points in your financial cycle to help you make the right financial moves at the right time."
+      },
+      {
+        "icon": "Fortune",
+        "title": "Annual Forecast & Decisions",
+        "question": "Is this year good to change jobs? When is the best time for major decisions?",
+        "insight": "The annual fortune book provides month-by-month analysis so you can anticipate each month's energy flow and act at the most favorable moments."
+      }
+    ],
+    "books": [
+      {
+        "name": "Comprehensive Book",
+        "tag": "Best for Beginners",
+        "desc": "Full BaZi (Four Pillars) & Zi Wei Dou Shu overview",
+        "points": ["Innate chart pattern and life axis", "Personality traits and talent direction", "Career, romance, and wealth overview", "Current major cycle interpretation"]
+      },
+      {
+        "name": "BaZi Fortune Book",
+        "tag": "Most In-Depth",
+        "desc": "12-chapter scientific lifetime analysis",
+        "points": ["Complete favorable/unfavorable element analysis", "Six relations (parents/spouse/children)", "Career, wealth, and health in detail", "Major cycle auspicious/inauspicious events"]
+      },
+      {
+        "name": "Major Cycle Book",
+        "tag": "Medium-Long Term Planning",
+        "desc": "5-year annual auspicious/inauspicious forecast",
+        "points": ["BaZi x Zi Wei Dou Shu cross-validation", "Year-by-year great/poor/neutral rating", "Key events and recommendations each year", "5-year overall trend overview"]
+      },
+      {
+        "name": "Annual Fortune Book",
+        "tag": "Annual Essential",
+        "desc": "Five-arts comprehensive annual analysis",
+        "points": ["BaZi · Tai Sui · Zodiac · Stars · Zi Wei", "Spring, Summer, Autumn, Winter highlights", "Monthly auspicious/inauspicious analysis", "Specific advice to attract luck and avoid misfortune"]
+      }
+    ]
+  },
+  "FAQ": {
+    "sectionTitle": "Frequently Asked Questions",
+    "sectionDesc": "Have questions? Here you'll find all the answers you need.",
+    "stillHaveQuestion": "Still have questions?",
+    "contactPrompt": "Feel free to contact the Yudongzi Academy support team — we're happy to help.",
+    "contactBtn": "Contact Support",
+    "items": [
+      {
+        "question": "How long does a chart analysis take?",
+        "answer": "The system uses real-time computation. Your complete fortune book report is ready within seconds of submission — no waiting required."
+      },
+      {
+        "question": "How do I pay?",
+        "answer": "We currently accept online credit card payments via ECPay. Transactions are securely handled by ECPay. We never store any credit card information."
+      },
+      {
+        "question": "How long can I keep the report?",
+        "answer": "Once downloaded, the report is yours permanently to view, print, or share at any time. Please download and save your report after receiving it — the system does not provide backup retrieval within your account."
+      },
+      {
+        "question": "What should I know before purchasing?",
+        "answer": "This service delivers a digital divination report. Once generated, refunds are not available. Please make sure you understand the service before ordering. For any questions, feel free to contact us via online consultation first."
+      },
+      {
+        "question": "How accurate is the chart analysis?",
+        "answer": "Divination, like the I Ching, is a classic life guide that helps people move toward a fulfilling life. It offers life guidance and decision-making reference rather than 100% fate prediction. Accuracy varies by individual."
+      },
+      {
+        "question": "How can I learn more about the services?",
+        "answer": "You're welcome to contact us via online consultation first. Tell us your needs in detail, and Yudongzi will explain the most suitable plan for you before you place an order."
+      },
+      {
+        "question": "Will my personal data be shared?",
+        "answer": "Absolutely not. Your birth data and fortune book report are completely private and for your use only. We strictly protect user privacy."
+      }
+    ]
+  },
+  "FinalCTA": {
+    "headline": "Ready to Begin Your Divination Journey?",
+    "body": "Generate your personal birth chart now and receive tailored life guidance. Explore your talents and seize the opportunities your destiny holds.",
+    "trust1": "Daily fortune for members",
+    "trust2": "Review before you order",
+    "trust3": "Secure bank transfer",
+    "trust4": "Professional support",
+    "ctaAuthenticated": "Generate My Chart Now",
+    "ctaGuest": "Join as a Member",
+    "ctaHeritage": "Explore Divination Knowledge",
+    "bottomText": "Join 5000+ Yudongzi Academy users and transform your perspective on life.",
+    "bottomText2": "Your birth chart is waiting for you."
+  }
 }

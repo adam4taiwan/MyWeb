@@ -2,9 +2,11 @@
 
 import { useAuth } from '@/components/AuthContext';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 export default function HeroSection({ showSubscribeNudge = false }: { showSubscribeNudge?: boolean }) {
   const { isAuthenticated } = useAuth();
+  const t = useTranslations('Hero');
 
   return (
     <section
@@ -27,28 +29,28 @@ export default function HeroSection({ showSubscribeNudge = false }: { showSubscr
         {/* Main headline */}
         <div className="space-y-4">
           <h1 className="hero-title drop-shadow-lg">
-            即刻知命，<br className="hidden md:block" />一生受用
+            {t('headline')}
           </h1>
 
           {/* Subheading */}
           <p className="text-xl md:text-2xl text-brand-100 drop-shadow-md max-w-3xl mx-auto leading-relaxed font-light">
-            30 年命理師的八字和紫微斗數分析。已為 5000+ 用戶提供人生指引。
+            {t('subheading')}
           </p>
         </div>
 
         {/* Trust metrics row */}
         <div className="grid grid-cols-3 gap-6 md:gap-12 max-w-2xl mx-auto py-6 border-t border-b border-brand-600/30">
           <div className="text-center">
-            <p className="text-3xl md:text-4xl font-bold text-brand-300">5000+</p>
-            <p className="text-sm text-brand-100 mt-2">活躍用戶</p>
+            <p className="text-3xl md:text-4xl font-bold text-brand-300">{t('stat1Value')}</p>
+            <p className="text-sm text-brand-100 mt-2">{t('stat1Label')}</p>
           </div>
           <div className="text-center">
-            <p className="text-3xl md:text-4xl font-bold text-brand-300">90%</p>
-            <p className="text-sm text-brand-100 mt-2">信賴度</p>
+            <p className="text-3xl md:text-4xl font-bold text-brand-300">{t('stat2Value')}</p>
+            <p className="text-sm text-brand-100 mt-2">{t('stat2Label')}</p>
           </div>
           <div className="text-center">
-            <p className="text-3xl md:text-4xl font-bold text-brand-300">30年</p>
-            <p className="text-sm text-brand-100 mt-2">專業經驗</p>
+            <p className="text-3xl md:text-4xl font-bold text-brand-300">{t('stat3Value')}</p>
+            <p className="text-sm text-brand-100 mt-2">{t('stat3Label')}</p>
           </div>
         </div>
 
@@ -56,27 +58,27 @@ export default function HeroSection({ showSubscribeNudge = false }: { showSubscr
         <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
           <Link href="/disk" className="inline-block">
             <button className="btn-primary w-full sm:w-auto">
-              {isAuthenticated ? '開始排盤分析' : '免費命盤預覽'}
+              {isAuthenticated ? t('ctaAuthenticated') : t('ctaGuest')}
             </button>
           </Link>
 
           <Link href="#features" className="inline-block">
             <button className="btn-secondary w-full sm:w-auto">
-              瞭解更多
+              {t('ctaLearnMore')}
             </button>
           </Link>
 
           <Link href="/subscribe" className="inline-block">
             <button className="w-full sm:w-auto px-6 py-3 rounded-lg font-semibold text-sm border border-amber-400 text-amber-300 hover:bg-amber-400/10 transition-colors">
-              訂閱會員方案
+              {t('ctaSubscribe')}
             </button>
           </Link>
         </div>
 
         {/* Additional trust signal at bottom */}
         <div className="text-sm text-brand-200 pt-8 space-y-2">
-          <p>✓ 訂閱會員即可查看每日個人化運勢</p>
-          <p>✓ 下單前請確認了解服務內容</p>
+          <p>{t('trustSignal1')}</p>
+          <p>{t('trustSignal2')}</p>
         </div>
       </div>
 

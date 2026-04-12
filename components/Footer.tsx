@@ -3,12 +3,14 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 const WECHAT_ID = 'wxid_22io062y9j1952';
 
 export default function Footer() {
   const [qr, setQr] = useState<'line' | 'wechat' | null>(null);
   const [wechatCopied, setWechatCopied] = useState(false);
+  const t = useTranslations('Footer');
 
   const copyWechatId = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -27,22 +29,22 @@ export default function Footer() {
               <div className="w-8 h-8 bg-gradient-to-br from-amber-600 to-orange-600 rounded-full flex items-center justify-center">
                 <i className="ri-book-open-line text-white text-lg"></i>
               </div>
-              <span className="text-xl font-bold" style={{fontFamily: 'var(--font-pacifico)'}}>玉洞子</span>
+              <span className="text-xl font-bold" style={{fontFamily: 'var(--font-pacifico)'}}>{t('brand')}</span>
             </div>
-            <p className="text-gray-400 mb-4">三十年命理經驗，傳承古典智慧，為現代人生提供專業指導。</p>
+            <p className="text-gray-400 mb-4">{t('tagline')}</p>
             <div className="flex space-x-3">
               {/* WeChat */}
               <div className="relative">
                 <div
                   onClick={() => setQr(qr === 'wechat' ? null : 'wechat')}
                   className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center cursor-pointer hover:bg-emerald-600 transition-colors"
-                  title="微信"
+                  title="WeChat"
                 >
                   <i className="ri-wechat-line text-sm"></i>
                 </div>
                 {qr === 'wechat' && (
                   <div className="absolute bottom-10 left-0 bg-white rounded-xl shadow-2xl p-3 w-44 text-center z-50">
-                    <p className="text-xs font-bold text-gray-700 mb-2">微信加我好友</p>
+                    <p className="text-xs font-bold text-gray-700 mb-2">{t('wechatFriend')}</p>
                     <div className="relative w-full aspect-square rounded-lg overflow-hidden hidden md:block">
                       <Image src="/image/WeChatID.jpg" alt="WeChat QR" fill className="object-contain" />
                     </div>
@@ -51,7 +53,7 @@ export default function Footer() {
                       onClick={copyWechatId}
                       className="mt-1.5 inline-block w-full py-1.5 bg-emerald-500 text-white text-xs rounded-lg font-medium hover:bg-emerald-600 transition-colors"
                     >
-                      {wechatCopied ? '已複製！' : '複製微信 ID'}
+                      {wechatCopied ? t('wechatCopied') : t('wechatCopy')}
                     </button>
                   </div>
                 )}
@@ -67,7 +69,7 @@ export default function Footer() {
                 </div>
                 {qr === 'line' && (
                   <div className="absolute bottom-10 left-0 bg-white rounded-xl shadow-2xl p-3 w-44 text-center z-50">
-                    <p className="text-xs font-bold text-gray-700 mb-2">LINE 加我好友</p>
+                    <p className="text-xs font-bold text-gray-700 mb-2">{t('lineFriend')}</p>
                     <div className="relative w-full aspect-square rounded-lg overflow-hidden hidden md:block">
                       <Image src="/image/lineID.jpg" alt="Line QR" fill className="object-contain" />
                     </div>
@@ -78,7 +80,7 @@ export default function Footer() {
                       rel="noopener noreferrer"
                       className="mt-2 inline-block w-full py-1.5 bg-green-500 text-white text-xs rounded-lg font-medium hover:bg-green-600 transition-colors"
                     >
-                      點擊加入 LINE
+                      {t('lineJoin')}
                     </a>
                   </div>
                 )}
@@ -88,27 +90,27 @@ export default function Footer() {
               </div>
             </div>
           </div>
-          
+
           <div>
-            <h3 className="font-semibold mb-4">服務項目</h3>
+            <h3 className="font-semibold mb-4">{t('services')}</h3>
             <ul className="space-y-2 text-gray-400">
-              <li><Link href="/consultation" className="hover:text-white transition-colors cursor-pointer">個人命理諮詢</Link></li>
-              <li><Link href="/heritage" className="hover:text-white transition-colors cursor-pointer">命學傳承教學</Link></li>
-              <li><Link href="/lectures" className="hover:text-white transition-colors cursor-pointer">企業講座服務</Link></li>
-              <li><Link href="/consultation" className="hover:text-white transition-colors cursor-pointer">遠距線上服務</Link></li>
+              <li><Link href="/consultation" className="hover:text-white transition-colors cursor-pointer">{t('personalConsult')}</Link></li>
+              <li><Link href="/heritage" className="hover:text-white transition-colors cursor-pointer">{t('heritageTeaching')}</Link></li>
+              <li><Link href="/lectures" className="hover:text-white transition-colors cursor-pointer">{t('corporateLecture')}</Link></li>
+              <li><Link href="/consultation" className="hover:text-white transition-colors cursor-pointer">{t('remoteService')}</Link></li>
             </ul>
           </div>
-          
+
           <div>
-            <h3 className="font-semibold mb-4">學習資源</h3>
+            <h3 className="font-semibold mb-4">{t('resources')}</h3>
             <ul className="space-y-2 text-gray-400">
-              <li><Link href="/books" className="hover:text-white transition-colors cursor-pointer">古籍典藏</Link></li>
-              <li><Link href="/bookstore" className="hover:text-white transition-colors cursor-pointer">二手書交易</Link></li>
+              <li><Link href="/books" className="hover:text-white transition-colors cursor-pointer">{t('ancientBooks')}</Link></li>
+              <li><Link href="/bookstore" className="hover:text-white transition-colors cursor-pointer">{t('usedBooks')}</Link></li>
             </ul>
           </div>
-          
+
           <div>
-            <h3 className="font-semibold mb-4">聯絡方式</h3>
+            <h3 className="font-semibold mb-4">{t('contact')}</h3>
             <ul className="space-y-2 text-gray-400">
               <li className="flex items-center space-x-2">
                 <i className="ri-phone-line text-amber-500"></i>
@@ -120,7 +122,7 @@ export default function Footer() {
               </li>
               <li className="flex items-center space-x-2">
                 <i className="ri-time-line text-amber-500"></i>
-                <span>週一至週五 9:00-18:00</span>
+                <span>{t('hours')}</span>
               </li>
               <li className="flex items-center space-x-2">
                 <i className="ri-map-pin-line text-amber-500"></i>
@@ -129,9 +131,9 @@ export default function Footer() {
             </ul>
           </div>
         </div>
-        
+
         <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-          <p>&copy; 1993 玉洞子. 版權所有 | 三十年專業經驗，值得信賴</p>
+          <p>{t('copyright')}</p>
         </div>
       </div>
     </footer>
