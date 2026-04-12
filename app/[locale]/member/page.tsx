@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/components/AuthContext';
+import { useTranslations } from 'next-intl';
 
 type Tab = 'profile' | 'subscription' | 'ninestar' | 'orders' | 'reports' | 'security';
 
@@ -87,6 +88,7 @@ interface NineStarTodayStars {
 }
 
 export default function MemberPage() {
+  const t = useTranslations('Member');
   const { user, token } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('profile');
   const [paymentNotice, setPaymentNotice] = useState<'success' | 'cancelled' | null>(null);
@@ -103,7 +105,7 @@ export default function MemberPage() {
   const [fortuneLoading, setFortuneLoading] = useState(false);
   const [fortuneError, setFortuneError] = useState('');
   const [mingGongStars, setMingGongStars] = useState<string | null>(null);
-  const [hasChart, setHasChart] = useState<boolean | null>(null); // null = 尚未查詢
+  const [hasChart, setHasChart] = useState<boolean | null>(null);
 
   const [nineStarDaily, setNineStarDaily] = useState<NineStarDaily | null>(null);
   const [nineStarTodayStars, setNineStarTodayStars] = useState<NineStarTodayStars | null>(null);
@@ -176,13 +178,11 @@ export default function MemberPage() {
     setFortuneLoading(true);
     setFortuneError('');
     try {
-      // 進入會員中心時先清除今日快取，確保取得最新個人化運勢
       await fetch(`${API_URL}/Fortune/my-cache-today`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       }).catch(() => {});
 
-      // 先查是否有儲存命盤
       const chartRes = await fetch(`${API_URL}/Astrology/my-chart`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -191,7 +191,6 @@ export default function MemberPage() {
       setHasChart(!!chartExists);
       if (chartExists) setMingGongStars(chartData.mingGongMainStars);
 
-      // 有命盤 → KB 個人化版；無命盤 → Gemini 通用版（原行為保留）
       const fortuneUrl = chartExists
         ? `${API_URL}/Fortune/daily-personal`
         : `${API_URL}/Fortune/daily`;
@@ -203,16 +202,15 @@ export default function MemberPage() {
         const data = await res.json();
         setDailyFortune(data);
       } else {
-        setFortuneError('今日運勢暫時無法取得，請稍後再試');
+        setFortuneError(t('fortuneError'));
       }
     } catch {
-      setFortuneError('連線失敗，請稍後再試');
+      setFortuneError(t('fortuneNetworkError'));
     } finally {
       setFortuneLoading(false);
     }
-  }, [token, API_URL]);
+  }, [token, API_URL, t]);
 
-  // Only fetch daily fortune for subscribed members (admin always allowed)
   useEffect(() => {
     if (subscription === null) return;
     if (!subscription.isSubscribed && !isAdmin) return;
@@ -254,18 +252,18 @@ export default function MemberPage() {
         setNineStarDaily(data);
       } else {
         const err = await dailyRes.json().catch(() => ({}));
-        setNineStarError(err?.message || '找不到本命星資料，請先在排盤工具填寫生辰');
+        setNineStarError(err?.message || t('nineStarDataNotFound'));
       }
       if (starsRes.ok) {
         setNineStarTodayStars(await starsRes.json());
       }
       setNineStarLoaded(true);
     } catch {
-      setNineStarError('網路錯誤，請稍後再試');
+      setNineStarError(t('nineStarLoadError'));
     } finally {
       setNineStarLoading(false);
     }
-  }, [token, API_URL, nineStarLoaded]);
+  }, [token, API_URL, nineStarLoaded, t]);
 
   const handleToggleNotify = async () => {
     if (!token || !hasLineLinked) return;
@@ -315,11 +313,11 @@ export default function MemberPage() {
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      setPasswordMsg('新密碼與確認密碼不符');
+      setPasswordMsg(t('passwordMismatch'));
       return;
     }
     if (passwordForm.newPassword.length < 6) {
-      setPasswordMsg('密碼至少需要 6 位數');
+      setPasswordMsg(t('passwordTooShort'));
       return;
     }
     setPasswordLoading(true);
@@ -335,29 +333,29 @@ export default function MemberPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        setPasswordMsg('密碼修改成功！');
+        setPasswordMsg(t('passwordSuccess'));
         setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
       } else {
-        setPasswordMsg(data.message || '修改失敗，請確認目前密碼是否正確');
+        setPasswordMsg(data.message || t('passwordError'));
       }
     } catch {
-      setPasswordMsg('連線失敗，請稍後再試');
+      setPasswordMsg(t('passwordNetworkError'));
     } finally {
       setPasswordLoading(false);
     }
   };
 
   const tabs: { id: Tab; label: string }[] = [
-    { id: 'profile', label: '個人資料' },
-    { id: 'subscription', label: '訂閱方案' },
-    { id: 'ninestar', label: '九星建議' },
-    { id: 'reports', label: '命書記錄' },
-    { id: 'orders', label: '購買記錄' },
-    { id: 'security', label: '帳號安全' },
+    { id: 'profile', label: t('tabProfile') },
+    { id: 'subscription', label: t('tabSubscription') },
+    { id: 'ninestar', label: t('tabNineStar') },
+    { id: 'reports', label: t('tabReports') },
+    { id: 'orders', label: t('tabOrders') },
+    { id: 'security', label: t('tabSecurity') },
   ];
 
-  const displayName = user?.name || user?.email?.split('@')[0] || '會員';
-  const displayEmail = user?.email || localStorage.getItem('email') || '';
+  const displayName = user?.name || user?.email?.split('@')[0] || t('regularMember');
+  const displayEmail = user?.email || (typeof localStorage !== 'undefined' ? localStorage.getItem('email') : '') || '';
   const avatarLetter = displayName.charAt(0).toUpperCase();
 
   return (
@@ -365,19 +363,19 @@ export default function MemberPage() {
       {fortuneLoading && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="w-12 h-12 border-4 border-amber-400 border-t-transparent rounded-full animate-spin mb-4"></div>
-          <p className="text-amber-200 text-sm">玉洞子正在推算今日運勢...</p>
+          <p className="text-amber-200 text-sm">{t('loadingFortune')}</p>
         </div>
       )}
       {nineStarLoading && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="w-12 h-12 border-4 border-amber-400 border-t-transparent rounded-full animate-spin mb-4"></div>
-          <p className="text-amber-200 text-sm">推算九星今日建議中...</p>
+          <p className="text-amber-200 text-sm">{t('loadingNineStar')}</p>
         </div>
       )}
       <Header />
 
       <main className="flex-grow w-full max-w-4xl mx-auto px-4 py-8">
-        {/* 會員資訊卡 */}
+        {/* Member info card */}
         <div className="bg-gradient-to-r from-amber-800 to-amber-950 rounded-2xl p-6 text-white mb-6 shadow-lg">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center text-2xl font-bold flex-shrink-0">
@@ -397,12 +395,12 @@ export default function MemberPage() {
                   </span>
                 ) : (
                   <span className="bg-white/20 text-white text-xs px-2 py-0.5 rounded-full">
-                    一般會員
+                    {t('regularMember')}
                   </span>
                 )}
                 {subscription?.isSubscribed && subscription.daysRemaining !== undefined && (
                   <span className="text-amber-200 text-xs">
-                    訂閱剩餘 {subscription.daysRemaining} 天
+                    {t('subscriptionDaysLeft', { days: subscription.daysRemaining })}
                   </span>
                 )}
               </div>
@@ -410,30 +408,30 @@ export default function MemberPage() {
           </div>
         </div>
 
-        {/* 無命盤提示 */}
+        {/* No chart notice */}
         {hasChart === false && (
           <div className="bg-amber-50 border border-amber-300 rounded-2xl p-4 mb-4 flex items-start gap-3">
             <div className="flex-shrink-0 w-8 h-8 bg-amber-400 rounded-full flex items-center justify-center text-white font-bold text-sm">!</div>
             <div>
-              <p className="text-sm font-bold text-amber-800 mb-1">尚未建立個人命盤</p>
+              <p className="text-sm font-bold text-amber-800 mb-1">{t('noChartTitle')}</p>
               <p className="text-xs text-amber-700 leading-relaxed">
-                請前往排盤鑑定，輸入出生年月日時，點擊「儲存生辰」即可建立命盤，獲得含大運、紫微命宮的個人化每日運勢。
+                {t('noChartDesc')}
               </p>
               <Link href="/disk">
                 <button className="mt-2 px-3 py-1.5 bg-amber-500 text-white text-xs font-medium rounded-lg hover:bg-amber-600 transition-colors">
-                  前往排盤鑑定
+                  {t('goToDisk')}
                 </button>
               </Link>
             </div>
           </div>
         )}
 
-        {/* 每日運勢卡 */}
+        {/* Daily fortune card */}
         <div className="bg-white rounded-2xl shadow-sm p-5 mb-6 border border-amber-100">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
-              今日運勢
-              {hasChart && <span className="text-xs text-purple-500 font-normal">個人化</span>}
+              {t('dailyFortuneTitle')}
+              {hasChart && <span className="text-xs text-purple-500 font-normal">{t('personalized')}</span>}
             </h2>
             {dailyFortune && (
               <span className="text-xs text-gray-400">{dailyFortune.date}</span>
@@ -442,23 +440,23 @@ export default function MemberPage() {
           {subscription === null ? (
             <div className="py-6 text-center">
               <div className="inline-block w-6 h-6 border-2 border-amber-400 border-t-transparent rounded-full animate-spin mb-2"></div>
-              <p className="text-sm text-gray-400">載入中...</p>
+              <p className="text-sm text-gray-400">{t('loadingText')}</p>
             </div>
           ) : !subscription.isSubscribed && !isAdmin ? (
             <div className="py-4 text-center space-y-3">
               <p className="text-sm text-gray-500 leading-relaxed">
-                每日個人化運勢為<span className="font-bold text-amber-700">訂閱會員</span>專屬服務。
+                {t('subscribeOnly')}<span className="font-bold text-amber-700">{t('subscribeOnlyBold')}</span>{t('subscribeOnlySuffix')}
               </p>
               <Link href="/subscribe">
                 <button className="px-5 py-2 bg-amber-600 text-white rounded-lg text-sm font-bold hover:bg-amber-700 transition-colors">
-                  訂閱即可查看每日運勢
+                  {t('subscribeToView')}
                 </button>
               </Link>
             </div>
           ) : fortuneLoading ? (
             <div className="py-6 text-center">
               <div className="inline-block w-6 h-6 border-2 border-amber-400 border-t-transparent rounded-full animate-spin mb-2"></div>
-              <p className="text-sm text-gray-400">玉洞子正在推算今日運勢...</p>
+              <p className="text-sm text-gray-400">{t('fortuneLoadingText')}</p>
             </div>
           ) : fortuneError ? (
             <div className="py-4 text-center">
@@ -467,7 +465,7 @@ export default function MemberPage() {
                 onClick={fetchDailyFortune}
                 className="mt-2 text-xs text-amber-600 underline"
               >
-                重新取得
+                {t('fortuneRetry')}
               </button>
             </div>
           ) : dailyFortune ? (
@@ -477,7 +475,7 @@ export default function MemberPage() {
           ) : null}
         </div>
 
-        {/* Tab 列 */}
+        {/* Tab bar */}
         <div className="flex bg-white rounded-xl p-1 mb-6 shadow-sm gap-1">
           {tabs.map(tab => (
             <button
@@ -494,24 +492,24 @@ export default function MemberPage() {
           ))}
         </div>
 
-        {/* Tab 內容 */}
+        {/* Tab content */}
         <div className="bg-white rounded-2xl shadow-sm p-6">
 
-          {/* ── 個人資料 ── */}
+          {/* Profile tab */}
           {activeTab === 'profile' && (
             <div className="space-y-6">
-              <h2 className="text-lg font-bold text-gray-900 border-b pb-3">個人資料</h2>
+              <h2 className="text-lg font-bold text-gray-900 border-b pb-3">{t('profileTitle')}</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
-                  <p className="text-xs font-medium text-gray-500 mb-1">姓名</p>
+                  <p className="text-xs font-medium text-gray-500 mb-1">{t('labelName')}</p>
                   <p className="text-gray-900 font-medium">{displayName}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-gray-500 mb-1">電子郵件</p>
+                  <p className="text-xs font-medium text-gray-500 mb-1">{t('labelEmail')}</p>
                   <p className="text-gray-900 font-medium break-all">{displayEmail}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-gray-500 mb-1">會員等級</p>
+                  <p className="text-xs font-medium text-gray-500 mb-1">{t('labelMemberLevel')}</p>
                   {subscription?.isSubscribed ? (
                     <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
                       subscription.planCode === 'GOLD' ? 'bg-yellow-100 text-yellow-800' :
@@ -522,7 +520,7 @@ export default function MemberPage() {
                     </span>
                   ) : (
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-600 font-medium">
-                      一般會員
+                      {t('regularMember')}
                     </span>
                   )}
                 </div>
@@ -530,48 +528,48 @@ export default function MemberPage() {
 
               {mingGongStars && (
                 <div className="bg-purple-50 border border-purple-100 rounded-xl p-4">
-                  <p className="text-xs font-medium text-purple-500 mb-1">紫微命宮主星</p>
+                  <p className="text-xs font-medium text-purple-500 mb-1">{t('mingGongLabel')}</p>
                   <p className="text-gray-800 font-semibold">{mingGongStars}</p>
-                  <p className="text-xs text-gray-400 mt-1">已加成至今日運勢</p>
+                  <p className="text-xs text-gray-400 mt-1">{t('mingGongApplied')}</p>
                 </div>
               )}
 
-              {/* Subscription nudge - shown when not subscribed */}
+              {/* Subscription nudge */}
               {subscription !== null && !subscription.isSubscribed && (
                 <div className="bg-gradient-to-r from-amber-700 to-amber-900 rounded-xl p-5 text-white">
-                  <p className="font-bold mb-1">尚未訂閱會員方案</p>
+                  <p className="font-bold mb-1">{t('notSubscribedTitle')}</p>
                   <p className="text-amber-200 text-xs leading-relaxed mb-3">
-                    訂閱後可享有每日建議、命書使用額度等專屬福利，年費 NT$1,000 起。
+                    {t('notSubscribedDesc')}
                   </p>
                   <Link href="/subscribe">
                     <button className="bg-white text-amber-800 px-4 py-2 rounded-lg text-sm font-bold hover:bg-amber-50 transition-colors">
-                      查看訂閱方案
+                      {t('viewSubscribePlans')}
                     </button>
                   </Link>
                 </div>
               )}
 
               <div className="pt-4 border-t">
-                <p className="text-sm font-bold text-gray-700 mb-3">快速操作</p>
+                <p className="text-sm font-bold text-gray-700 mb-3">{t('quickActions')}</p>
                 <div className="flex flex-wrap gap-3">
                   <Link href="/disk">
                     <button className="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 transition-colors">
-                      前往排盤鑑定
+                      {t('goToChart')}
                     </button>
                   </Link>
                   <Link href="/subscribe">
                     <button className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors">
-                      訂閱方案
+                      {t('subscribePlan')}
                     </button>
                   </Link>
                   <Link href="/blessing">
                     <button className="px-4 py-2 border border-amber-300 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-50 transition-colors">
-                      祈福服務
+                      {t('blessingService')}
                     </button>
                   </Link>
                   <Link href="/appointment">
                     <button className="px-4 py-2 border border-amber-300 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-50 transition-colors">
-                      問事預約
+                      {t('consultationBooking')}
                     </button>
                   </Link>
                 </div>
@@ -579,78 +577,78 @@ export default function MemberPage() {
             </div>
           )}
 
-          {/* ── 訂閱方案 ── */}
+          {/* Subscription tab */}
           {activeTab === 'subscription' && (
             <div className="space-y-6">
-              <h2 className="text-lg font-bold text-gray-900 border-b pb-3">訂閱方案</h2>
+              <h2 className="text-lg font-bold text-gray-900 border-b pb-3">{t('subscriptionTitle')}</h2>
 
               {paymentNotice === 'success' && (
                 <div className="bg-green-50 border border-green-200 text-green-700 rounded-xl p-4 text-sm flex items-start justify-between gap-3">
-                  <span>訂閱成功！方案已啟用，請確認下方狀態。</span>
+                  <span>{t('paymentSuccess')}</span>
                   <button onClick={() => setPaymentNotice(null)} className="text-green-500 hover:text-green-700 flex-shrink-0">x</button>
                 </div>
               )}
               {paymentNotice === 'cancelled' && (
                 <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 rounded-xl p-4 text-sm flex items-start justify-between gap-3">
-                  <span>已取消付款，如需訂閱請重新選擇方案。</span>
+                  <span>{t('paymentCancelled')}</span>
                   <button onClick={() => setPaymentNotice(null)} className="text-yellow-500 hover:text-yellow-700 flex-shrink-0">x</button>
                 </div>
               )}
 
               {subscription?.isSubscribed ? (
                 <>
-                  {/* 目前訂閱狀態卡 */}
+                  {/* Current subscription card */}
                   <div className={`rounded-xl p-5 text-white ${
                     subscription.planCode === 'GOLD' ? 'bg-gradient-to-r from-yellow-500 to-amber-600' :
                     subscription.planCode === 'SILVER' ? 'bg-gradient-to-r from-slate-500 to-slate-700' :
                     'bg-gradient-to-r from-amber-700 to-amber-900'
                   }`}>
-                    <p className="text-sm opacity-80 mb-1">目前方案</p>
+                    <p className="text-sm opacity-80 mb-1">{t('currentPlan')}</p>
                     <p className="text-2xl font-bold">{subscription.planName}</p>
                     <p className="text-sm opacity-80 mt-2">
-                      到期日：{subscription.expiryDate ? new Date(subscription.expiryDate).toLocaleDateString('zh-TW') : '---'}
-                      （剩餘 {subscription.daysRemaining} 天）
+                      {t('expiry', {
+                        date: subscription.expiryDate ? new Date(subscription.expiryDate).toLocaleDateString() : '---',
+                        days: subscription.daysRemaining ?? 0,
+                      })}
                     </p>
                   </div>
 
-                  {/* LINE 每日推播設定 */}
+                  {/* LINE daily push settings */}
                   <div className="bg-green-50 border border-green-200 rounded-xl p-4 space-y-3">
-                    <p className="text-sm font-bold text-green-800">每日 LINE 推播運勢</p>
+                    <p className="text-sm font-bold text-green-800">{t('linePushTitle')}</p>
                     <p className="text-xs text-green-700 leading-relaxed">
-                      每天早上 7:30 自動推播個人化八字運勢到 LINE，無需手動查詢。
+                      {t('linePushDesc')}
                     </p>
 
                     {!hasLineLinked ? (
-                      // 未綁 LINE：引導步驟
                       <div className="space-y-2">
-                        <p className="text-xs font-medium text-green-800">完成以下步驟即可啟用：</p>
+                        <p className="text-xs font-medium text-green-800">{t('lineSetupStepsTitle')}</p>
                         <ol className="text-xs text-green-700 space-y-1.5 list-decimal list-inside">
                           <li>
-                            加入官方 LINE 帳號
+                            {t('lineStep1')}
                             <a
                               href="https://line.me/R/ti/p/@213qrysy"
                               target="_blank"
                               rel="noopener noreferrer"
                               className="ml-1 underline font-medium text-green-900"
                             >
-                              點此加入 @213qrysy
+                              {t('lineStep1Link')}
                             </a>
                           </li>
-                          <li>在排盤工具填寫並儲存生辰資料</li>
+                          <li>{t('lineStep2')}</li>
                           <li>
                             <Link href="/login" className="underline font-medium text-green-900">
-                              用 LINE 帳號登入本平台
+                              {t('lineStep3Prefix')}
                             </Link>
-                            （綁定 LINE ID）
+                            {t('lineStep3Suffix')}
                           </li>
                         </ol>
                       </div>
                     ) : (
-                      // 已綁 LINE：顯示通知開關
                       <div className="flex items-center justify-between pt-1">
                         <div>
-                          <p className="text-xs font-medium text-green-800">LINE 帳號已綁定</p>
-                          <p className="text-xs text-green-600">{notifyEnabled ? '推播已開啟，每日 7:30 自動發送' : '推播已關閉'}</p>
+                          <p className="text-xs font-medium text-green-800">{t('lineLinked')}</p>
+                          <p className="text-xs text-green-600">{notifyEnabled ? t('lineNotifyOn') : t('lineNotifyOff')}</p>
                         </div>
                         <button
                           onClick={handleToggleNotify}
@@ -663,24 +661,24 @@ export default function MemberPage() {
                     )}
                   </div>
 
-                  {/* 額度使用狀況 */}
+                  {/* Quota usage */}
                   {subscription.quotaStatus && subscription.quotaStatus.length > 0 && (
                     <div>
-                      <p className="text-sm font-bold text-gray-700 mb-3">免費額度使用狀況（本年度）</p>
+                      <p className="text-sm font-bold text-gray-700 mb-3">{t('quotaTitle')}</p>
                       <div className="space-y-3">
                         {subscription.quotaStatus.map((q, i) => (
                           <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
                             <div>
                               <p className="text-sm font-medium text-gray-800">{
-                                q.productCode === 'BOOK_BAZI' ? '八字命書' :
-                                q.productCode === 'BOOK_LIUNIAN' ? '流年命書' :
-                                q.productCode === 'BOOK_DAIYUN' ? '大運命書' :
+                                q.productCode === 'BOOK_BAZI' ? t('bookBazi') :
+                                q.productCode === 'BOOK_LIUNIAN' ? t('bookLiunian') :
+                                q.productCode === 'BOOK_DAIYUN' ? t('bookDaiyun') :
                                 q.productCode
                               }</p>
-                              <p className="text-xs text-gray-400">已使用 {q.used} / 共 {q.total} 次（本年度）</p>
+                              <p className="text-xs text-gray-400">{t('quotaUsed', { used: q.used, total: q.total })}</p>
                             </div>
                             <span className={`text-sm font-bold ${q.remaining > 0 ? 'text-green-600' : 'text-gray-400'}`}>
-                              剩餘 {q.remaining}
+                              {t('quotaRemaining', { remaining: q.remaining })}
                             </span>
                           </div>
                         ))}
@@ -688,10 +686,10 @@ export default function MemberPage() {
                     </div>
                   )}
 
-                  {/* 方案福利列表 */}
+                  {/* Plan benefits */}
                   {subscription.benefits && subscription.benefits.length > 0 && (
                     <div>
-                      <p className="text-sm font-bold text-gray-700 mb-3">方案包含福利</p>
+                      <p className="text-sm font-bold text-gray-700 mb-3">{t('benefitsTitle')}</p>
                       <div className="space-y-2">
                         {subscription.benefits.map((b, i) => (
                           <div key={i} className="flex items-start gap-2 text-sm text-gray-700">
@@ -706,34 +704,34 @@ export default function MemberPage() {
                   <div className="pt-2">
                     <Link href="/subscribe">
                       <button className="px-4 py-2 border border-amber-300 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-50 transition-colors">
-                        查看其他方案 / 續訂
+                        {t('viewOtherPlans')}
                       </button>
                     </Link>
                   </div>
                 </>
               ) : (
-                /* 未訂閱 */
+                /* Not subscribed */
                 <div className="space-y-4">
                   {subscription?.isInTrial && (
                     <div className="bg-teal-50 border border-teal-200 rounded-xl p-4">
-                      <p className="text-teal-800 font-bold text-sm mb-1">7 天免費試用中</p>
-                      <p className="text-teal-700 text-sm">剩餘 <span className="font-bold text-lg">{subscription.trialDaysRemaining}</span> 天</p>
-                      <p className="text-teal-600 text-xs mt-1">試用期間可免費預覽命盤結構，訂閱後可查看完整命書報告</p>
+                      <p className="text-teal-800 font-bold text-sm mb-1">{t('trialTitle')}</p>
+                      <p className="text-teal-700 text-sm">{t('trialDaysLeft', { days: subscription.trialDaysRemaining ?? 0 })}</p>
+                      <p className="text-teal-600 text-xs mt-1">{t('trialDesc')}</p>
                     </div>
                   )}
                   {!subscription?.isInTrial && (
                     <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 text-sm text-amber-700">
-                      免費試用期已結束，訂閱會員即可使用全部功能
+                      {t('trialEnded')}
                     </div>
                   )}
                   <div className="text-center py-4">
-                    <p className="text-gray-700 font-medium mb-1">尚未訂閱任何方案</p>
+                    <p className="text-gray-700 font-medium mb-1">{t('noSubscriptionTitle')}</p>
                     <p className="text-sm text-gray-500 mb-6 leading-relaxed">
-                      訂閱會員即可享有每日建議、命書折扣、祈福服務等專屬福利。
+                      {t('noSubscriptionDesc')}
                     </p>
                     <Link href="/subscribe">
                       <button className="px-6 py-3 bg-amber-600 text-white rounded-xl font-bold hover:bg-amber-700 transition-colors">
-                        查看訂閱方案
+                        {t('viewSubscribePlans')}
                       </button>
                     </Link>
                   </div>
@@ -742,18 +740,18 @@ export default function MemberPage() {
             </div>
           )}
 
-          {/* ── 九星建議 ── */}
+          {/* Nine Star tab */}
           {activeTab === 'ninestar' && (
             <div className="space-y-6">
-              <h2 className="text-lg font-bold text-gray-900 border-b pb-3">九星氣學 - 今日建議</h2>
+              <h2 className="text-lg font-bold text-gray-900 border-b pb-3">{t('nineStarTitle')}</h2>
 
               {nineStarError && (
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
                   <p className="text-amber-700 text-sm">{nineStarError}</p>
-                  <p className="text-amber-600 text-xs mt-1">請前往「排盤鑑定」填寫生辰資料後，即可查看個人化九星建議。</p>
+                  <p className="text-amber-600 text-xs mt-1">{t('nineStarErrorFill')}</p>
                   <Link href="/disk">
                     <button className="mt-3 px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 transition-colors">
-                      前往填寫生辰
+                      {t('goFillBirthData')}
                     </button>
                   </Link>
                 </div>
@@ -761,29 +759,29 @@ export default function MemberPage() {
 
               {nineStarDaily && (
                 <>
-                  {/* 本命星卡片 */}
+                  {/* Natal star card */}
                   <div className="bg-gradient-to-br from-amber-800 to-amber-900 rounded-2xl p-5 text-white">
-                    <p className="text-amber-300 text-xs mb-1">您的本命星</p>
+                    <p className="text-amber-300 text-xs mb-1">{t('yourNatalStar')}</p>
                     <p className="text-2xl font-bold">{nineStarDaily.natalStar.name}</p>
                     <p className={`text-xs mt-2 px-2 py-1 rounded-full inline-block ${nineStarDaily.isProspering ? 'bg-green-600 text-green-100' : 'bg-gray-600 text-gray-200'}`}>
-                      目前運勢：{nineStarDaily.yunStatus}
+                      {t('currentYun', { status: nineStarDaily.yunStatus })}
                     </p>
                     <p className="text-amber-200 text-xs mt-2">{nineStarDaily.date}</p>
                   </div>
 
-                  {/* 整體評語 */}
+                  {/* Overall assessment */}
                   <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                    <p className="text-xs font-bold text-amber-700 mb-1">今日綜合評語</p>
+                    <p className="text-xs font-bold text-amber-700 mb-1">{t('todayOverall')}</p>
                     <p className="text-sm text-amber-900 leading-relaxed">{nineStarDaily.overallVerdict}</p>
                   </div>
 
-                  {/* 今日四星 */}
+                  {/* Today's four stars */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     {[
-                      { label: '流年星', star: nineStarDaily.yearStar },
-                      { label: '流月星', star: nineStarDaily.monthStar },
-                      { label: '流日星', star: nineStarDaily.dayStar },
-                      { label: '流時星', star: nineStarDaily.hourStar },
+                      { label: t('yearStar'), star: nineStarDaily.yearStar },
+                      { label: t('monthStar'), star: nineStarDaily.monthStar },
+                      { label: t('dayStar'), star: nineStarDaily.dayStar },
+                      { label: t('hourStar'), star: nineStarDaily.hourStar },
                     ].map(({ label, star }) => (
                       <div key={label} className="bg-white border border-gray-200 rounded-xl p-3 text-center shadow-sm">
                         <p className="text-xs text-gray-500 mb-1">{label}</p>
@@ -793,10 +791,10 @@ export default function MemberPage() {
                     ))}
                   </div>
 
-                  {/* 五對組合分析 */}
+                  {/* Star combination analysis */}
                   {nineStarDaily.combinations && nineStarDaily.combinations.length > 0 && (
                     <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-                      <p className="text-sm font-bold text-gray-700 mb-3">星曜組合分析</p>
+                      <p className="text-sm font-bold text-gray-700 mb-3">{t('combinationTitle')}</p>
                       <div className="space-y-2">
                         {nineStarDaily.combinations.map((c, i) => {
                           const verdictColor =
@@ -823,54 +821,54 @@ export default function MemberPage() {
                     </div>
                   )}
 
-                  {/* 今日運勢 */}
+                  {/* Today's fortune detail */}
                   <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-4">
                     <div>
-                      <p className="text-sm font-bold text-gray-700 mb-2">今日運勢詳解</p>
+                      <p className="text-sm font-bold text-gray-700 mb-2">{t('fortuneDetailTitle')}</p>
                       <p className="text-gray-700 text-sm leading-relaxed">{nineStarDaily.fortuneText}</p>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-gray-100">
                       <div className="bg-green-50 border border-green-100 rounded-xl p-3">
-                        <p className="text-xs font-bold text-green-700 mb-1">今日宜</p>
+                        <p className="text-xs font-bold text-green-700 mb-1">{t('auspicious')}</p>
                         <p className="text-sm text-green-800">{nineStarDaily.auspicious || '-'}</p>
                       </div>
                       <div className="bg-red-50 border border-red-100 rounded-xl p-3">
-                        <p className="text-xs font-bold text-red-600 mb-1">今日忌</p>
+                        <p className="text-xs font-bold text-red-600 mb-1">{t('avoid')}</p>
                         <p className="text-sm text-red-700">{nineStarDaily.avoid || '-'}</p>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4 pt-3 border-t border-gray-100">
                       <div className="bg-blue-50 border border-blue-100 rounded-xl p-3">
-                        <p className="text-xs font-bold text-blue-600 mb-1">今日吉方位</p>
+                        <p className="text-xs font-bold text-blue-600 mb-1">{t('direction')}</p>
                         <p className="text-sm text-blue-700">{nineStarDaily.direction || '-'}</p>
                       </div>
                       <div className="bg-purple-50 border border-purple-100 rounded-xl p-3">
-                        <p className="text-xs font-bold text-purple-600 mb-1">今日吉顏色</p>
+                        <p className="text-xs font-bold text-purple-600 mb-1">{t('color')}</p>
                         <p className="text-sm text-purple-700">{nineStarDaily.color || '-'}</p>
                       </div>
                     </div>
                   </div>
 
                   <p className="text-xs text-gray-400 text-center">
-                    依三元九運 + 五行組合推算，運 &gt; 年 &gt; 月 &gt; 日 &gt; 時
+                    {t('nineStarNote')}
                   </p>
                 </>
               )}
 
               {!nineStarLoaded && !nineStarError && (
-                <div className="text-center py-8 text-gray-400 text-sm">載入中...</div>
+                <div className="text-center py-8 text-gray-400 text-sm">{t('loadingText')}</div>
               )}
             </div>
           )}
 
-          {/* ── 購買記錄 ── */}
+          {/* Orders tab */}
           {activeTab === 'orders' && (
             <div className="space-y-4">
-              <h2 className="text-lg font-bold text-gray-900 border-b pb-3">購買記錄</h2>
+              <h2 className="text-lg font-bold text-gray-900 border-b pb-3">{t('ordersTitle')}</h2>
               {isLoading ? (
-                <div className="text-center py-8 text-gray-400">載入中...</div>
+                <div className="text-center py-8 text-gray-400">{t('loadingText')}</div>
               ) : orders.length > 0 ? (
                 <div className="space-y-3">
                   {orders.map(order => (
@@ -878,10 +876,10 @@ export default function MemberPage() {
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <p className="font-medium text-gray-900">
-                            {order.orderType === 'point_purchase' ? '點數購買' : order.orderType}
+                            {order.orderType === 'point_purchase' ? t('pointPurchase') : order.orderType}
                           </p>
                           <p className="text-xs text-gray-500 mt-0.5">
-                            {new Date(order.createdAt).toLocaleDateString('zh-TW', {
+                            {new Date(order.createdAt).toLocaleDateString(undefined, {
                               year: 'numeric',
                               month: '2-digit',
                               day: '2-digit',
@@ -891,7 +889,7 @@ export default function MemberPage() {
                           </p>
                           {order.points && (
                             <p className="text-sm text-amber-600 mt-1 font-medium">
-                              +{order.points} 點
+                              +{order.points}
                             </p>
                           )}
                         </div>
@@ -909,10 +907,10 @@ export default function MemberPage() {
                             }`}
                           >
                             {order.status === 'completed'
-                              ? '已完成'
+                              ? t('statusCompleted')
                               : order.status === 'pending'
-                              ? '處理中'
-                              : '失敗'}
+                              ? t('statusPending')
+                              : t('statusFailed')}
                           </span>
                         </div>
                       </div>
@@ -922,10 +920,10 @@ export default function MemberPage() {
               ) : (
                 <div className="text-center py-10 text-gray-400 border-2 border-dashed border-gray-200 rounded-xl">
                   <p className="text-3xl mb-2">🛒</p>
-                  <p className="text-sm">尚無購買記錄</p>
+                  <p className="text-sm">{t('noOrders')}</p>
                   <Link href="/subscribe">
                     <button className="mt-3 px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 transition-colors">
-                      前往訂閱方案
+                      {t('goSubscribe')}
                     </button>
                   </Link>
                 </div>
@@ -933,13 +931,13 @@ export default function MemberPage() {
             </div>
           )}
 
-          {/* ── 命書記錄 ── */}
+          {/* Reports tab */}
           {activeTab === 'reports' && (
             <div className="space-y-4">
-              <h2 className="text-lg font-bold text-gray-900 border-b pb-3">命書記錄</h2>
+              <h2 className="text-lg font-bold text-gray-900 border-b pb-3">{t('reportsTitle')}</h2>
 
               {reportLoading && (
-                <div className="text-center py-8 text-amber-600">載入中...</div>
+                <div className="text-center py-8 text-amber-600">{t('loadingText')}</div>
               )}
 
               {selectedReport ? (
@@ -949,14 +947,14 @@ export default function MemberPage() {
                       onClick={() => setSelectedReport(null)}
                       className="text-sm text-amber-700 underline hover:text-amber-900"
                     >
-                      &lt; 返回列表
+                      {t('backToList')}
                     </button>
                     <span className="text-sm text-gray-500">{selectedReport.title}</span>
                   </div>
                   <div className="bg-[#F9F3E9] border-2 border-amber-200 rounded-2xl p-6">
                     <h3 className="text-xl font-bold text-amber-900 mb-4 text-center">{selectedReport.title}</h3>
                     <p className="text-xs text-gray-400 text-center mb-4">
-                      {new Date(selectedReport.createdAt).toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      {new Date(selectedReport.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
                     </p>
                     <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap font-serif">
                       {selectedReport.content}
@@ -967,10 +965,10 @@ export default function MemberPage() {
                 <>
                   {reportsLoaded && userReports.length === 0 && (
                     <div className="text-center py-8">
-                      <p className="text-gray-500 text-sm mb-3">尚無命書記錄</p>
+                      <p className="text-gray-500 text-sm mb-3">{t('noReports')}</p>
                       <Link href="/disk">
                         <button className="px-6 py-2.5 bg-amber-600 text-white rounded-xl font-bold text-sm hover:bg-amber-700 transition-colors">
-                          前往產生命書
+                          {t('generateReport')}
                         </button>
                       </Link>
                     </div>
@@ -986,10 +984,10 @@ export default function MemberPage() {
                           <div>
                             <p className="font-medium text-gray-800">{r.title}</p>
                             <p className="text-xs text-gray-400 mt-0.5">
-                              {new Date(r.createdAt).toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' })}
+                              {new Date(r.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
                             </p>
                           </div>
-                          <span className="text-amber-600 text-sm font-medium">查看</span>
+                          <span className="text-amber-600 text-sm font-medium">{t('viewReport')}</span>
                         </button>
                       ))}
                     </div>
@@ -999,15 +997,15 @@ export default function MemberPage() {
             </div>
           )}
 
-          {/* ── 帳號安全 ── */}
+          {/* Security tab */}
           {activeTab === 'security' && (
             <div className="space-y-6">
-              <h2 className="text-lg font-bold text-gray-900 border-b pb-3">帳號安全</h2>
+              <h2 className="text-lg font-bold text-gray-900 border-b pb-3">{t('securityTitle')}</h2>
 
               <form onSubmit={handleChangePassword} className="space-y-4 max-w-md">
-                <p className="text-sm font-bold text-gray-700">修改密碼</p>
+                <p className="text-sm font-bold text-gray-700">{t('changePasswordTitle')}</p>
                 <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">目前密碼</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">{t('labelCurrentPassword')}</label>
                   <input
                     type="password"
                     value={passwordForm.currentPassword}
@@ -1016,11 +1014,11 @@ export default function MemberPage() {
                     }
                     required
                     className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-amber-300 outline-none transition"
-                    placeholder="輸入目前密碼"
+                    placeholder={t('placeholderCurrentPassword')}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">新密碼</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">{t('labelNewPassword')}</label>
                   <input
                     type="password"
                     value={passwordForm.newPassword}
@@ -1030,11 +1028,11 @@ export default function MemberPage() {
                     required
                     minLength={6}
                     className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-amber-300 outline-none transition"
-                    placeholder="至少 6 位數"
+                    placeholder={t('placeholderNewPassword')}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">確認新密碼</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">{t('labelConfirmPassword')}</label>
                   <input
                     type="password"
                     value={passwordForm.confirmPassword}
@@ -1044,13 +1042,13 @@ export default function MemberPage() {
                     required
                     minLength={6}
                     className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-amber-300 outline-none transition"
-                    placeholder="再次輸入新密碼"
+                    placeholder={t('placeholderConfirmPassword')}
                   />
                 </div>
                 {passwordMsg && (
                   <p
                     className={`text-sm ${
-                      passwordMsg.includes('成功') ? 'text-green-600' : 'text-red-500'
+                      passwordMsg.includes(t('passwordSuccess').slice(0, 4)) ? 'text-green-600' : 'text-red-500'
                     }`}
                   >
                     {passwordMsg}
@@ -1061,16 +1059,16 @@ export default function MemberPage() {
                   disabled={passwordLoading}
                   className="px-6 py-2.5 bg-amber-600 text-white rounded-lg font-medium hover:bg-amber-700 disabled:opacity-50 transition-colors"
                 >
-                  {passwordLoading ? '修改中...' : '確認修改'}
+                  {passwordLoading ? t('changingPassword') : t('confirmChange')}
                 </button>
               </form>
 
               <div className="border-t pt-6">
-                <p className="text-sm font-bold text-gray-700 mb-3">安全資訊</p>
+                <p className="text-sm font-bold text-gray-700 mb-3">{t('securityInfoTitle')}</p>
                 <ul className="space-y-2 text-sm text-gray-600">
-                  <li>✓ 密碼使用加密儲存，我們無法查看您的密碼</li>
-                  <li>✓ JWT Token 有效期為 7 天，到期後需重新登入</li>
-                  <li>✓ 如懷疑帳號被盜用，請立即修改密碼並聯繫客服</li>
+                  <li>{t('securityInfo1')}</li>
+                  <li>{t('securityInfo2')}</li>
+                  <li>{t('securityInfo3')}</li>
                 </ul>
               </div>
             </div>

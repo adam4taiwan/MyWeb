@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/components/AuthContext';
+import { useTranslations } from 'next-intl';
 
 interface PlanBenefit {
   productCode: string | null;
@@ -27,23 +28,20 @@ interface Plan {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://ecanapi.fly.dev/api';
 
-const PLAN_META: Record<string, { badge: string; color: string; border: string; btnClass: string; highlight: boolean }> = {
+const PLAN_META: Record<string, { color: string; border: string; btnClass: string; highlight: boolean }> = {
   BRONZE: {
-    badge: '銅會員',
     color: 'from-amber-700 to-amber-900',
     border: 'border-amber-300',
     btnClass: 'bg-amber-600 hover:bg-amber-700 text-white',
     highlight: false,
   },
   SILVER: {
-    badge: '銀會員',
     color: 'from-slate-500 to-slate-700',
     border: 'border-slate-400',
     btnClass: 'bg-slate-600 hover:bg-slate-700 text-white',
     highlight: true,
   },
   GOLD: {
-    badge: '金會員',
     color: 'from-yellow-500 to-amber-600',
     border: 'border-yellow-400',
     btnClass: 'bg-yellow-500 hover:bg-yellow-600 text-white',
@@ -51,25 +49,34 @@ const PLAN_META: Record<string, { badge: string; color: string; border: string; 
   },
 };
 
-function benefitLabel(b: PlanBenefit): string {
-  if (b.description) return b.description;
-  if (b.benefitType === 'access') return '每日建議存取';
-  if (b.benefitType === 'quota') return `免費額度 x${b.benefitValue}`;
-  if (b.benefitType === 'discount') {
-    const pct = Math.round(parseFloat(b.benefitValue) * 100);
-    const target = b.productType ?? b.productCode ?? '';
-    const typeMap: Record<string, string> = { book: '命書', blessing: '祈福服務', consultation: '問事', course: '課程' };
-    return `${typeMap[target] ?? target}享 ${pct} 折`;
-  }
-  return b.benefitValue;
-}
-
 export default function SubscribePage() {
+  const t = useTranslations('Subscribe');
+  const tPricing = useTranslations('Pricing');
   const { isAuthenticated, token } = useAuth();
   const router = useRouter();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState<string | null>(null);
+
+  function benefitLabel(b: PlanBenefit): string {
+    if (b.description) return b.description;
+    if (b.benefitType === 'access') return t('benefitAccess');
+    if (b.benefitType === 'quota') return t('benefitQuota', { value: b.benefitValue });
+    if (b.benefitType === 'discount') {
+      const pct = Math.round(parseFloat(b.benefitValue) * 100);
+      const target = b.productType ?? b.productCode ?? '';
+      const keyMap: Record<string, string> = {
+        book: 'benefitDiscountBook',
+        blessing: 'benefitDiscountBlessing',
+        consultation: 'benefitDiscountConsultation',
+        course: 'benefitDiscountCourse',
+      };
+      const key = keyMap[target];
+      if (key) return t(key as Parameters<typeof t>[0], { pct });
+      return `${target} ${pct}%`;
+    }
+    return b.benefitValue;
+  }
 
   useEffect(() => {
     fetch(`${API_URL}/Subscription/plans`)
@@ -106,10 +113,10 @@ export default function SubscribePage() {
         document.body.appendChild(form);
         form.submit();
       } else {
-        alert(data.message || '訂閱失敗，請稍後再試');
+        alert(data.message || t('subscribeError'));
       }
     } catch {
-      alert('連線失敗，請稍後再試');
+      alert(t('connectError'));
     } finally {
       setPurchasing(null);
     }
@@ -124,11 +131,11 @@ export default function SubscribePage() {
       <main className="flex-grow pt-20 pb-16 px-4">
         {/* Hero */}
         <div className="max-w-3xl mx-auto text-center py-10">
-          <p className="text-amber-600 text-sm font-medium tracking-widest mb-2">MEMBERSHIP</p>
-          <h1 className="text-3xl font-bold text-gray-900 mb-3">選擇您的會員方案</h1>
+          <p className="text-amber-600 text-sm font-medium tracking-widest mb-2">{t('membership')}</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-3">{t('heroTitle')}</h1>
           <p className="text-gray-500 text-sm leading-relaxed">
-            訂閱即可獲得每日個人化建議、命書折扣、祈福服務等專屬福利。
-            <br />每個方案均以年為單位，到期前皆可續訂。
+            {t('heroDesc')}
+            <br />{t('heroDesc2')}
           </p>
         </div>
 
@@ -150,13 +157,13 @@ export default function SubscribePage() {
                   <div className={`bg-gradient-to-br ${meta.color} p-6 text-white`}>
                     {meta.highlight && (
                       <div className="absolute top-3 right-3 bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                        最受歡迎
+                        {t('mostPopular')}
                       </div>
                     )}
                     <p className="text-sm font-medium opacity-80 mb-1">{plan.name}</p>
                     <p className="text-4xl font-bold">
                       NT${plan.priceTwd.toLocaleString()}
-                      <span className="text-sm font-normal opacity-80 ml-1">/ 年</span>
+                      <span className="text-sm font-normal opacity-80 ml-1">{t('perYear')}</span>
                     </p>
                     {plan.description && (
                       <p className="text-xs opacity-70 mt-2">{plan.description}</p>
@@ -186,7 +193,7 @@ export default function SubscribePage() {
                       disabled={purchasing !== null}
                       className={`w-full py-3 rounded-xl font-bold text-sm transition-colors disabled:opacity-50 ${meta.btnClass}`}
                     >
-                      {purchasing === plan.code ? '處理中...' : `訂閱 ${plan.name}`}
+                      {purchasing === plan.code ? t('processing') : t('subscribePlan', { name: plan.name })}
                     </button>
                   </div>
                 </div>
@@ -201,34 +208,34 @@ export default function SubscribePage() {
             <div className="relative rounded-2xl bg-gradient-to-r from-gray-800 to-gray-900 border border-gray-600 shadow-lg overflow-hidden opacity-80">
               <div className="absolute top-4 right-4">
                 <span className="bg-gray-600 text-gray-200 px-3 py-1 rounded-full text-xs font-bold tracking-wide">
-                  即將推出
+                  {tPricing('comingSoon')}
                 </span>
               </div>
               <div className="p-6 flex flex-col md:flex-row md:items-center gap-5">
                 <div className="flex-shrink-0">
                   <p className="text-xs text-gray-400 uppercase tracking-widest mb-1">VIP</p>
-                  <p className="text-2xl font-bold text-yellow-300">VIP 會員</p>
-                  <p className="text-3xl font-bold text-yellow-300 mt-2">NT$6,000<span className="text-sm font-normal text-gray-400 ml-1">/ 年</span></p>
+                  <p className="text-2xl font-bold text-yellow-300">{tPricing('vipName')}</p>
+                  <p className="text-3xl font-bold text-yellow-300 mt-2">NT$6,000<span className="text-sm font-normal text-gray-400 ml-1">{tPricing('perYear')}</span></p>
                   <div className="mt-2 bg-white/10 rounded-lg px-3 py-1.5">
-                    <p className="text-xs text-gray-400 mb-0.5">方案服務點數價值</p>
+                    <p className="text-xs text-gray-400 mb-0.5">{t('vipPlanValue')}</p>
                     <div className="flex items-center gap-2">
                       <span className="text-base font-bold text-yellow-300">NT$8,000+</span>
-                      <span className="bg-yellow-500/30 text-yellow-300 text-xs font-bold px-2 py-0.5 rounded-full">省 NT$2,000+</span>
+                      <span className="bg-yellow-500/30 text-yellow-300 text-xs font-bold px-2 py-0.5 rounded-full">{t('vipSaving')}</span>
                     </div>
                   </div>
-                  <p className="text-gray-400 text-xs mt-1">頂級尊榮，一次擁有最完整服務</p>
+                  <p className="text-gray-400 text-xs mt-1">{tPricing('vipDesc')}</p>
                 </div>
                 <div className="flex-grow grid grid-cols-2 gap-2">
-                  {['每日個人化建議', '終身命書(8大運) x1', '玉洞子解說 x1', '流年命書六折優惠', '課程八折優惠', '贈送祈福服務 x1'].map((f, i) => (
+                  {(tPricing.raw('vipFeatures') as string[]).map((f: string, i: number) => (
                     <div key={i} className="flex items-center gap-2 text-sm text-gray-300">
-                      <span className="text-yellow-400 font-bold">✓</span>
+                      <span className="text-yellow-400 font-bold">v</span>
                       <span>{f}</span>
                     </div>
                   ))}
                 </div>
                 <div className="flex-shrink-0">
                   <button disabled className="w-full px-6 py-3 rounded-xl font-bold bg-gray-600 text-gray-400 cursor-not-allowed text-sm">
-                    敬請期待
+                    {tPricing('comingSoonBtn')}
                   </button>
                 </div>
               </div>
@@ -238,14 +245,8 @@ export default function SubscribePage() {
 
         {/* FAQ / Notes */}
         <div className="max-w-2xl mx-auto mt-14 space-y-4">
-          <h2 className="text-center text-base font-bold text-gray-700 mb-4">常見問題</h2>
-          {[
-            ['訂閱後何時生效？', '付款完成後立即生效，有效期 365 天。'],
-            ['可以升級方案嗎？', '可以。升級後新方案到期日從購買日起算 365 天，並與現有訂閱合計。'],
-            ['祈福服務如何使用？', '銀會員及金會員每年可領取 1 項免費祈福服務（安太歲、光明燈、補財庫、祈福服務擇一），由玉洞子代辦。'],
-            ['命書折扣如何計算？', '訂閱後購買命書時，系統自動套用折扣點數，無需手動輸入折扣碼。'],
-            ['如何取消訂閱？', '訂閱為一次性年費，到期後不自動續訂。如需繼續享有福利，請在到期前手動續訂。'],
-          ].map(([q, a]) => (
+          <h2 className="text-center text-base font-bold text-gray-700 mb-4">{t('faqTitle')}</h2>
+          {(t.raw('faqs') as string[][]).map(([q, a]) => (
             <details key={q} className="bg-white rounded-xl border border-gray-100 p-4 group">
               <summary className="font-medium text-gray-800 cursor-pointer text-sm list-none flex justify-between items-center">
                 {q}
@@ -260,7 +261,7 @@ export default function SubscribePage() {
         {isAuthenticated && (
           <div className="text-center mt-10">
             <Link href="/member" className="text-sm text-amber-600 hover:underline">
-              返回會員中心
+              {t('backToMember')}
             </Link>
           </div>
         )}
