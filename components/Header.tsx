@@ -35,10 +35,10 @@ export default function Header() {
             <div className="w-10 h-10 bg-gradient-to-br from-amber-600 to-orange-600 rounded-full flex items-center justify-center">
               <i className="ri-book-open-line text-white text-xl"></i>
             </div>
-            <span className="text-2xl font-bold text-amber-800" style={{fontFamily: 'var(--font-pacifico)'}}>{t('brand')}</span>
+            <span className="text-2xl font-bold text-amber-800" style={currentLocale === 'zh-TW' ? {fontFamily: 'var(--font-pacifico)'} : {fontFamily: '"Arial Black", Arial, sans-serif', fontWeight: 900}}>{t('brand')}</span>
           </Link>
 
-          <nav className="hidden md:flex items-center space-x-8">
+          <nav className="hidden md:flex items-center space-x-8 ml-10">
             <Link href="/" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">{t('home')}</Link>
             <Link href="/heritage" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">{t('heritage')}</Link>
             <Link href="/blog" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">{t('blog')}</Link>
