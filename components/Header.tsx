@@ -50,7 +50,7 @@ export default function Header() {
             <Link href="/appointment" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">{t('appointment')}</Link>
           </nav>
 
-          <div className="hidden md:flex items-center space-x-3">
+          <div className="hidden md:flex items-center space-x-3 ml-6">
             {/* Language switcher */}
             <div className="flex items-center gap-1 text-xs">
               {locales.map(loc => (
