@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Pacifico } from "next/font/google";
 import "./globals.css";
-import { AuthProvider } from '../components/AuthContext';
-import ContactFloat from '../components/ContactFloat';
+import { AuthProvider } from '@/components/AuthContext';
+import ContactFloat from '@/components/ContactFloat';
 
 const pacifico = Pacifico({
   weight: '400',

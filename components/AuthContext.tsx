@@ -21,6 +21,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const protectedRoutes = ['/member', '/admin'];
+const locales = ['zh-TW', 'en', 'ja'];
 
 function decodeJwtPayload(token: string): Record<string, string> | null {
   try {
@@ -74,12 +75,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (loading) return;
-    const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
+    const currentLocale = locales.find(l => pathname.startsWith(`/${l}`)) || 'zh-TW';
+    const pathWithoutLocale = locales.reduce((path, locale) =>
+      path.startsWith(`/${locale}`) ? path.slice(locale.length + 1) : path,
+      pathname
+    );
+    const isProtectedRoute = protectedRoutes.some(route => pathWithoutLocale.startsWith(route));
+    const isLoginPage = pathWithoutLocale === '/login';
     if (!isAuthenticated && isProtectedRoute) {
-      router.replace('/login');
+      router.replace(`/${currentLocale}/login`);
     }
-    if (isAuthenticated && pathname === '/login') {
-      router.replace('/');
+    if (isAuthenticated && isLoginPage) {
+      router.replace(`/${currentLocale}/`);
     }
   }, [isAuthenticated, loading, pathname, router]);
 
@@ -88,7 +95,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setToken(jwtToken);
     setIsAuthenticated(true);
     setUser(buildUserInfo(jwtToken));
-    router.push('/');
+    const currentLocale = locales.find(l => pathname.startsWith(`/${l}`)) || 'zh-TW';
+    router.push(`/${currentLocale}/`);
   };
 
   const logout = () => {
@@ -99,7 +107,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setToken(null);
     setIsAuthenticated(false);
     setUser(null);
-    router.push('/');
+    const currentLocale = locales.find(l => pathname.startsWith(`/${l}`)) || 'zh-TW';
+    router.push(`/${currentLocale}/`);
   };
 
   if (loading) {

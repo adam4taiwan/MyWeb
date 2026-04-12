@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
 import html2canvas from 'html2canvas';
+import Link from 'next/link';
 import Header from '@/components/Header';
 import { useAuth } from '@/components/AuthContext';
 
@@ -440,7 +441,7 @@ export default function DiskPage() {
   };
 
   const handleExportXLS = async () => {
-    if (!token) return alert("請先登入");
+    if (!token) { alert("請先加入會員"); window.location.href = '/login'; return; }
     setLoadingText('正在導出命盤資料...');
     setIsLoading(true);
     try {
@@ -455,8 +456,11 @@ export default function DiskPage() {
         const a = document.createElement('a');
         a.href = url; a.download = `${formData.name}_命盤.xls`;
         document.body.appendChild(a); a.click(); a.remove();
+      } else {
+        const errText = await response.text().catch(() => '');
+        alert(`下載失敗（${response.status}）${errText ? '：' + errText : ''}`);
       }
-    } catch { alert("下載失敗"); } finally { setIsLoading(false); }
+    } catch (err) { alert("下載失敗：" + String(err)); } finally { setIsLoading(false); }
   };
 
 
@@ -875,7 +879,7 @@ export default function DiskPage() {
             {!token && (
               <div className="mb-4 bg-amber-50 border border-amber-200 p-4 rounded-[2rem] flex justify-between items-center">
                 <p className="text-sm text-amber-800">登入後可儲存生辰、使用試用期及訂閱命書功能</p>
-                <a href="/login?redirect=/disk" className="bg-amber-700 text-white px-5 py-2 rounded-full font-bold text-sm">登入</a>
+                <Link href="/login?redirect=/disk" className="bg-amber-700 text-white px-5 py-2 rounded-full font-bold text-sm">登入</Link>
               </div>
             )}
             {token && subStatus && !subStatus.isSubscribed && subStatus.isInTrial && (
@@ -884,7 +888,7 @@ export default function DiskPage() {
                   <p className="text-xs text-white/80">7 天免費試用中</p>
                   <p className="font-bold text-white">剩餘 {subStatus.trialDaysRemaining} 天</p>
                 </div>
-                <a href="/subscribe" className="bg-white text-teal-800 px-4 py-2 rounded-full font-bold text-sm hover:bg-teal-50">訂閱解鎖全功能</a>
+                <Link href="/subscribe" className="bg-white text-teal-800 px-4 py-2 rounded-full font-bold text-sm hover:bg-teal-50">訂閱解鎖全功能</Link>
               </div>
             )}
             {token && subStatus && subStatus.isSubscribed && (
@@ -907,7 +911,7 @@ export default function DiskPage() {
             {token && subStatus && !subStatus.isSubscribed && !subStatus.isInTrial && (
               <div className="mb-4 bg-gray-100 border border-amber-200 p-4 rounded-[2rem] flex justify-between items-center">
                 <p className="text-sm text-gray-600">試用期已結束，訂閱後可使用命書功能</p>
-                <a href="/subscribe" className="bg-amber-700 text-white px-5 py-2 rounded-full font-bold text-sm">訂閱方案</a>
+                <Link href="/subscribe" className="bg-amber-700 text-white px-5 py-2 rounded-full font-bold text-sm">訂閱方案</Link>
               </div>
             )}
 
@@ -1196,7 +1200,7 @@ export default function DiskPage() {
                 <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 text-center">
                   <p className="text-amber-900 font-bold text-lg mb-1">命盤已計算完成</p>
                   <p className="text-sm text-amber-700 mb-3">以下為命盤結構視覺圖，完整命書報告需訂閱後使用</p>
-                  <a href="/subscribe" className="inline-block bg-amber-700 text-white px-8 py-2.5 rounded-full font-bold text-sm hover:bg-amber-800">訂閱解鎖完整命書</a>
+                  <Link href="/subscribe" className="inline-block bg-amber-700 text-white px-8 py-2.5 rounded-full font-bold text-sm hover:bg-amber-800">訂閱解鎖完整命書</Link>
                 </div>
                 {/* Bazi + Ziwei chart visual displayed for free */}
                 {exportChart?.bazi && (
@@ -1240,8 +1244,8 @@ export default function DiskPage() {
                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm">
                     <p className="text-amber-900 font-bold text-xl mb-2">命書報告已鎖定</p>
                     <p className="text-sm text-amber-700 mb-4">訂閱會員方案後可查看完整命書</p>
-                    <a href="/subscribe" className="bg-amber-700 text-white px-8 py-3 rounded-full font-bold hover:bg-amber-800 transition-all shadow-lg">立即訂閱解鎖</a>
-                    {!token && <a href="/login?redirect=/disk" className="mt-3 text-sm text-gray-500 underline hover:text-gray-700">已有帳號？登入</a>}
+                    <Link href="/subscribe" className="bg-amber-700 text-white px-8 py-3 rounded-full font-bold hover:bg-amber-800 transition-all shadow-lg">立即訂閱解鎖</Link>
+                    {!token && <Link href="/login?redirect=/disk" className="mt-3 text-sm text-gray-500 underline hover:text-gray-700">已有帳號？登入</Link>}
                   </div>
                 </div>
               </div>

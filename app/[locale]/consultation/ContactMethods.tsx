@@ -2,6 +2,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 
 export default function ContactMethods() {
   const [wechatCopied, setWechatCopied] = useState(false);
@@ -162,11 +163,11 @@ export default function ContactMethods() {
                 ))}
               </div>
               <div className="flex-shrink-0 text-center">
-                <a href="/appointment">
+                <Link href="/appointment">
                   <button className="bg-amber-400 text-amber-900 px-8 py-3 rounded-xl font-bold hover:bg-amber-300 transition-colors whitespace-nowrap">
                     立即預約
                   </button>
-                </a>
+                </Link>
                 <p className="text-amber-300 text-xs mt-2">訂閱會員享折扣優惠</p>
               </div>
             </div>

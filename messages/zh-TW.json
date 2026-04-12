@@ -1,0 +1,11 @@
+{
+  "common": {
+    "loading": "載入中...",
+    "error": "發生錯誤",
+    "cancel": "取消",
+    "confirm": "確認",
+    "save": "儲存",
+    "close": "關閉"
+  },
+  "report_language_notice": "命書以繁體中文呈現"
+}

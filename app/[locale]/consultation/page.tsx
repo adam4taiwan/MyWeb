@@ -2,8 +2,8 @@
 'use client';
 
 import { useState } from 'react';
-import Header from '../../components/Header';
-import Footer from '../../components/Footer';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import ConsultationHero from './ConsultationHero';
 import ServiceOptions from './ServiceOptions';
 import ContactMethods from './ContactMethods';

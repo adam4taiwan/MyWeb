@@ -42,3 +42,4 @@ yarn-error.log*
 
 # Large generated files
 repomix-output.xml
+deploy.sh

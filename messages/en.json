@@ -1,0 +1,11 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "close": "Close"
+  },
+  "report_language_notice": "Fortune reports are presented in Traditional Chinese"
+}

@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/AuthContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://ecanapi.fly.dev/api';
 
-export default function LineCallbackPage() {
+function LineCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login } = useAuth();
@@ -56,5 +56,18 @@ export default function LineCallbackPage() {
       <div className="w-10 h-10 border-4 border-[#06C755] border-t-transparent rounded-full animate-spin mb-4"></div>
       <p className="text-gray-600 text-sm">LINE 登入中，請稍候...</p>
     </div>
+  );
+}
+
+export default function LineCallbackPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+        <div className="w-10 h-10 border-4 border-[#06C755] border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="text-gray-600 text-sm">LINE 登入中，請稍候...</p>
+      </div>
+    }>
+      <LineCallbackContent />
+    </Suspense>
   );
 }
