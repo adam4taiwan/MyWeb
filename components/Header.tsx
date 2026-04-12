@@ -57,7 +57,7 @@ export default function Header() {
                 <button
                   key={loc.code}
                   onClick={() => switchLocale(loc.code)}
-                  className={`px-1.5 py-0.5 rounded ${currentLocale === loc.code ? 'bg-amber-600 text-white' : 'text-gray-600 hover:text-amber-600'}`}
+                  className={`px-1.5 py-0.5 rounded whitespace-nowrap ${currentLocale === loc.code ? 'bg-amber-600 text-white' : 'text-gray-600 hover:text-amber-600'}`}
                 >
                   {loc.label}
                 </button>
