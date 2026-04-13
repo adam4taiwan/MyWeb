@@ -1,10 +1,11 @@
-
 'use client';
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 export default function ContactMethods() {
+  const t = useTranslations('Consultation');
   const [wechatCopied, setWechatCopied] = useState(false);
 
   const copyWechatId = (id: string) => {
@@ -13,22 +14,23 @@ export default function ContactMethods() {
       setTimeout(() => setWechatCopied(false), 2000);
     });
   };
+
   const socialContacts = [
     {
       platform: 'LINE',
       icon: 'ri-line-line',
       color: 'bg-green-500 hover:bg-green-600',
       id: 'adam4taiwan',
-      description: '即時訊息諮詢，快速回覆',
+      description: t('lineDesc'),
       qrImage: '/image/lineID.jpg',
       link: 'https://line.me/ti/p/adam4taiwan',
     },
     {
-      platform: '微信',
+      platform: t('contactWechat') || '微信',
       icon: 'ri-wechat-line',
       color: 'bg-green-600 hover:bg-green-700',
       id: 'wxid_22io062y9j1952',
-      description: '語音文字皆可，24小時內回覆',
+      description: t('wechatDesc'),
       qrImage: '/image/WeChatID.jpg',
       link: null,
     },
@@ -36,42 +38,44 @@ export default function ContactMethods() {
 
   const traditionalContacts = [
     {
-      method: '專線電話',
+      method: t('phoneMethod'),
       icon: 'ri-phone-line',
       info: '0910-032-057',
-      description: '週一至週五 9:00-18:00',
+      description: t('phoneDesc'),
       color: 'text-amber-600'
     },
     {
-      method: '電子郵件',
+      method: t('emailMethod'),
       icon: 'ri-mail-line',
       info: 'adam4taiwan@gmail.com',
-      description: '詳細諮詢說明，24小時內回覆',
+      description: t('emailDesc'),
       color: 'text-blue-600'
     },
     {
-      method: '預約專線',
+      method: t('bookingMethod'),
       icon: 'ri-phone-line',
       info: 'TEL:0970975258',
-      description: '面對面深度諮詢，需提前預約',
+      description: t('bookingDesc'),
       color: 'text-green-600'
     }
   ];
+
+  const consultFeatures = t.raw('consultFeatures') as string[];
 
   return (
     <section className="py-20 bg-white">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-            多元聯絡方式
+            {t('contactTitle')}
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            選擇您最習慣的溝通方式，我們提供全方位的諮詢管道
+            {t('contactDesc')}
           </p>
         </div>
 
         <div className="mb-16">
-          <h3 className="text-3xl font-bold text-center text-gray-900 mb-12">社群平台聯繫</h3>
+          <h3 className="text-3xl font-bold text-center text-gray-900 mb-12">{t('socialTitle')}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-2xl mx-auto">
             {socialContacts.map((contact, index) => (
               <div key={index} className="bg-gradient-to-br from-gray-50 to-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow text-center">
@@ -98,18 +102,18 @@ export default function ContactMethods() {
                     rel="noopener noreferrer"
                     className={`mt-4 inline-block ${contact.color} text-white px-6 py-2 rounded-full transition-colors whitespace-nowrap cursor-pointer`}
                   >
-                    立即加入
+                    {t('lineJoinBtn')}
                   </a>
                 ) : (
                   <div className="mt-4 space-y-2">
-                    <p className="text-sm text-gray-500 hidden md:block">長按或掃描 QR Code</p>
+                    <p className="text-sm text-gray-500 hidden md:block">{t('wechatScanDesc')}</p>
                     <button
                       onClick={() => copyWechatId(contact.id)}
                       className={`inline-block ${contact.color} text-white px-6 py-2 rounded-full transition-colors whitespace-nowrap cursor-pointer`}
                     >
-                      {wechatCopied ? '已複製！' : '複製微信 ID'}
+                      {wechatCopied ? t('wechatCopied') : t('wechatCopyBtn')}
                     </button>
-                    <p className="text-xs text-gray-400 md:hidden">複製後開啟微信搜尋加好友</p>
+                    <p className="text-xs text-gray-400 md:hidden">{t('wechatMobileDesc')}</p>
                   </div>
                 )}
               </div>
@@ -118,14 +122,14 @@ export default function ContactMethods() {
         </div>
 
         <div>
-          <h3 className="text-3xl font-bold text-center text-gray-900 mb-12">傳統聯繫方式</h3>
+          <h3 className="text-3xl font-bold text-center text-gray-900 mb-12">{t('traditionalTitle')}</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {traditionalContacts.map((contact, index) => (
               <div key={index} className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-8 text-center hover:shadow-lg transition-shadow">
                 <div className={`w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-md`}>
                   <i className={`${contact.icon} text-2xl ${contact.color}`}></i>
                 </div>
-                
+
                 <h4 className="text-xl font-bold text-gray-900 mb-3">{contact.method}</h4>
                 <p className={`font-semibold mb-2 ${contact.color}`}>{contact.info}</p>
                 <p className="text-gray-600 leading-relaxed">{contact.description}</p>
@@ -134,30 +138,23 @@ export default function ContactMethods() {
           </div>
         </div>
 
-        {/* 玉洞子親談費率 */}
+        {/* Personal consultation pricing */}
         <div className="mt-16">
           <div className="bg-gradient-to-br from-amber-900 to-amber-950 rounded-2xl p-8 text-white">
             <div className="flex flex-col md:flex-row items-center gap-8">
               <div className="flex-shrink-0 text-center md:text-left">
-                <p className="text-amber-300 text-sm font-medium tracking-widest mb-2">PERSONAL CONSULTATION</p>
-                <h3 className="text-2xl font-bold mb-1">玉洞子親談</h3>
-                <p className="text-amber-200 text-sm">百事可問，線上視訊深度諮詢</p>
+                <p className="text-amber-300 text-sm font-medium tracking-widest mb-2">{t('personalConsultLabel')}</p>
+                <h3 className="text-2xl font-bold mb-1">{t('personalConsultTitle')}</h3>
+                <p className="text-amber-200 text-sm">{t('personalConsultDesc')}</p>
                 <div className="mt-4">
-                  <p className="text-4xl font-bold text-yellow-300">NT$3,600</p>
-                  <p className="text-amber-300 text-sm mt-1">/ 小時</p>
+                  <p className="text-4xl font-bold text-yellow-300">{t('personalConsultPrice')}</p>
+                  <p className="text-amber-300 text-sm mt-1">{t('personalConsultPriceUnit')}</p>
                 </div>
               </div>
               <div className="flex-grow grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {[
-                  '命主八字全面剖析',
-                  '紫微斗數深度解讀',
-                  '大運流年交叉論斷',
-                  '事業婚姻財運諮詢',
-                  '風水格局指點',
-                  '可錄影備存參考',
-                ].map((item, i) => (
+                {consultFeatures.map((item, i) => (
                   <div key={i} className="flex items-center gap-2 text-sm text-amber-100">
-                    <span className="text-yellow-400 font-bold">✓</span>
+                    <span className="text-yellow-400 font-bold">v</span>
                     <span>{item}</span>
                   </div>
                 ))}
@@ -165,10 +162,10 @@ export default function ContactMethods() {
               <div className="flex-shrink-0 text-center">
                 <Link href="/appointment">
                   <button className="bg-amber-400 text-amber-900 px-8 py-3 rounded-xl font-bold hover:bg-amber-300 transition-colors whitespace-nowrap">
-                    立即預約
+                    {t('bookNowBtn')}
                   </button>
                 </Link>
-                <p className="text-amber-300 text-xs mt-2">訂閱會員享折扣優惠</p>
+                <p className="text-amber-300 text-xs mt-2">{t('memberDiscountNote')}</p>
               </div>
             </div>
           </div>
@@ -176,9 +173,9 @@ export default function ContactMethods() {
 
         <div className="mt-8 text-center">
           <div className="bg-gradient-to-r from-amber-600 to-orange-600 rounded-2xl p-6 text-white">
-            <h3 className="text-lg font-bold mb-2">24小時服務承諾</h3>
+            <h3 className="text-lg font-bold mb-2">{t('servicePromise')}</h3>
             <p className="text-sm opacity-90">
-              無論您選擇哪種聯繫方式，我們承諾在24小時內給予回覆
+              {t('servicePromiseDesc')}
             </p>
           </div>
         </div>

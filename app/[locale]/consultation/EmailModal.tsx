@@ -2,6 +2,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface EmailModalProps {
   isOpen: boolean;
@@ -10,6 +11,7 @@ interface EmailModalProps {
 }
 
 export default function EmailModal({ isOpen, onClose, service }: EmailModalProps) {
+  const t = useTranslations('Consultation');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -36,7 +38,6 @@ export default function EmailModal({ isOpen, onClose, service }: EmailModalProps
     setError(null);
 
     try {
-      // 调用后端 API
       const response = await fetch('/api/consultation/send-email', {
         method: 'POST',
         headers: {
@@ -51,10 +52,9 @@ export default function EmailModal({ isOpen, onClose, service }: EmailModalProps
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || '邮件发送失败，请重试');
+        throw new Error(data.error || t('btnSendEmail'));
       }
 
-      // 成功
       setIsSubmitted(true);
       setTimeout(() => {
         setIsSubmitted(false);
@@ -77,9 +77,9 @@ export default function EmailModal({ isOpen, onClose, service }: EmailModalProps
         });
       }, 3000);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : '发送失败，请稍后重试';
+      const errorMessage = err instanceof Error ? err.message : t('btnSending');
       setError(errorMessage);
-      console.error('邮件发送错误:', err);
+      console.error('email send error:', err);
     } finally {
       setIsLoading(false);
     }
@@ -107,11 +107,11 @@ export default function EmailModal({ isOpen, onClose, service }: EmailModalProps
                 <i className="ri-mail-line text-white text-xl"></i>
               </div>
               <div>
-                <h3 className="text-xl font-bold text-gray-900">電子郵件諮詢</h3>
+                <h3 className="text-xl font-bold text-gray-900">{t('emailModalTitle')}</h3>
                 <p className="text-gray-600">{service}</p>
               </div>
             </div>
-            <button 
+            <button
               onClick={onClose}
               className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors cursor-pointer"
             >
@@ -125,7 +125,7 @@ export default function EmailModal({ isOpen, onClose, service }: EmailModalProps
             <div className="flex items-start space-x-3">
               <i className="ri-error-warning-line text-red-600 text-xl mt-1"></i>
               <div>
-                <h5 className="font-semibold text-red-800">发送失败</h5>
+                <h5 className="font-semibold text-red-800">{t('emailSendFailed')}</h5>
                 <p className="text-red-700 text-sm mt-1">{error}</p>
               </div>
             </div>
@@ -137,15 +137,15 @@ export default function EmailModal({ isOpen, onClose, service }: EmailModalProps
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <i className="ri-mail-check-line text-green-600 text-2xl"></i>
             </div>
-            <h4 className="text-xl font-bold text-gray-900 mb-2">郵件發送成功！</h4>
-            <p className="text-gray-600 mb-4">我們已收到您的諮詢申請</p>
+            <h4 className="text-xl font-bold text-gray-900 mb-2">{t('emailSendSuccess')}</h4>
+            <p className="text-gray-600 mb-4">{t('emailReceived')}</p>
             <div className="bg-green-50 rounded-lg p-4 text-left">
-              <h5 className="font-semibold text-green-800 mb-2">接下來的流程：</h5>
+              <h5 className="font-semibold text-green-800 mb-2">{t('emailNextSteps')}</h5>
               <ul className="text-green-700 space-y-1 text-sm">
-                <li>• 24小時內確認收件並回覆預估時間</li>
-                <li>• 3-5個工作天內提供詳細分析報告</li>
-                <li>• 如需補充資料會另行聯繫</li>
-                <li>• 報告將以PDF格式寄送至您的信箱</li>
+                <li>- {t('emailStep1')}</li>
+                <li>- {t('emailStep2')}</li>
+                <li>- {t('emailStep3')}</li>
+                <li>- {t('emailStep4')}</li>
               </ul>
             </div>
           </div>
@@ -154,10 +154,10 @@ export default function EmailModal({ isOpen, onClose, service }: EmailModalProps
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <div className="space-y-6">
                 <div>
-                  <h4 className="text-lg font-bold text-gray-900 mb-4">基本資料</h4>
+                  <h4 className="text-lg font-bold text-gray-900 mb-4">{t('basicInfoTitle')}</h4>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">姓名 *</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">{t('labelName')}</label>
                       <input
                         type="text"
                         name="name"
@@ -165,12 +165,12 @@ export default function EmailModal({ isOpen, onClose, service }: EmailModalProps
                         onChange={handleChange}
                         required
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
-                        placeholder="請輸入您的姓名"
+                        placeholder={t('placeholderName')}
                       />
                     </div>
-                    
+
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">電子郵件 *</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">{t('labelEmailField')}</label>
                       <input
                         type="email"
                         name="email"
@@ -181,9 +181,9 @@ export default function EmailModal({ isOpen, onClose, service }: EmailModalProps
                         placeholder="example@email.com"
                       />
                     </div>
-                    
+
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">聯絡電話</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">{t('labelPhone')}</label>
                       <input
                         type="tel"
                         name="phone"
@@ -197,11 +197,11 @@ export default function EmailModal({ isOpen, onClose, service }: EmailModalProps
                 </div>
 
                 <div>
-                  <h4 className="text-lg font-bold text-gray-900 mb-4">生辰資料</h4>
+                  <h4 className="text-lg font-bold text-gray-900 mb-4">{t('birthInfoTitle')}</h4>
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">出生日期 *</label>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">{t('labelBirthDate')}</label>
                         <input
                           type="date"
                           name="birthDate"
@@ -212,7 +212,7 @@ export default function EmailModal({ isOpen, onClose, service }: EmailModalProps
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">出生時間</label>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">{t('labelBirthTime')}</label>
                         <input
                           type="time"
                           name="birthTime"
@@ -222,22 +222,22 @@ export default function EmailModal({ isOpen, onClose, service }: EmailModalProps
                         />
                       </div>
                     </div>
-                    
+
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">出生地點</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">{t('labelBirthPlace')}</label>
                       <input
                         type="text"
                         name="birthPlace"
                         value={formData.birthPlace}
                         onChange={handleChange}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
-                        placeholder="縣市或國家"
+                        placeholder={t('placeholderBirthPlace')}
                       />
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">性別 *</label>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">{t('labelGender')}</label>
                         <select
                           name="gender"
                           value={formData.gender}
@@ -245,37 +245,37 @@ export default function EmailModal({ isOpen, onClose, service }: EmailModalProps
                           required
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm pr-8"
                         >
-                          <option value="">請選擇</option>
-                          <option value="male">男性</option>
-                          <option value="female">女性</option>
+                          <option value="">{t('selectPlaceholder')}</option>
+                          <option value="male">{t('genderMale')}</option>
+                          <option value="female">{t('genderFemale')}</option>
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">婚姻狀況</label>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">{t('labelMaritalStatus')}</label>
                         <select
                           name="maritalStatus"
                           value={formData.maritalStatus}
                           onChange={handleChange}
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm pr-8"
                         >
-                          <option value="">請選擇</option>
-                          <option value="single">未婚</option>
-                          <option value="married">已婚</option>
-                          <option value="divorced">離婚</option>
-                          <option value="widowed">喪偶</option>
+                          <option value="">{t('selectPlaceholder')}</option>
+                          <option value="single">{t('maritalSingle')}</option>
+                          <option value="married">{t('maritalMarried')}</option>
+                          <option value="divorced">{t('maritalDivorced')}</option>
+                          <option value="widowed">{t('maritalWidowed')}</option>
                         </select>
                       </div>
                     </div>
-                    
+
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">職業</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">{t('labelOccupation')}</label>
                       <input
                         type="text"
                         name="occupation"
                         value={formData.occupation}
                         onChange={handleChange}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
-                        placeholder="您的職業或工作領域"
+                        placeholder={t('placeholderOccupation')}
                       />
                     </div>
                   </div>
@@ -284,10 +284,10 @@ export default function EmailModal({ isOpen, onClose, service }: EmailModalProps
 
               <div className="space-y-6">
                 <div>
-                  <h4 className="text-lg font-bold text-gray-900 mb-4">諮詢詳情</h4>
+                  <h4 className="text-lg font-bold text-gray-900 mb-4">{t('consultDetailTitle')}</h4>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">諮詢主題 *</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">{t('labelSubject')}</label>
                       <input
                         type="text"
                         name="subject"
@@ -295,41 +295,41 @@ export default function EmailModal({ isOpen, onClose, service }: EmailModalProps
                         onChange={handleChange}
                         required
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
-                        placeholder="請簡述諮詢主題"
+                        placeholder={t('placeholderSubject')}
                       />
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">優先程度</label>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">{t('labelPriority')}</label>
                         <select
                           name="priority"
                           value={formData.priority}
                           onChange={handleChange}
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm pr-8"
                         >
-                          <option value="normal">一般</option>
-                          <option value="urgent">緊急</option>
-                          <option value="very-urgent">非常緊急</option>
+                          <option value="normal">{t('priorityNormal')}</option>
+                          <option value="urgent">{t('priorityUrgent')}</option>
+                          <option value="very-urgent">{t('priorityVeryUrgent')}</option>
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">諮詢類型</label>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">{t('labelConsultationType')}</label>
                         <select
                           name="consultationType"
                           value={formData.consultationType}
                           onChange={handleChange}
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm pr-8"
                         >
-                          <option value="detailed">詳細分析</option>
-                          <option value="brief">簡要回覆</option>
-                          <option value="specific">特定問題</option>
+                          <option value="detailed">{t('typeDetailed')}</option>
+                          <option value="brief">{t('typeBrief')}</option>
+                          <option value="specific">{t('typeSpecific')}</option>
                         </select>
                       </div>
                     </div>
-                    
+
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">詳細問題描述 *</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">{t('labelQuestions')}</label>
                       <textarea
                         name="questions"
                         value={formData.questions}
@@ -338,17 +338,17 @@ export default function EmailModal({ isOpen, onClose, service }: EmailModalProps
                         rows={8}
                         maxLength={500}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm resize-none"
-                        placeholder="請詳細描述您的問題，包括具體想了解的方面、目前的困擾或期望獲得的建議等（限500字）"
+                        placeholder={t('placeholderQuestions')}
                       ></textarea>
                       <div className="text-right text-xs text-gray-500 mt-1">
                         {formData.questions.length}/500
                       </div>
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
                         <i className="ri-yin-yang-2-line text-amber-600 mr-2"></i>
-                        附件上傳
+                        {t('labelAttachments')}
                       </label>
                       <input
                         type="file"
@@ -359,19 +359,19 @@ export default function EmailModal({ isOpen, onClose, service }: EmailModalProps
                       />
                       <p className="text-xs text-gray-500 mt-1">
                         <i className="ri-book-2-line text-amber-600 mr-1"></i>
-                        可上傳相關資料（如手相照片、八字圖表、風水平面圖等），支援PDF、圖片、文檔格式
+                        {t('attachmentNote')}
                       </p>
                     </div>
                   </div>
                 </div>
 
                 <div className="bg-amber-50 rounded-lg p-4">
-                  <h5 className="font-semibold text-amber-800 mb-2">服務說明</h5>
+                  <h5 className="font-semibold text-amber-800 mb-2">{t('serviceNoteTitle')}</h5>
                   <ul className="text-amber-700 space-y-1 text-sm">
-                    <li>• 專業命理師將在3-5個工作天內回覆</li>
-                    <li>• 詳細分析報告將以PDF格式提供</li>
-                    <li>• 緊急諮詢將優先處理（額外收費）</li>
-                    <li>• 一次諮詢包含一次免費追問機會</li>
+                    <li>- {t('serviceNote1')}</li>
+                    <li>- {t('serviceNote2')}</li>
+                    <li>- {t('serviceNote3')}</li>
+                    <li>- {t('serviceNote4')}</li>
                   </ul>
                 </div>
               </div>
@@ -384,7 +384,7 @@ export default function EmailModal({ isOpen, onClose, service }: EmailModalProps
                 disabled={isLoading}
                 className="flex-1 bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 transition-colors whitespace-nowrap cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                取消
+                {t('btnCancel')}
               </button>
               <button
                 type="submit"
@@ -394,10 +394,10 @@ export default function EmailModal({ isOpen, onClose, service }: EmailModalProps
                 {isLoading ? (
                   <>
                     <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                    發送中...
+                    {t('btnSending')}
                   </>
                 ) : (
-                  '發送諮詢郵件'
+                  t('btnSendEmail')
                 )}
               </button>
             </div>

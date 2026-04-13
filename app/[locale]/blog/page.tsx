@@ -3,13 +3,20 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { getAllPosts } from '@/lib/posts';
 import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = {
-  title: '命理知識文章 | 玉洞子星相古學堂',
-  description: '玉洞子老師親撰命理知識文章，涵蓋八字入門、大運解析、流年運勢等主題，帶你深入了解傳統命理智慧。',
-};
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'Blog' });
+  return {
+    title: t('metaTitle'),
+    description: t('metaDesc'),
+  };
+}
 
-export default function BlogPage() {
+export default async function BlogPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'Blog' });
   const posts = getAllPosts();
 
   const categories = Array.from(new Set(posts.map(p => p.category)));
@@ -21,16 +28,16 @@ export default function BlogPage() {
       {/* Hero */}
       <section className="bg-gradient-to-br from-amber-900 to-amber-700 text-white py-16 px-4 text-center">
         <h1 className="text-4xl font-bold mb-3" style={{ fontFamily: 'var(--font-pacifico)' }}>
-          命理知識文章
+          {t('heroTitle')}
         </h1>
         <p className="text-amber-200 text-lg max-w-xl mx-auto">
-          玉洞子老師親撰，帶你認識八字、紫微斗數的核心智慧
+          {t('heroDesc')}
         </p>
       </section>
 
       <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-12">
         {posts.length === 0 ? (
-          <p className="text-center text-gray-500">目前尚無文章，請稍後再來。</p>
+          <p className="text-center text-gray-500">{t('noPosts')}</p>
         ) : (
           <>
             {/* Category tags */}
@@ -55,7 +62,7 @@ export default function BlogPage() {
                       {post.title}
                     </h2>
                     <p className="text-gray-600 text-sm leading-relaxed line-clamp-2">{post.summary}</p>
-                    <span className="inline-block mt-3 text-amber-600 text-sm font-medium">閱讀全文 &rarr;</span>
+                    <span className="inline-block mt-3 text-amber-600 text-sm font-medium">{t('readMore')} &rarr;</span>
                   </article>
                 </Link>
               ))}
