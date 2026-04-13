@@ -44,7 +44,7 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
             <div className="flex flex-wrap gap-2 mb-8">
               {categories.map(cat => (
                 <span key={cat} className="px-3 py-1 bg-amber-100 text-amber-700 text-sm rounded-full border border-amber-200">
-                  {cat}
+                  {(t.raw('categories') as Record<string, string>)[cat] ?? cat}
                 </span>
               ))}
             </div>
@@ -55,7 +55,7 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
                 <Link key={post.slug} href={`/blog/${post.slug}`}>
                   <article className="bg-white rounded-xl border border-amber-100 hover:border-amber-300 hover:shadow-md transition-all p-6 cursor-pointer">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="text-xs px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full">{post.category}</span>
+                      <span className="text-xs px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full">{(t.raw('categories') as Record<string, string>)[post.category] ?? post.category}</span>
                       <time className="text-xs text-gray-400">{post.date}</time>
                     </div>
                     <h2 className="text-xl font-bold text-gray-800 mb-2 hover:text-amber-700 transition-colors">

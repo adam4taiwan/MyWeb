@@ -411,6 +411,12 @@
     "noPosts": "No articles yet. Please check back later.",
     "readMore": "Read More",
     "backToBlog": "Back to Articles",
+    "categories": {
+      "紫微基礎": "Purple Star Basics",
+      "民俗信仰": "Folk Beliefs",
+      "八字基礎": "BaZi Basics",
+      "八字進階": "BaZi Advanced"
+    },
     "ctaTitle": "Want to explore your birth chart in depth?",
     "ctaDesc": "Master Yudongzi offers professional BaZi and Zi Wei Dou Shu chart reading services",
     "ctaConsult": "Book a Consultation",
