@@ -1,7 +1,8 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
 import html2canvas from 'html2canvas';
-import Link from 'next/link';
+import { Link } from '@/navigation';
+import { useTranslations } from 'next-intl';
 import Header from '@/components/Header';
 import { useAuth } from '@/components/AuthContext';
 
@@ -33,6 +34,7 @@ const PRODUCT_CODE_MAP: Partial<Record<ReportTypeKey, string>> = {
 
 export default function DiskPage() {
   const { token } = useAuth();
+  const t = useTranslations('Disk');
   const API_URL = process.env.NEXT_PUBLIC_API_URL
     ? process.env.NEXT_PUBLIC_API_URL
     : (typeof window !== 'undefined' && window.location.hostname === 'localhost')
@@ -52,7 +54,7 @@ export default function DiskPage() {
   const targetYear = currentYear;
 
   const [report, setReport] = useState('');
-  const [reportTitle, setReportTitle] = useState('命理鑑定書');
+  const [reportTitle, setReportTitle] = useState('');
   const [lifelongCycles, setLifelongCycles] = useState<Array<{stem:string;branch:string;liuShen:string;startAge:number;endAge:number;score:number;level:string}> | null>(null);
   const [annualForecasts, setAnnualForecasts] = useState<Array<{year:number;age:number;stemBranch:string;daiyunStem:string;daiyunBranch:string;baziScore:number;ziweiScore:number;crossClass:string;summary:string}> | null>(null);
   const [monthlyForecasts, setMonthlyForecasts] = useState<Array<{month:number;label:string;stemBranch:string;season:string;flowStar:string;baziHint:string;crossClass:string;baziScore:number;ziweiScore:number;tip:string}> | null>(null);
@@ -62,7 +64,7 @@ export default function DiskPage() {
     branches: Array<{branch:string;elem:string;shiShen:string;cls:string;inChart:boolean}>;
   } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [loadingText, setLoadingText] = useState('命理鑑定計算中...');
+  const [loadingText, setLoadingText] = useState('');
   const [profileSaving, setProfileSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState('');
 
@@ -130,7 +132,7 @@ export default function DiskPage() {
           dateType: formData.dateType,
         })
       });
-      if (!profileRes.ok) { setSaveMsg('生辰資料儲存失敗'); return; }
+      if (!profileRes.ok) { setSaveMsg(t('saveMsgFailed')); return; }
 
       // 2. 計算命盤
       const calcRes = await fetch(`${API_URL}/Astrology/calculate`, {
@@ -138,7 +140,7 @@ export default function DiskPage() {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(formData),
       });
-      if (!calcRes.ok) { setSaveMsg('生辰已儲存，但命盤計算失敗'); return; }
+      if (!calcRes.ok) { setSaveMsg(t('saveMsgChartFailed')); return; }
       const chartData = await calcRes.json();
 
       // 3. 儲存命盤 JSON
@@ -149,10 +151,11 @@ export default function DiskPage() {
       });
       const saveData = saveRes.ok ? await saveRes.json() : null;
 
-      const starLabel = saveData?.mingGongMainStars ? `命宮主星：${saveData.mingGongMainStars}` : '';
-      setSaveMsg(`生辰與命盤已儲存${starLabel ? '，' + starLabel : ''}`);
+      setSaveMsg(saveData?.mingGongMainStars
+        ? t('saveMsgSuccess', { stars: saveData.mingGongMainStars })
+        : t('saveMsgSuccessNoStars'));
       setProfileLoaded(true);
-    } catch { setSaveMsg('儲存失敗，請稍後再試'); } finally { setProfileSaving(false); }
+    } catch { setSaveMsg(t('saveMsgError')); } finally { setProfileSaving(false); }
   };
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -317,29 +320,29 @@ export default function DiskPage() {
       return;
     }
     if (serviceStatus === 'used') {
-      return alert('本訂閱週期此服務已使用完畢，請升級方案或等待下一週期。');
+      return alert(t('alertUsed'));
     }
 
     // 執行前確認（扣配額不可逆）
     const lockWarning = !subStatus?.birthdateLocked
-      ? '\n\n【重要提醒】命書列印啟動成功後，出生時辰將永久鎖定，不可再更改，請確認出生日時正確無誤。'
+      ? t('birthdateLockWarningAlert')
       : '';
     const confirmMessages: Record<string, string> = {
-      '綜合性命書': `綜合命書本訂閱週期僅可使用 1 次。\n\n確認後即扣除本期使用次數，命書產生後可重複下載，但離開頁面後需再扣一次才可重新產生。${lockWarning}\n\n確定要執行嗎？`,
-      '八字命書': `八字命書本訂閱週期僅可使用 1 次。\n\n確認後即扣除本期使用次數，命書產生後可重複下載，但離開頁面後需再扣一次才可重新產生。${lockWarning}\n\n確定要執行嗎？`,
-      '大運命書': `大運命書（5年大運）本訂閱週期僅可使用 1 次。\n\n確認後即扣除本期使用次數，命書產生後可重複下載，但離開頁面後需再扣一次才可重新產生。${lockWarning}\n\n確定要執行嗎？`,
-      '流年命書': `流年命書本訂閱週期僅可使用 1 次。\n鑑定年份：${targetYear} 年（今年）\n\n確認後即扣除本期使用次數，命書產生後可重複下載，但離開頁面後需再扣一次才可重新產生。${lockWarning}\n\n確定要執行嗎？`,
+      '綜合性命書': t('confirmComprehensive', { lockWarning }),
+      '八字命書': t('confirmBazi', { lockWarning }),
+      '大運命書': t('confirmDaiyun', { lockWarning }),
+      '流年命書': t('confirmLiunian', { year: targetYear, lockWarning }),
     };
-    if (!window.confirm(confirmMessages[reportType] ?? '確定要執行嗎？')) return;
+    if (!window.confirm(confirmMessages[reportType] ?? t('confirmDefault'))) return;
 
     if ((reportType === '八字命書' || reportType === '大運命書' || reportType === '流年命書') && !profileLoaded) {
-      return alert(`${reportType}需要先儲存生辰資料，請先填寫並儲存您的生辰。`);
+      return alert(t('alertNeedProfile', { type: reportType }));
     }
     setLoadingText(reportType === '大運命書' && profileLoaded
-      ? '大運命書（5年大運）生成中，請稍候...'
+      ? t('loadingDaiyun5yr')
       : reportType === '流年命書'
-      ? `流年命書（${targetYear} 年）生成中，請稍候...`
-      : `${reportType}生成中，請稍候...`);
+      ? t('loadingLiunianYear', { year: targetYear })
+      : t('loadingGeneric', { type: reportType }));
     setIsLoading(true);
     try {
       const body: Record<string, unknown> = {
@@ -402,24 +405,24 @@ export default function DiskPage() {
         else setMonthlyForecasts(null);
         // 設定報告標題
         const titles: Record<ReportTypeKey, string> = {
-          '綜合性命書': '綜合命理鑑定書',
-          '八字命書': '八字命書',
-          '大運命書': '5年大運鑑定書',
-          '流年命書': `${targetYear} 年流年鑑定書`,
+          '綜合性命書': t('reportTitleComprehensive'),
+          '八字命書': t('reportTitleBazi'),
+          '大運命書': t('reportTitleDaiyun'),
+          '流年命書': t('reportTitleLiunian', { year: targetYear }),
         };
         setReportTitle(titles[reportType]);
       } else {
-        const msg = data.error || '鑑定失敗';
-        const detail = data.details ? `\n\n詳情：${data.details}` : '';
+        const msg = data.error || t('alertAnalysisFailed');
+        const detail = data.details ? `\n\n${data.details}` : '';
         alert(msg + detail);
       }
-    } catch (err) { alert('鑑定失敗：' + String(err)); } finally { setIsLoading(false); }
+    } catch (err) { alert(t('alertAnalysisFailed') + '：' + String(err)); } finally { setIsLoading(false); }
   };
 
 
   // Free chart preview (no auth required, no subscription needed)
   const handlePreviewChart = async () => {
-    setLoadingText('命盤計算中...');
+    setLoadingText(t('loadingPreviewChart'));
     setIsLoading(true);
     try {
       const res = await fetch(`${API_URL}/Astrology/calculate`, {
@@ -427,7 +430,7 @@ export default function DiskPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
-      if (!res.ok) { alert('命盤計算失敗'); return; }
+      if (!res.ok) { alert(t('alertPreviewFailed')); return; }
       const chartData = await res.json();
       setPreviewChartData(chartData);
       setReport('');
@@ -437,12 +440,12 @@ export default function DiskPage() {
       setMonthlyForecasts(null);
       setYongJiTable(null);
       setExportChart(chartData);
-    } catch (err) { alert('命盤計算失敗：' + String(err)); } finally { setIsLoading(false); }
+    } catch (err) { alert(t('alertPreviewFailedDetail', { err: String(err) })); } finally { setIsLoading(false); }
   };
 
   const handleExportXLS = async () => {
-    if (!token) { alert("請先加入會員"); window.location.href = '/login'; return; }
-    setLoadingText('正在導出命盤資料...');
+    if (!token) { alert(t('alertLoginRequired')); window.location.href = '/login'; return; }
+    setLoadingText(t('loadingExportXls'));
     setIsLoading(true);
     try {
       const response = await fetch(`${API_URL}/Astrology/Export`, {
@@ -458,17 +461,19 @@ export default function DiskPage() {
         document.body.appendChild(a); a.click(); a.remove();
       } else {
         const errText = await response.text().catch(() => '');
-        alert(`下載失敗（${response.status}）${errText ? '：' + errText : ''}`);
+        alert(errText
+          ? t('alertDownloadFailedDetail', { status: response.status, err: errText })
+          : t('alertDownloadFailed', { status: response.status }));
       }
-    } catch (err) { alert("下載失敗：" + String(err)); } finally { setIsLoading(false); }
+    } catch (err) { alert(t('alertDownloadError', { err: String(err) })); } finally { setIsLoading(false); }
   };
 
 
   const handleIgPostNow = async (testImageUrl?: string) => {
-    const label = testImageUrl ? 'IG API 連線測試（小圖）' : 'Instagram 發文測試';
-    if (!confirm(`確定觸發 ${label}？`)) return;
+    const label = testImageUrl ? t('igApiTestLabel') : t('igPostTestLabel');
+    if (!confirm(t('alertIgConfirm', { label }))) return;
     setIsLoading(true);
-    setLoadingText('Instagram 發文中...');
+    setLoadingText(t('loadingIgPost'));
     try {
       const qs = testImageUrl ? `?testImageUrl=${encodeURIComponent(testImageUrl)}` : '';
       const res = await fetch(`${API_URL}/NineStar/ig-post-now${qs}`, {
@@ -477,21 +482,21 @@ export default function DiskPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        alert(`${label} 成功！`);
+        alert(t('alertIgSuccess', { label }));
       } else {
-        alert(`${label} 失敗：` + (data.message ?? JSON.stringify(data)));
+        alert(t('alertIgFailed', { label, err: data.message ?? JSON.stringify(data) }));
       }
     } catch (err) {
-      alert(`${label} 失敗：` + String(err));
+      alert(t('alertIgFailed', { label, err: String(err) }));
     } finally {
       setIsLoading(false);
     }
   };
 
   const handlePushNow = async () => {
-    if (!confirm('確定立即觸發每日 LINE 推播？（九星 + 訂閱會員）')) return;
+    if (!confirm(t('alertPushConfirm'))) return;
     setIsLoading(true);
-    setLoadingText('推播中...');
+    setLoadingText(t('loadingPushNow'));
     try {
       const res = await fetch(`${API_URL}/NineStar/push-now`, {
         method: 'POST',
@@ -500,20 +505,22 @@ export default function DiskPage() {
       const data = await res.json();
       if (res.ok) {
         const errDetail = data.errors?.map((e: {type:string; error:string; lineUserId?:string; userId?:string}) => `[${e.type}] ${e.lineUserId ?? e.userId}: ${e.error}`).join('\n') ?? '';
-        alert(`推播完成\n成功：${data.pushedCount} 人\n失敗：${data.errorCount} 人\n\n${data.pushed.map((p: {type:string; name?:string; lineUserId?:string}) => `[${p.type}] ${p.name ?? p.lineUserId}`).join('\n')}${errDetail ? '\n\n錯誤詳情：\n' + errDetail : ''}`);
+        const pushedList = data.pushed.map((p: {type:string; name?:string; lineUserId?:string}) => `[${p.type}] ${p.name ?? p.lineUserId}`).join('\n');
+        const details = pushedList + (errDetail ? `\n\n${t('errorsDetail')}\n` + errDetail : '');
+        alert(t('alertPushComplete', { pushedCount: data.pushedCount, errorCount: data.errorCount, details }));
       } else {
-        alert('推播失敗：' + (data.message ?? JSON.stringify(data)));
+        alert(t('alertPushFailed', { err: data.message ?? JSON.stringify(data) }));
       }
     } catch (err) {
-      alert('推播失敗：' + String(err));
+      alert(t('alertPushFailed', { err: String(err) }));
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleYudongziReport = async () => {
-    if (!profileLoaded) return alert('玉洞子命書需要先儲存生辰資料。');
-    setLoadingText('玉洞子命書生成中，請稍候...');
+    if (!profileLoaded) return alert(t('alertYudongziNeedProfile'));
+    setLoadingText(t('loadingYudongziReport'));
     setIsLoading(true);
     try {
       const controller = new AbortController();
@@ -525,15 +532,15 @@ export default function DiskPage() {
       });
       clearTimeout(timer);
       const data = await res.json();
-      if (!res.ok) return alert(data.error || '玉洞子命書生成失敗');
+      if (!res.ok) return alert(data.error || t('alertYudongziFailed'));
       setReport(data.result);
       if (data.baziTable) setBaziTable(data.baziTable); else setBaziTable(null);
       if (data.yongJiTable) setYongJiTable(data.yongJiTable); else setYongJiTable(null);
       if (data.luckCycles) setLifelongCycles(data.luckCycles); else setLifelongCycles(null);
-      setReportTitle('玉洞子命書（內部版）');
+      setReportTitle(t('reportTitleYudongzi'));
     } catch (err: unknown) {
-      if (err instanceof Error && err.name === 'AbortError') alert('請求逾時，請稍後再試。');
-      else alert('玉洞子命書生成失敗：' + String(err));
+      if (err instanceof Error && err.name === 'AbortError') alert(t('alertYudongziTimeout'));
+      else alert(t('alertYudongziFailedDetail', { err: String(err) }));
     } finally {
       setIsLoading(false);
     }
@@ -543,10 +550,10 @@ export default function DiskPage() {
     if (!report) return;
     // 封面顯示標題
     const bookTitleMap: Record<string, string> = {
-      '八字命書':  '八 字 命 書',
-      '大運命書':  '大 運 命 書',
-      '流年命書':  '流 年 命 書',
-      '綜合性命書': '命 理 鑑 定 書',
+      '八字命書':  t('bookTitleBazi'),
+      '大運命書':  t('bookTitleDaiyun'),
+      '流年命書':  t('bookTitleLiunian'),
+      '綜合性命書': t('bookTitleComprehensive'),
     };
     // report body 裡要略過的標題行（綜合命書內容來自 LfBuildReport，標題是「八 字 命 書」）
     const skipTitleMap: Record<string, string> = {
@@ -559,26 +566,26 @@ export default function DiskPage() {
     const skipTitle = skipTitleMap[reportType] ?? bookTitle;
     try {
       setIsLoading(true);
-      setLoadingText('生成命書 DOCX...');
+      setLoadingText(t('loadingExportDocx'));
       const res = await fetch(`${API_URL}/Consultation/export-generic-docx`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ reportText: report, personName: formData.name, bookTitle, skipTitle }),
       });
-      if (!res.ok) { const d = await res.json().catch(() => ({})); alert(d.error || 'DOCX 生成失敗'); return; }
+      if (!res.ok) { const d = await res.json().catch(() => ({})); alert(d.error || t('alertDocxFailed')); return; }
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       const safeTitle = reportTitle.replace(/[\s/\\:*?"<>|]/g, '_');
       a.href = url; a.download = `${formData.name}_${safeTitle}.docx`;
       document.body.appendChild(a); a.click(); a.remove();
-    } catch (err) { alert('DOCX 生成失敗：' + String(err)); }
+    } catch (err) { alert(t('alertDocxFailedDetail', { err: String(err) })); }
     finally { setIsLoading(false); }
   };
 
   const handleYudongziDocx = async () => {
-    if (!profileLoaded) return alert('需要先儲存生辰資料。');
-    setLoadingText('準備先天元神圖...');
+    if (!profileLoaded) return alert(t('alertNeedProfileDocx'));
+    setLoadingText(t('loadingPrepareYudongzi'));
     setIsLoading(true);
     try {
       const calcRes = await fetch(`${API_URL}/Astrology/calculate`, {
@@ -586,13 +593,13 @@ export default function DiskPage() {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(formData),
       });
-      if (!calcRes.ok) { alert('命盤計算失敗'); return; }
+      if (!calcRes.ok) { alert(t('alertCalcFailed')); return; }
       const chartData = await calcRes.json();
       exportChartJsonRef.current = JSON.stringify(chartData);
       setExportChart(chartData);
       setCaptureMode(true);
     } catch (err) {
-      alert('發生錯誤：' + String(err));
+      alert(t('alertCalcError', { err: String(err) }));
       setIsLoading(false);
     }
   };
@@ -604,7 +611,7 @@ export default function DiskPage() {
       await new Promise(r => setTimeout(r, 200));
       if (cancelled || !ziweiGridRef.current) return;
       try {
-        setLoadingText('生成玉洞子命書 DOCX...');
+        setLoadingText(t('loadingYudongziDocx'));
         const canvas = await html2canvas(ziweiGridRef.current, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
         const imgBase64 = canvas.toDataURL('image/png').split(',')[1];
         setCaptureMode(false);
@@ -618,13 +625,13 @@ export default function DiskPage() {
             personName: formData.name,
           }),
         });
-        if (!res.ok) { const d = await res.json().catch(() => ({})); alert(d.error || 'DOCX 生成失敗'); return; }
+        if (!res.ok) { const d = await res.json().catch(() => ({})); alert(d.error || t('alertDocxFailed')); return; }
         const blob = await res.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url; a.download = `${formData.name}_玉洞子命書.docx`;
         document.body.appendChild(a); a.click(); a.remove();
-      } catch (err) { alert('DOCX 生成失敗：' + String(err)); }
+      } catch (err) { alert(t('alertDocxFailedDetail', { err: String(err) })); }
       finally { setIsLoading(false); }
     })();
     return () => { cancelled = true; };
@@ -649,7 +656,7 @@ export default function DiskPage() {
       {profileSaving && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="w-12 h-12 border-4 border-amber-400 border-t-transparent rounded-full animate-spin mb-4"></div>
-          <p className="text-amber-200 text-sm">儲存生辰與命盤資料中，請稍候...</p>
+          <p className="text-amber-200 text-sm">{t('loadingSavingProfile')}</p>
         </div>
       )}
 
@@ -659,50 +666,50 @@ export default function DiskPage() {
           {/* 左側：命主資料 */}
           <div className="md:col-span-4 space-y-4">
             <div className="bg-white p-5 rounded-3xl shadow-sm border border-orange-100 text-sm">
-              <h2 className="text-lg font-bold text-amber-950 mb-4">命主資料</h2>
+              <h2 className="text-lg font-bold text-amber-950 mb-4">{t('profileSection')}</h2>
               {subStatus?.birthdateLocked && (
                 <div className="mb-3 px-3 py-2 bg-gray-100 border border-gray-300 rounded-xl text-xs text-gray-500 text-center">
-                  命書已產生，生辰資料已鎖定，不可更改
+                  {t('birthdateLocked')}
                 </div>
               )}
               <div className="space-y-3">
                 <div>
-                  <label className="block text-gray-600 mb-1 font-bold text-xs">姓名</label>
+                  <label className="block text-gray-600 mb-1 font-bold text-xs">{t('labelName')}</label>
                   <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} disabled={subStatus?.birthdateLocked} className="w-full px-3 py-1.5 rounded-xl border border-gray-200 outline-none focus:border-amber-500 disabled:bg-gray-50 disabled:text-gray-400" />
                 </div>
 
                 <div>
-                  <label className="block text-gray-600 mb-1 font-bold text-xs">性別</label>
+                  <label className="block text-gray-600 mb-1 font-bold text-xs">{t('labelGender')}</label>
                   <select value={formData.gender} onChange={(e) => setFormData({ ...formData, gender: e.target.value })} disabled={subStatus?.birthdateLocked} className="w-full px-3 py-1.5 rounded-xl border border-gray-200 disabled:bg-gray-50 disabled:text-gray-400">
-                    <option value="1">乾造 (男)</option><option value="2">坤造 (女)</option>
+                    <option value="1">{t('genderMale')}</option><option value="2">{t('genderFemale')}</option>
                   </select>
                 </div>
 
                 <div className="grid grid-cols-3 gap-2">
-                  <div><label className="text-[10px] text-gray-400">西元年</label><select value={formData.year} onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })} disabled={subStatus?.birthdateLocked} className="w-full border rounded p-1 text-xs disabled:bg-gray-50 disabled:text-gray-400">{generateYears().map(y => <option key={y} value={y}>{y}年</option>)}</select></div>
-                  <div><label className="text-[10px] text-gray-400">月</label><select value={formData.month} onChange={(e) => setFormData({ ...formData, month: parseInt(e.target.value) })} disabled={subStatus?.birthdateLocked} className="w-full border rounded p-1 text-xs disabled:bg-gray-50 disabled:text-gray-400">{months.map(m => <option key={m} value={m}>{m}月</option>)}</select></div>
-                  <div><label className="text-[10px] text-gray-400">日</label><select value={formData.day} onChange={(e) => setFormData({ ...formData, day: parseInt(e.target.value) })} disabled={subStatus?.birthdateLocked} className="w-full border rounded p-1 text-xs disabled:bg-gray-50 disabled:text-gray-400">{days.map(d => <option key={d} value={d}>{d}日</option>)}</select></div>
+                  <div><label className="text-[10px] text-gray-400">{t('labelYear')}</label><select value={formData.year} onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })} disabled={subStatus?.birthdateLocked} className="w-full border rounded p-1 text-xs disabled:bg-gray-50 disabled:text-gray-400">{generateYears().map(y => <option key={y} value={y}>{t('yearSuffix', { year: y })}</option>)}</select></div>
+                  <div><label className="text-[10px] text-gray-400">{t('labelMonth')}</label><select value={formData.month} onChange={(e) => setFormData({ ...formData, month: parseInt(e.target.value) })} disabled={subStatus?.birthdateLocked} className="w-full border rounded p-1 text-xs disabled:bg-gray-50 disabled:text-gray-400">{months.map(m => <option key={m} value={m}>{t('monthSuffix', { month: m })}</option>)}</select></div>
+                  <div><label className="text-[10px] text-gray-400">{t('labelDay')}</label><select value={formData.day} onChange={(e) => setFormData({ ...formData, day: parseInt(e.target.value) })} disabled={subStatus?.birthdateLocked} className="w-full border rounded p-1 text-xs disabled:bg-gray-50 disabled:text-gray-400">{days.map(d => <option key={d} value={d}>{t('daySuffix', { day: d })}</option>)}</select></div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
-                  <div><label className="text-[10px] text-gray-400">小時</label><select value={formData.hour} onChange={(e) => setFormData({ ...formData, hour: parseInt(e.target.value) })} disabled={subStatus?.birthdateLocked} className="w-full border rounded p-1 text-xs disabled:bg-gray-50 disabled:text-gray-400">{hours.map(h => <option key={h} value={h}>{h}時</option>)}</select></div>
-                  <div><label className="text-[10px] text-gray-400">分鐘</label><select value={formData.minute} onChange={(e) => setFormData({ ...formData, minute: parseInt(e.target.value) })} disabled={subStatus?.birthdateLocked} className="w-full border rounded p-1 text-xs disabled:bg-gray-50 disabled:text-gray-400">{minutes.map(m => <option key={m} value={m}>{m}分</option>)}</select></div>
+                  <div><label className="text-[10px] text-gray-400">{t('labelHour')}</label><select value={formData.hour} onChange={(e) => setFormData({ ...formData, hour: parseInt(e.target.value) })} disabled={subStatus?.birthdateLocked} className="w-full border rounded p-1 text-xs disabled:bg-gray-50 disabled:text-gray-400">{hours.map(h => <option key={h} value={h}>{t('hourSuffix', { hour: h })}</option>)}</select></div>
+                  <div><label className="text-[10px] text-gray-400">{t('labelMinute')}</label><select value={formData.minute} onChange={(e) => setFormData({ ...formData, minute: parseInt(e.target.value) })} disabled={subStatus?.birthdateLocked} className="w-full border rounded p-1 text-xs disabled:bg-gray-50 disabled:text-gray-400">{minutes.map(m => <option key={m} value={m}>{t('minuteSuffix', { minute: m })}</option>)}</select></div>
                 </div>
 
                 <button
                   onClick={handlePreviewChart}
                   className="w-full bg-teal-700 text-white font-bold py-2 rounded-xl text-xs shadow-md hover:bg-teal-800 transition-all"
                 >
-                  免費預覽命盤（不消耗配額）
+                  {t('btnPreviewChart')}
                 </button>
                 <div className="grid grid-cols-2 gap-2">
-                  <button onClick={handleExportXLS} className="w-full bg-emerald-700 text-white font-bold py-2 rounded-xl text-xs shadow-md">下載命盤 XLS</button>
+                  <button onClick={handleExportXLS} className="w-full bg-emerald-700 text-white font-bold py-2 rounded-xl text-xs shadow-md">{t('btnDownloadXls')}</button>
                   <button
                     onClick={saveProfile}
                     disabled={profileSaving || subStatus?.birthdateLocked || !token}
                     className="w-full bg-sky-700 text-white font-bold py-2 rounded-xl text-xs shadow-md disabled:opacity-40 disabled:cursor-not-allowed"
                   >
-                    {!token ? '請先登入' : subStatus?.birthdateLocked ? '生辰已鎖定' : profileLoaded ? '更新生辰' : '儲存生辰'}
+                    {!token ? t('btnLoginRequired') : subStatus?.birthdateLocked ? t('btnBirthdateLocked') : profileLoaded ? t('btnUpdateProfile') : t('btnSaveProfile')}
                   </button>
                 </div>
                 {saveMsg && (
@@ -715,30 +722,30 @@ export default function DiskPage() {
                     onClick={handleYudongziDocx}
                     className="w-full bg-amber-800 text-white font-bold py-2 rounded-xl text-xs shadow-md mt-1"
                   >
-                    執行下載玉洞子命書docx
+                    {t('btnYudongziDocx')}
                   </button>
                 )}
                 {profileLoaded && !subStatus?.birthdateLocked && (
-                  <p className="text-[10px] text-green-600 text-center">已載入會員生辰資料</p>
+                  <p className="text-[10px] text-green-600 text-center">{t('profileLoadedNotice')}</p>
                 )}
               </div>
             </div>
 
             {/* 命書類型選擇 */}
             <div className="bg-white p-5 rounded-3xl shadow-sm border border-orange-100 text-sm">
-              <h2 className="text-lg font-bold text-amber-950 mb-3">命書類型</h2>
+              <h2 className="text-lg font-bold text-amber-950 mb-3">{t('reportTypeSection')}</h2>
               <div className="space-y-2">
                 {REPORT_TYPES.map(rt => {
                   const svcStatus = canUseService(rt.key);
                   const badge = svcStatus === 'available'
-                    ? <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full shrink-0">可用</span>
+                    ? <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full shrink-0">{t('badgeAvailable')}</span>
                     : svcStatus === 'used'
-                    ? <span className="text-[10px] bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full shrink-0">已使用</span>
+                    ? <span className="text-[10px] bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full shrink-0">{t('badgeUsed')}</span>
                     : svcStatus === 'cross_year'
-                    ? <span className="text-[10px] bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full shrink-0">跨年需重訂</span>
+                    ? <span className="text-[10px] bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full shrink-0">{t('badgeCrossYear')}</span>
                     : svcStatus === 'locked'
-                    ? <span className="text-[10px] bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full shrink-0">升級解鎖</span>
-                    : <span className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full shrink-0">需訂閱</span>;
+                    ? <span className="text-[10px] bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full shrink-0">{t('badgeLocked')}</span>
+                    : <span className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full shrink-0">{t('badgeNoSubscription')}</span>;
                   return (
                     <button
                       key={rt.key}
@@ -750,8 +757,18 @@ export default function DiskPage() {
                     >
                       <div className="flex justify-between items-center gap-2">
                         <div className="min-w-0">
-                          <div className="font-bold text-sm">{rt.label}</div>
-                          <div className={`text-xs mt-0.5 ${reportType === rt.key ? 'text-amber-200' : 'text-gray-400'}`}>{rt.desc}</div>
+                          <div className="font-bold text-sm">{
+                            rt.key === '綜合性命書' ? t('reportTypeComprehensive') :
+                            rt.key === '八字命書' ? t('reportTypeBazi') :
+                            rt.key === '大運命書' ? t('reportTypeDaiyun') :
+                            t('reportTypeLiunian')
+                          }</div>
+                          <div className={`text-xs mt-0.5 ${reportType === rt.key ? 'text-amber-200' : 'text-gray-400'}`}>{
+                            rt.key === '綜合性命書' ? t('reportTypeComprehensiveDesc') :
+                            rt.key === '八字命書' ? t('reportTypeBaziDesc') :
+                            rt.key === '大運命書' ? t('reportTypeDaiyunDesc') :
+                            t('reportTypeLiunianDesc')
+                          }</div>
                         </div>
                         {badge}
                       </div>
@@ -764,8 +781,8 @@ export default function DiskPage() {
               {reportType === '大運命書' && (
                 <div className="mt-3 pt-3 border-t border-gray-100">
                   <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-xs text-amber-800">
-                    <div className="font-bold mb-0.5">大運命書（5年大運）</div>
-                    <div className="text-amber-600 mt-0.5">逐月依干支合沖刑害破、神煞、六神、紫微四化分析</div>
+                    <div className="font-bold mb-0.5">{t('daiyunInfo')}</div>
+                    <div className="text-amber-600 mt-0.5">{t('daiyunInfoDesc')}</div>
                   </div>
                 </div>
               )}
@@ -774,8 +791,8 @@ export default function DiskPage() {
               {reportType === '流年命書' && (
                 <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
                   <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-xs text-amber-800">
-                    <div className="font-bold mb-0.5">流年命書（{currentYear} 年 · 今年）</div>
-                    <div className="text-amber-600 mt-0.5">包含：八字·太歲·生肖·流星·紫微四化 + 逐月分析</div>
+                    <div className="font-bold mb-0.5">{t('liunianInfo', { year: currentYear })}</div>
+                    <div className="text-amber-600 mt-0.5">{t('liunianInfoDesc')}</div>
                   </div>
                 </div>
               )}
@@ -785,11 +802,15 @@ export default function DiskPage() {
                 const btnStatus = canUseService(reportType);
                 const isDisabled = btnStatus === 'used' || btnStatus === 'cross_year';
                 const isRedirect = btnStatus === 'locked' || btnStatus === 'no_subscription' || btnStatus === 'cross_year';
-                const btnLabel = btnStatus === 'used' ? '本期已使用'
-                  : btnStatus === 'cross_year' ? '訂閱已跨年，請重新訂閱'
-                  : btnStatus === 'locked' ? '升級方案解鎖'
-                  : btnStatus === 'no_subscription' ? '訂閱後使用'
-                  : `啟動${selected.label}`;
+                const selectedLabel = reportType === '綜合性命書' ? t('reportTypeComprehensive') :
+                  reportType === '八字命書' ? t('reportTypeBazi') :
+                  reportType === '大運命書' ? t('reportTypeDaiyun') :
+                  t('reportTypeLiunian');
+                const btnLabel = btnStatus === 'used' ? t('btnUsed')
+                  : btnStatus === 'cross_year' ? t('btnCrossYear')
+                  : btnStatus === 'locked' ? t('btnUpgrade')
+                  : btnStatus === 'no_subscription' ? t('btnSubscribe')
+                  : t('btnActivate', { label: selectedLabel });
                 return (
                   <button
                     onClick={isDisabled ? undefined : isRedirect ? () => { window.location.href = '/subscribe'; } : handleAnalysis}
@@ -809,7 +830,7 @@ export default function DiskPage() {
 
               {!subStatus?.birthdateLocked && subStatus?.isSubscribed && (
                 <p className="mt-2 text-[10px] text-gray-400 text-center leading-relaxed">
-                  請先確認出生日時正確。命書列印啟動成功後，出生時辰將永久鎖定不可更改。
+                  {t('birthdateLockWarning')}
                 </p>
               )}
 
@@ -818,7 +839,7 @@ export default function DiskPage() {
                   onClick={handleYudongziReport}
                   className="mt-2 w-full bg-stone-800 text-amber-200 font-bold py-2.5 rounded-2xl text-xs shadow-md hover:bg-stone-900 transition-all border border-amber-700"
                 >
-                  玉洞子命書（內部版）
+                  {t('adminYudongziReport')}
                 </button>
               )}
               {isAdmin && (
@@ -826,23 +847,23 @@ export default function DiskPage() {
                   onClick={handlePushNow}
                   className="mt-1 w-full bg-blue-900 text-blue-100 font-bold py-2.5 rounded-2xl text-xs shadow-md hover:bg-blue-950 transition-all border border-blue-700"
                 >
-                  立即觸發 LINE 推播測試
+                  {t('adminPushNow')}
                 </button>
               )}
               {isAdmin && (
                 <button
                   onClick={async () => {
-                    setIsLoading(true); setLoadingText('IG 帳號診斷中...');
+                    setIsLoading(true); setLoadingText(t('loadingIgCheck'));
                     try {
                       const res = await fetch(`${API_URL}/NineStar/ig-check`, { headers: { Authorization: `Bearer ${token}` } });
                       const data = await res.json();
-                      alert('IG 帳號診斷結果：\n\n' + JSON.stringify(data, null, 2));
-                    } catch(e) { alert('診斷失敗：' + String(e)); }
+                      alert(t('alertIgCheckTitle') + JSON.stringify(data, null, 2));
+                    } catch(e) { alert(t('alertIgCheckFailed', { err: String(e) })); }
                     finally { setIsLoading(false); }
                   }}
                   className="mt-1 w-full bg-purple-900 text-purple-100 font-bold py-2.5 rounded-2xl text-xs shadow-md hover:bg-purple-950 transition-all border border-purple-700"
                 >
-                  IG 帳號診斷
+                  {t('adminIgCheck')}
                 </button>
               )}
               {isAdmin && (
@@ -850,7 +871,7 @@ export default function DiskPage() {
                   onClick={() => handleIgPostNow('https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Camponotus_flavomarginatus_ant.jpg/1200px-Camponotus_flavomarginatus_ant.jpg')}
                   className="mt-1 w-full bg-pink-800 text-pink-100 font-bold py-2.5 rounded-2xl text-xs shadow-md hover:bg-pink-900 transition-all border border-pink-600"
                 >
-                  IG API 連線測試（小圖+正文）
+                  {t('adminIgTestSmall')}
                 </button>
               )}
               {isAdmin && (
@@ -858,7 +879,7 @@ export default function DiskPage() {
                   onClick={() => handleIgPostNow()}
                   className="mt-1 w-full bg-pink-900 text-pink-100 font-bold py-2.5 rounded-2xl text-xs shadow-md hover:bg-pink-950 transition-all border border-pink-700"
                 >
-                  立即觸發 Instagram 發文測試（大圖）
+                  {t('adminIgTestLarge')}
                 </button>
               )}
               {/* 原玉洞子命書DOCX按鈕（已移至左上方，此處暫停）
@@ -878,40 +899,40 @@ export default function DiskPage() {
           <div className="md:col-span-8">
             {!token && (
               <div className="mb-4 bg-amber-50 border border-amber-200 p-4 rounded-[2rem] flex justify-between items-center">
-                <p className="text-sm text-amber-800">登入後可儲存生辰、使用試用期及訂閱命書功能</p>
-                <Link href="/login?redirect=/disk" className="bg-amber-700 text-white px-5 py-2 rounded-full font-bold text-sm">登入</Link>
+                <p className="text-sm text-amber-800">{t('noSubscriptionBanner')}</p>
+                <Link href="/login?redirect=/disk" className="bg-amber-700 text-white px-5 py-2 rounded-full font-bold text-sm">{t('loginBtn')}</Link>
               </div>
             )}
             {token && subStatus && !subStatus.isSubscribed && subStatus.isInTrial && (
               <div className="mb-4 bg-gradient-to-r from-teal-700 to-teal-900 p-4 rounded-[2rem] text-white flex justify-between items-center shadow-lg">
                 <div>
-                  <p className="text-xs text-white/80">7 天免費試用中</p>
-                  <p className="font-bold text-white">剩餘 {subStatus.trialDaysRemaining} 天</p>
+                  <p className="text-xs text-white/80">{t('trialBannerTitle')}</p>
+                  <p className="font-bold text-white">{t('trialBannerDays', { days: subStatus.trialDaysRemaining ?? 0 })}</p>
                 </div>
-                <Link href="/subscribe" className="bg-white text-teal-800 px-4 py-2 rounded-full font-bold text-sm hover:bg-teal-50">訂閱解鎖全功能</Link>
+                <Link href="/subscribe" className="bg-white text-teal-800 px-4 py-2 rounded-full font-bold text-sm hover:bg-teal-50">{t('trialUpgradeBtn')}</Link>
               </div>
             )}
             {token && subStatus && subStatus.isSubscribed && (
               <div className="mb-4 bg-gradient-to-r from-amber-800 to-amber-950 p-4 rounded-[2rem] text-white flex justify-between items-center shadow-lg">
                 <div>
-                  <p className="text-xs text-white/80">訂閱方案</p>
+                  <p className="text-xs text-white/80">{t('subscribedBannerTitle')}</p>
                   <p className="font-bold text-white">{subStatus.planName}</p>
                 </div>
                 <div className="text-right text-xs text-white/80 space-y-0.5">
                   {subStatus.quotaStatus?.map(q => (
                     <div key={q.productCode}>{
-                      q.productCode === 'BOOK_BAZI' ? '八字命書' :
-                      q.productCode === 'BOOK_LIUNIAN' ? '流年命書' :
-                      q.productCode === 'BOOK_DAIYUN' ? '大運命書' : q.productCode
-                    }：剩餘 {q.remaining}/{q.total}</div>
+                      q.productCode === 'BOOK_BAZI' ? t('quotaBazi') :
+                      q.productCode === 'BOOK_LIUNIAN' ? t('quotaLiunian') :
+                      q.productCode === 'BOOK_DAIYUN' ? t('quotaDaiyun') : q.productCode
+                    }：{t('quotaRemaining', { remaining: q.remaining, total: q.total })}</div>
                   ))}
                 </div>
               </div>
             )}
             {token && subStatus && !subStatus.isSubscribed && !subStatus.isInTrial && (
               <div className="mb-4 bg-gray-100 border border-amber-200 p-4 rounded-[2rem] flex justify-between items-center">
-                <p className="text-sm text-gray-600">試用期已結束，訂閱後可使用命書功能</p>
-                <Link href="/subscribe" className="bg-amber-700 text-white px-5 py-2 rounded-full font-bold text-sm">訂閱方案</Link>
+                <p className="text-sm text-gray-600">{t('trialEndedBanner')}</p>
+                <Link href="/subscribe" className="bg-amber-700 text-white px-5 py-2 rounded-full font-bold text-sm">{t('subscribeBtn')}</Link>
               </div>
             )}
 
@@ -919,17 +940,17 @@ export default function DiskPage() {
               <div className="space-y-4">
                 <div className="flex justify-end gap-2">
                   <button onClick={handleExportDocx} className="bg-amber-700 text-white border border-amber-600 px-5 py-2 rounded-full text-xs font-bold hover:bg-amber-800 transition-all shadow-sm">
-                    下載命書 DOCX
+                    {t('btnDownloadDocx')}
                   </button>
                 </div>
                 {/* 命盤結構表格（八字命書/大運命書共用，顯示在報告之前） */}
                 {baziTable && baziTable.pillars && (
                   <div className="bg-white p-4 rounded-2xl border border-amber-100 shadow-sm overflow-x-auto">
-                    <h3 className="text-base font-bold text-amber-900 mb-3">八字命盤</h3>
+                    <h3 className="text-base font-bold text-amber-900 mb-3">{t('baziChartTitle')}</h3>
                     <table className="w-full border-collapse text-sm text-center">
                       <thead>
                         <tr className="bg-amber-50">
-                          {['時柱','日柱','月柱','年柱'].map(l => (
+                          {[t('pillarHour'),t('pillarDay'),t('pillarMonth'),t('pillarYear')].map(l => (
                             <th key={l} className="border border-amber-300 px-3 py-1 font-bold text-amber-900">{l}</th>
                           ))}
                         </tr>
@@ -978,7 +999,7 @@ export default function DiskPage() {
                     {/* 大運表格 */}
                     {lifelongCycles && lifelongCycles.length > 0 && (
                       <div className="mt-4">
-                        <h4 className="text-sm font-bold text-amber-900 mb-2">大運</h4>
+                        <h4 className="text-sm font-bold text-amber-900 mb-2">{t('daiyunTitle')}</h4>
                         <div className="overflow-x-auto">
                           <table className="w-full border-collapse text-xs text-center">
                             <tbody>
@@ -1012,7 +1033,7 @@ export default function DiskPage() {
                 {/* 大運走勢圖（報告之前） */}
                 {lifelongCycles && lifelongCycles.length > 0 && (
                   <div className="bg-white p-5 rounded-2xl border border-amber-100 shadow-sm">
-                    <h3 className="text-base font-bold text-amber-900 mb-3">大運走勢圖（百分制）</h3>
+                    <h3 className="text-base font-bold text-amber-900 mb-3">{t('daiyunTrendTitle')}</h3>
                     <div className="flex items-end gap-1 h-32">
                       {lifelongCycles.map((c) => {
                         const colorMap: Record<string, string> = {
@@ -1035,7 +1056,7 @@ export default function DiskPage() {
                       })}
                     </div>
                     <div className="flex gap-2 mt-2 flex-wrap text-[9px]">
-                      {[['大吉運','bg-amber-500'],['中吉運','bg-amber-300'],['平運','bg-gray-300'],['中凶運','bg-orange-300'],['大凶運','bg-red-400']].map(([lv, cls]) => (
+                      {([[t('legendGreatLuck'),'bg-amber-500'],[t('legendGoodLuck'),'bg-amber-300'],[t('legendNeutral'),'bg-gray-300'],[t('legendMinorBad'),'bg-orange-300'],[t('legendGreatBad'),'bg-red-400']] as [string,string][]).map(([lv, cls]) => (
                         <div key={lv} className="flex items-center gap-1"><div className={`w-2.5 h-2.5 rounded ${cls}`} /><span className="text-gray-500">{lv}</span></div>
                       ))}
                     </div>
@@ -1068,9 +1089,9 @@ export default function DiskPage() {
                 {/* 天干地支喜忌對照表 */}
                 {yongJiTable && (
                   <div className="bg-white p-4 rounded-2xl border border-amber-100 shadow-sm overflow-x-auto">
-                    <h3 className="text-base font-bold text-amber-900 mb-3">天干地支喜忌對照</h3>
+                    <h3 className="text-base font-bold text-amber-900 mb-3">{t('yongJiTitle')}</h3>
                     <div className="mb-3">
-                      <h4 className="text-xs font-bold text-amber-700 mb-1">天干</h4>
+                      <h4 className="text-xs font-bold text-amber-700 mb-1">{t('yongJiStemsLabel')}</h4>
                       <table className="border-collapse text-xs text-center">
                         <tbody>
                           <tr className="bg-amber-50">
@@ -1097,7 +1118,7 @@ export default function DiskPage() {
                       </table>
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-amber-700 mb-1">地支（*=命局已有）</h4>
+                      <h4 className="text-xs font-bold text-amber-700 mb-1">{t('yongJiBranchesLabel')}</h4>
                       <table className="border-collapse text-xs text-center">
                         <tbody>
                           <tr className="bg-amber-50">
@@ -1123,13 +1144,13 @@ export default function DiskPage() {
                         </tbody>
                       </table>
                     </div>
-                    <p className="text-[10px] text-gray-400 mt-2">○=喜用  △忌=次忌（克用神）  △=中性  X=大忌（克身）</p>
+                    <p className="text-[10px] text-gray-400 mt-2">{t('yongJiLegend')}</p>
                   </div>
                 )}
                 {/* 大運命書：逐年摘要 */}
                 {annualForecasts && annualForecasts.length > 0 && (
                   <div className="bg-white p-5 rounded-2xl border border-amber-100 shadow-sm">
-                    <h3 className="text-base font-bold text-amber-900 mb-3">流年逐年摘要（{annualForecasts.length} 年）</h3>
+                    <h3 className="text-base font-bold text-amber-900 mb-3">{t('annualForecastTitle', { count: annualForecasts.length })}</h3>
                     <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
                       {annualForecasts.map(f => {
                         const clsMap: Record<string, string> = {
@@ -1142,16 +1163,16 @@ export default function DiskPage() {
                           <div key={f.year} className="flex items-start gap-2 p-2 rounded-lg bg-amber-50/60 border border-amber-100">
                             <div className="flex-shrink-0 text-center min-w-[48px]">
                               <div className="text-sm font-bold text-amber-800">{f.year}</div>
-                              <div className="text-[10px] text-gray-500">{f.age}歲</div>
+                              <div className="text-[10px] text-gray-500">{t('ageSuffix', { age: f.age })}</div>
                             </div>
                             <div className="flex-shrink-0 text-center min-w-[36px]">
                               <div className="text-xs font-bold text-amber-700">{f.stemBranch}</div>
-                              <div className="text-[9px] text-gray-400">{f.daiyunStem}{f.daiyunBranch}運</div>
+                              <div className="text-[9px] text-gray-400">{t('daiyunRunSuffix', { stem: f.daiyunStem, branch: f.daiyunBranch })}</div>
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-1 mb-0.5">
                                 <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${badgeClass}`}>{f.crossClass}</span>
-                                <span className="text-[10px] text-gray-500">八字{f.baziScore}·紫微{f.ziweiScore}</span>
+                                <span className="text-[10px] text-gray-500">{t('baziZiweiScore', { bazi: f.baziScore, ziwei: f.ziweiScore })}</span>
                               </div>
                               <div className="text-[10px] text-gray-600 leading-tight">{f.summary}</div>
                             </div>
@@ -1164,8 +1185,8 @@ export default function DiskPage() {
                 {/* 流年命書：月曆卡片 */}
                 {monthlyForecasts && monthlyForecasts.length > 0 && (
                   <div className="bg-white p-5 rounded-2xl border border-amber-100 shadow-sm">
-                    <h3 className="text-base font-bold text-amber-900 mb-1">流年逐月速覽（12個月）</h3>
-                    <p className="text-xs text-gray-400 mb-3">月建以節氣約略日期區分，月曆卡供快速掌握吉凶月份</p>
+                    <h3 className="text-base font-bold text-amber-900 mb-1">{t('monthlyForecastTitle')}</h3>
+                    <p className="text-xs text-gray-400 mb-3">{t('monthlyForecastNote')}</p>
                     <div className="grid grid-cols-3 gap-2 md:grid-cols-4">
                       {monthlyForecasts.map(m => {
                         const borderCls = m.crossClass === '大吉' ? 'border-amber-500 bg-amber-900/10'
@@ -1184,9 +1205,9 @@ export default function DiskPage() {
                               <span className="text-amber-800 font-bold text-sm">{m.label.split('(')[0]}</span>
                               <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${badgeCls}`}>{m.crossClass}</span>
                             </div>
-                            <div className="text-gray-500 text-[10px]">{m.stemBranch} · {m.season}季</div>
+                            <div className="text-gray-500 text-[10px]">{t('monthSeasonSuffix', { stemBranch: m.stemBranch, season: m.season })}</div>
                             {m.flowStar && <div className="text-gray-600 text-[10px] mt-0.5 leading-tight truncate" title={m.flowStar}>{m.flowStar}</div>}
-                            <div className="text-gray-500 text-[10px] mt-1">八字{m.baziScore}·紫微{m.ziweiScore}</div>
+                            <div className="text-gray-500 text-[10px] mt-1">{t('baziZiweiScore', { bazi: m.baziScore, ziwei: m.ziweiScore })}</div>
                             <div className="text-gray-700 text-[10px] mt-1 leading-tight">{m.tip.slice(0, 30)}{m.tip.length > 30 ? '...' : ''}</div>
                           </div>
                         );
@@ -1198,18 +1219,18 @@ export default function DiskPage() {
             ) : previewChartData ? (
               <div className="space-y-4">
                 <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 text-center">
-                  <p className="text-amber-900 font-bold text-lg mb-1">命盤已計算完成</p>
-                  <p className="text-sm text-amber-700 mb-3">以下為命盤結構視覺圖，完整命書報告需訂閱後使用</p>
-                  <Link href="/subscribe" className="inline-block bg-amber-700 text-white px-8 py-2.5 rounded-full font-bold text-sm hover:bg-amber-800">訂閱解鎖完整命書</Link>
+                  <p className="text-amber-900 font-bold text-lg mb-1">{t('previewCompleteTitle')}</p>
+                  <p className="text-sm text-amber-700 mb-3">{t('previewCompleteDesc')}</p>
+                  <Link href="/subscribe" className="inline-block bg-amber-700 text-white px-8 py-2.5 rounded-full font-bold text-sm hover:bg-amber-800">{t('previewSubscribeBtn')}</Link>
                 </div>
                 {/* Bazi + Ziwei chart visual displayed for free */}
                 {exportChart?.bazi && (
                   <div className="bg-white p-4 rounded-2xl border border-amber-100 shadow-sm overflow-x-auto">
-                    <h3 className="text-base font-bold text-amber-900 mb-3">八字命盤</h3>
+                    <h3 className="text-base font-bold text-amber-900 mb-3">{t('baziChartTitle')}</h3>
                     <table className="w-full border-collapse text-sm text-center">
                       <thead>
                         <tr className="bg-amber-50">
-                          {['時柱','日柱','月柱','年柱'].map(l => (
+                          {[t('pillarHour'),t('pillarDay'),t('pillarMonth'),t('pillarYear')].map(l => (
                             <th key={l} className="border border-amber-300 px-3 py-1 font-bold text-amber-900">{l}</th>
                           ))}
                         </tr>
@@ -1231,7 +1252,7 @@ export default function DiskPage() {
                 )}
                 {exportChart?.palaces && (
                   <div className="bg-white rounded-2xl border border-amber-100 shadow-sm overflow-hidden">
-                    <h3 className="text-base font-bold text-amber-900 px-4 pt-4 mb-2">紫微斗數命盤</h3>
+                    <h3 className="text-base font-bold text-amber-900 px-4 pt-4 mb-2">{t('ziweiChartTitle')}</h3>
                     <ZiweiGrid chartData={exportChart} gridRef={{ current: null }} />
                   </div>
                 )}
@@ -1242,18 +1263,18 @@ export default function DiskPage() {
                     <p className="text-sm text-gray-500 mt-1">一、格局判斷 · 二、核心特質 · 三、關鍵斷語 · 四、具體建議</p>
                   </div>
                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm">
-                    <p className="text-amber-900 font-bold text-xl mb-2">命書報告已鎖定</p>
-                    <p className="text-sm text-amber-700 mb-4">訂閱會員方案後可查看完整命書</p>
-                    <Link href="/subscribe" className="bg-amber-700 text-white px-8 py-3 rounded-full font-bold hover:bg-amber-800 transition-all shadow-lg">立即訂閱解鎖</Link>
-                    {!token && <Link href="/login?redirect=/disk" className="mt-3 text-sm text-gray-500 underline hover:text-gray-700">已有帳號？登入</Link>}
+                    <p className="text-amber-900 font-bold text-xl mb-2">{t('reportLockedTitle')}</p>
+                    <p className="text-sm text-amber-700 mb-4">{t('reportLockedDesc')}</p>
+                    <Link href="/subscribe" className="bg-amber-700 text-white px-8 py-3 rounded-full font-bold hover:bg-amber-800 transition-all shadow-lg">{t('reportLockedSubscribeBtn')}</Link>
+                    {!token && <Link href="/login?redirect=/disk" className="mt-3 text-sm text-gray-500 underline hover:text-gray-700">{t('reportLockedLoginLink')}</Link>}
                   </div>
                 </div>
               </div>
             ) : (
               <div className="space-y-4">
                 <div className="h-[400px] border-2 border-dashed border-amber-100 rounded-[3rem] flex flex-col items-center justify-center bg-white/40 gap-4">
-                  <div className="text-amber-200 text-xl italic tracking-widest font-bold">請輸入資料後開啟鑑定</div>
-                  <p className="text-sm text-amber-400">或點擊「免費預覽命盤」查看八字命盤結構</p>
+                  <div className="text-amber-200 text-xl italic tracking-widest font-bold">{t('emptyStateText')}</div>
+                  <p className="text-sm text-amber-400">{t('emptyStateSubtext')}</p>
                 </div>
               </div>
             )}
