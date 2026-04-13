@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { Link } from '@/navigation';
 import { useAuth } from '@/components/AuthContext';
 import { useTranslations } from 'next-intl';
 

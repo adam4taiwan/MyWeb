@@ -1,7 +1,7 @@
 'use client';
 
 import { useAuth } from '@/components/AuthContext';
-import Link from 'next/link';
+import { Link } from '@/navigation';
 import { useTranslations } from 'next-intl';
 
 export default function HeroSection({ showSubscribeNudge = false }: { showSubscribeNudge?: boolean }) {

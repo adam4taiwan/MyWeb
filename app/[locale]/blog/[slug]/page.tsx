@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
+import { Link } from '@/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { getPostBySlug, getAllSlugs } from '@/lib/posts';

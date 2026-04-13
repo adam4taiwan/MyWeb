@@ -1,10 +1,9 @@
 'use client';
 
-import Link from 'next/link';
 import { useState } from 'react';
 import { useAuth } from './AuthContext';
-import { useTranslations } from 'next-intl';
-import { useParams, usePathname, useRouter } from 'next/navigation';
+import { useTranslations, useLocale } from 'next-intl';
+import { Link, usePathname, useRouter } from '@/navigation';
 
 const locales = [
   { code: 'zh-TW', label: '繁中' },
@@ -16,15 +15,12 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { isAuthenticated, logout } = useAuth();
   const t = useTranslations('Header');
-  const params = useParams();
-  const currentLocale = (params?.locale as string) || 'zh-TW';
+  const currentLocale = useLocale();
   const pathname = usePathname();
   const router = useRouter();
 
   const switchLocale = (newLocale: string) => {
-    const segments = pathname.split('/');
-    segments[1] = newLocale;
-    router.push(segments.join('/'));
+    router.replace(pathname, { locale: newLocale });
   };
 
   return (
@@ -42,7 +38,6 @@ export default function Header() {
             <Link href="/" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">{t('home')}</Link>
             <Link href="/heritage" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">{t('heritage')}</Link>
             <Link href="/blog" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">{t('blog')}</Link>
-            {/* <Link href="/bookstore" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">二手書店</Link> */}
             {isAuthenticated && (
               <Link href="/disk" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">{t('disk')}</Link>
             )}
@@ -107,10 +102,8 @@ export default function Header() {
           <div className="md:hidden mt-4 pb-4 border-t border-amber-200">
             <nav className="flex flex-col space-y-4 mt-4">
               <Link href="/" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>{t('home')}</Link>
-              {/*<Link href="/books" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>古書介紹</Link>*/}
               <Link href="/heritage" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>{t('heritage')}</Link>
               <Link href="/blog" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>{t('blog')}</Link>
-              {/* <Link href="/bookstore" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>二手書店</Link> */}
               <Link href="/consultation" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>{t('consultationMobile')}</Link>
               {isAuthenticated && (
                 <Link href="/disk" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>{t('disk')}</Link>
