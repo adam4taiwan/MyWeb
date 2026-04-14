@@ -195,7 +195,7 @@ export default function SubscribePage() {
                   </div>
 
                   {/* CTA */}
-                  <div className="p-5 pt-0">
+                  <div className="p-5 pt-0 space-y-2">
                     <button
                       onClick={() => handleSubscribe(plan.code)}
                       disabled={purchasing !== null}
@@ -203,6 +203,20 @@ export default function SubscribePage() {
                     >
                       {purchasing === plan.code ? t('processing') : t('subscribePlan', { name: planDisplayName(plan.code) })}
                     </button>
+                    <a
+                      href={`https://paypal.me/chinesebook/${plan.priceTwd}TWD`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-bold text-sm bg-[#0070BA] hover:bg-[#005ea6] text-white transition-colors"
+                    >
+                      <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.59 3.025-2.566 4.643-5.876 4.643h-1.77c-.386 0-.712.281-.772.662l-.93 5.89-.26 1.64H8.11l.243-1.54.928-5.886a1.95 1.95 0 0 1 1.923-1.655h1.77c3.956 0 6.58-1.888 7.362-5.59.28-1.36.14-2.5-.114-3.347z"/>
+                      </svg>
+                      PayPal 付款
+                    </a>
+                    <p className="text-xs text-gray-400 text-center leading-relaxed">
+                      PayPal 付款後請來信告知，將於24小時內手動開通
+                    </p>
                   </div>
                 </div>
               );
