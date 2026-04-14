@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/AuthContext';
 import { useRouter, Link } from '@/navigation';
 import { useTranslations } from 'next-intl';
@@ -8,6 +9,8 @@ import { useTranslations } from 'next-intl';
 export default function LoginPage() {
   const t = useTranslations('Login');
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || '/';
   const { login, isAuthenticated } = useAuth();
 
   const [email, setEmail] = useState('');
@@ -26,9 +29,9 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.replace('/');
+      router.replace(redirectTo as '/');
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, router, redirectTo]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
