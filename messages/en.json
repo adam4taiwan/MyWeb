@@ -98,19 +98,19 @@
       {
         "name": "Bronze Member",
         "description": "Entry-level subscription with essential member benefits",
-        "features": ["Unlimited daily guidance", "BaZi (Four Pillars) book 1x/year", "Unlimited nine-star guidance", "Annual plan, no auto-renewal"],
+        "features": ["Unlimited daily guidance", "Yudongzi BaZi & ZiWei Fortune Book 1x/year", "Unlimited nine-star guidance", "Annual plan, no auto-renewal"],
         "cta": "Subscribe Bronze"
       },
       {
         "name": "Silver Member",
         "description": "Advanced plan with annual fortune book included",
-        "features": ["Unlimited daily guidance", "BaZi (Four Pillars) book 1x/year", "Annual fortune book 1x/year", "Unlimited nine-star guidance"],
+        "features": ["Unlimited daily guidance", "Yudongzi BaZi & ZiWei Fortune Book 1x/year", "Annual fortune book 1x/year", "Unlimited nine-star guidance"],
         "cta": "Subscribe Silver"
       },
       {
         "name": "Gold Member",
         "description": "Premium plan with major cycle fortune book included",
-        "features": ["Unlimited daily guidance", "BaZi (Four Pillars) book 1x/year", "Annual fortune book 1x/year", "Major cycle fortune book 1x/year", "Unlimited nine-star guidance"],
+        "features": ["Unlimited daily guidance", "Yudongzi BaZi & ZiWei Fortune Book 1x/year", "Annual fortune book 1x/year", "Major cycle fortune book 1x/year", "Unlimited nine-star guidance"],
         "cta": "Subscribe Gold"
       }
     ]
@@ -151,16 +151,10 @@
     ],
     "books": [
       {
-        "name": "Comprehensive Book",
-        "tag": "Best for Beginners",
-        "desc": "Full BaZi (Four Pillars) & Zi Wei Dou Shu overview",
-        "points": ["Innate chart pattern and life axis", "Personality traits and talent direction", "Career, romance, and wealth overview", "Current major cycle interpretation"]
-      },
-      {
-        "name": "BaZi Fortune Book",
-        "tag": "Most In-Depth",
-        "desc": "12-chapter scientific lifetime analysis",
-        "points": ["Complete favorable/unfavorable element analysis", "Six relations (parents/spouse/children)", "Career, wealth, and health in detail", "Major cycle auspicious/inauspicious events"]
+        "name": "Yudongzi BaZi & ZiWei Fortune Book",
+        "tag": "From Bronze",
+        "desc": "Dual-system BaZi & Zi Wei Dou Shu comprehensive analysis",
+        "points": ["BaZi favorable/unfavorable element analysis", "Zi Wei Dou Shu cross-validation", "Six relations (parents/spouse/children)", "Career, wealth, and health in detail"]
       },
       {
         "name": "Major Cycle Book",
@@ -292,7 +286,7 @@
     "planName_BRONZE": "Bronze Member",
     "planName_SILVER": "Silver Member",
     "planName_GOLD": "Gold Member",
-    "benefit_BOOK_BAZI": "BaZi Fortune Book x1/yr",
+    "benefit_BOOK_BAZI": "Yudongzi BaZi & ZiWei Fortune Book x1/yr",
     "benefit_BOOK_DAIYUN": "Major Cycle Fortune Book x1/yr",
     "benefit_BOOK_LIUNIAN": "Annual Fortune Book x1/yr",
     "benefit_DAILY_FORTUNE": "Unlimited Daily Guidance",
@@ -1017,7 +1011,7 @@
     "quotaTitle": "Free Quota Usage (This Year)",
     "quotaUsed": "Used {used} / {total} times (this year)",
     "quotaRemaining": "{remaining} remaining",
-    "bookBazi": "BaZi Fortune Book",
+    "bookBazi": "Yudongzi BaZi & ZiWei Fortune Book",
     "bookLiunian": "Annual Fortune Book",
     "bookDaiyun": "Major Cycle Fortune Book",
     "benefitsTitle": "Plan Benefits",
@@ -1122,8 +1116,8 @@
     "reportTypeSection": "Fortune Book Type",
     "reportTypeComprehensive": "Comprehensive Fortune Book",
     "reportTypeComprehensiveDesc": "Full BaZi & Zi Wei Dou Shu Reading",
-    "reportTypeBazi": "BaZi Fortune Book",
-    "reportTypeBaziDesc": "12-chapter scientific life analysis",
+    "reportTypeBazi": "Yudongzi BaZi & ZiWei Fortune Book",
+    "reportTypeBaziDesc": "Dual-system BaZi & Zi Wei comprehensive analysis",
     "reportTypeDaiyun": "Major Cycle Fortune Book",
     "reportTypeDaiyunDesc": "Year-by-year major cycle analysis",
     "reportTypeLiunian": "Annual Forecast Fortune Book",
@@ -1187,7 +1181,7 @@
     "trialBannerDays": "{days} days remaining",
     "trialUpgradeBtn": "Subscribe to Unlock All Features",
     "subscribedBannerTitle": "Subscription Plan",
-    "quotaBazi": "BaZi Fortune Book",
+    "quotaBazi": "Yudongzi BaZi & ZiWei Fortune Book",
     "quotaDaiyun": "Major Cycle Fortune Book",
     "quotaLiunian": "Annual Forecast Fortune Book",
     "quotaRemaining": "Remaining {remaining}/{total}",
@@ -1233,11 +1227,11 @@
     "adminIgTestSmall": "IG API Connection Test (small image)",
     "adminIgTestLarge": "Trigger Instagram Post Test (large image)",
     "reportTitleComprehensive": "Comprehensive Divination Report",
-    "reportTitleBazi": "BaZi Fortune Book",
+    "reportTitleBazi": "Yudongzi BaZi & ZiWei Fortune Book",
     "reportTitleDaiyun": "5-Year Major Cycle Report",
     "reportTitleLiunian": "{year} Annual Forecast Report",
     "reportTitleYudongzi": "Yudongzi Fortune Book (Internal)",
-    "bookTitleBazi": "BaZi Fortune Book",
+    "bookTitleBazi": "Yudongzi BaZi & ZiWei Fortune Book",
     "bookTitleDaiyun": "Major Cycle Fortune Book",
     "bookTitleLiunian": "Annual Forecast Fortune Book",
     "bookTitleComprehensive": "Divination Report",

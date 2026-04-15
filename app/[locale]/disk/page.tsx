@@ -16,8 +16,7 @@ const hours = Array.from({ length: 24 }, (_, i) => i);
 const minutes = Array.from({ length: 60 }, (_, i) => i);
 
 const REPORT_TYPES = [
-  { key: '綜合性命書', label: '綜合命書', desc: '八字紫微全面鑑定' },
-  { key: '八字命書', label: '八字命書', desc: '12章科學化一生命運剖析' },
+  { key: '八字命書', label: '玉洞子八字紫微命書', desc: '八字紫微雙系統全方位命盤剖析' },
   { key: '大運命書', label: '大運命書', desc: '逐年吉凶大運推演' },
   { key: '流年命書', label: '流年命書', desc: '五術合一年度全方位推演' },
 ] as const;
@@ -26,7 +25,6 @@ const REPORT_TYPES = [
 type ReportTypeKey = typeof REPORT_TYPES[number]['key'];
 
 const PRODUCT_CODE_MAP: Partial<Record<ReportTypeKey, string>> = {
-  '綜合性命書': 'BOOK_BAZI',
   '八字命書': 'BOOK_BAZI',
   '大運命書': 'BOOK_DAIYUN',
   '流年命書': 'BOOK_LIUNIAN',
@@ -50,7 +48,7 @@ export default function DiskPage() {
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  const [reportType, setReportType] = useState<ReportTypeKey>('綜合性命書');
+  const [reportType, setReportType] = useState<ReportTypeKey>('八字命書');
   const targetYear = currentYear;
 
   const [report, setReport] = useState('');
@@ -328,7 +326,6 @@ export default function DiskPage() {
       ? t('birthdateLockWarningAlert')
       : '';
     const confirmMessages: Record<string, string> = {
-      '綜合性命書': t('confirmComprehensive', { lockWarning }),
       '八字命書': t('confirmBazi', { lockWarning }),
       '大運命書': t('confirmDaiyun', { lockWarning }),
       '流年命書': t('confirmLiunian', { year: targetYear, lockWarning }),
@@ -354,15 +351,8 @@ export default function DiskPage() {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 5 * 60 * 1000);
 
-      // 路由邏輯：綜合命書/終身命書走 KB 端點，其餘走 Gemini
       let res: Response;
-      if (reportType === '綜合性命書' && profileLoaded) {
-        res = await fetch(`${API_URL}/Consultation/analyze-kb`, {
-          method: 'GET',
-          headers: { 'Authorization': `Bearer ${token}` },
-          signal: controller.signal
-        });
-      } else if (reportType === '八字命書' && profileLoaded) {
+      if (reportType === '八字命書' && profileLoaded) {
         res = await fetch(`${API_URL}/Consultation/analyze-lifelong`, {
           method: 'GET',
           headers: { 'Authorization': `Bearer ${token}` },
@@ -405,7 +395,6 @@ export default function DiskPage() {
         else setMonthlyForecasts(null);
         // 設定報告標題
         const titles: Record<ReportTypeKey, string> = {
-          '綜合性命書': t('reportTitleComprehensive'),
           '八字命書': t('reportTitleBazi'),
           '大運命書': t('reportTitleDaiyun'),
           '流年命書': t('reportTitleLiunian', { year: targetYear }),
@@ -553,14 +542,11 @@ export default function DiskPage() {
       '八字命書':  t('bookTitleBazi'),
       '大運命書':  t('bookTitleDaiyun'),
       '流年命書':  t('bookTitleLiunian'),
-      '綜合性命書': t('bookTitleComprehensive'),
     };
-    // report body 裡要略過的標題行（綜合命書內容來自 LfBuildReport，標題是「八 字 命 書」）
     const skipTitleMap: Record<string, string> = {
       '八字命書':  '八 字 命 書',
       '大運命書':  '大 運 命 書',
       '流年命書':  '流 年 命 書',
-      '綜合性命書': '八 字 命 書',
     };
     const bookTitle = bookTitleMap[reportType] ?? '命書';
     const skipTitle = skipTitleMap[reportType] ?? bookTitle;
@@ -758,13 +744,11 @@ export default function DiskPage() {
                       <div className="flex justify-between items-center gap-2">
                         <div className="min-w-0">
                           <div className="font-bold text-sm">{
-                            rt.key === '綜合性命書' ? t('reportTypeComprehensive') :
                             rt.key === '八字命書' ? t('reportTypeBazi') :
                             rt.key === '大運命書' ? t('reportTypeDaiyun') :
                             t('reportTypeLiunian')
                           }</div>
                           <div className={`text-xs mt-0.5 ${reportType === rt.key ? 'text-amber-200' : 'text-gray-400'}`}>{
-                            rt.key === '綜合性命書' ? t('reportTypeComprehensiveDesc') :
                             rt.key === '八字命書' ? t('reportTypeBaziDesc') :
                             rt.key === '大運命書' ? t('reportTypeDaiyunDesc') :
                             t('reportTypeLiunianDesc')
@@ -802,8 +786,7 @@ export default function DiskPage() {
                 const btnStatus = canUseService(reportType);
                 const isDisabled = btnStatus === 'used' || btnStatus === 'cross_year';
                 const isRedirect = btnStatus === 'locked' || btnStatus === 'no_subscription' || btnStatus === 'cross_year';
-                const selectedLabel = reportType === '綜合性命書' ? t('reportTypeComprehensive') :
-                  reportType === '八字命書' ? t('reportTypeBazi') :
+                const selectedLabel = reportType === '八字命書' ? t('reportTypeBazi') :
                   reportType === '大運命書' ? t('reportTypeDaiyun') :
                   t('reportTypeLiunian');
                 const btnLabel = btnStatus === 'used' ? t('btnUsed')

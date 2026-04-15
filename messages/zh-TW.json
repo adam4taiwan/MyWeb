@@ -98,19 +98,19 @@
       {
         "name": "銅會員",
         "description": "入門訂閱方案，享受基本會員福利",
-        "features": ["每日建議無限存取", "八字命書 1次/年", "九星建議無限", "年費方案，到期不自動續訂"],
+        "features": ["每日建議無限存取", "玉洞子八字紫微命書 1次/年", "九星建議無限", "年費方案，到期不自動續訂"],
         "cta": "訂閱銅會員"
       },
       {
         "name": "銀會員",
         "description": "進階方案，加送流年命書",
-        "features": ["每日建議無限存取", "八字命書 1次/年", "流年命書 1次/年", "九星建議無限"],
+        "features": ["每日建議無限存取", "玉洞子八字紫微命書 1次/年", "流年命書 1次/年", "九星建議無限"],
         "cta": "訂閱銀會員"
       },
       {
         "name": "金會員",
         "description": "尊榮方案，含大運命書",
-        "features": ["每日建議無限存取", "八字命書 1次/年", "流年命書 1次/年", "大運命書 1次/年", "九星建議無限"],
+        "features": ["每日建議無限存取", "玉洞子八字紫微命書 1次/年", "流年命書 1次/年", "大運命書 1次/年", "九星建議無限"],
         "cta": "訂閱金會員"
       }
     ]
@@ -151,16 +151,10 @@
     ],
     "books": [
       {
-        "name": "綜合命書",
-        "tag": "入門首選",
-        "desc": "八字紫微全面鑑定",
-        "points": ["先天格局與一生主軸", "個性特質與才能方向", "事業、感情、財運總覽", "當前大運走勢解讀"]
-      },
-      {
-        "name": "八字命書",
-        "tag": "最深入",
-        "desc": "12 章科學化一生剖析",
-        "points": ["用神忌神完整分析", "六親宮位（父母/夫妻/子女）", "職業財運健康詳論", "大運逐期吉凶斷事"]
+        "name": "玉洞子八字紫微命書",
+        "tag": "銅會員起",
+        "desc": "八字紫微雙系統全方位命盤剖析",
+        "points": ["八字用神忌神完整分析", "紫微斗數星盤交叉驗證", "六親宮位（父母/夫妻/子女）", "職業財運健康詳論"]
       },
       {
         "name": "大運命書",
@@ -292,7 +286,7 @@
     "planName_BRONZE": "銅會員",
     "planName_SILVER": "銀會員",
     "planName_GOLD": "金會員",
-    "benefit_BOOK_BAZI": "八字命書 1次/年",
+    "benefit_BOOK_BAZI": "玉洞子八字紫微命書 1次/年",
     "benefit_BOOK_DAIYUN": "大運命書 1次/年",
     "benefit_BOOK_LIUNIAN": "流年命書 1次/年",
     "benefit_DAILY_FORTUNE": "每日建議無限存取",
@@ -1017,7 +1011,7 @@
     "quotaTitle": "免費額度使用狀況（本年度）",
     "quotaUsed": "已使用 {used} / 共 {total} 次（本年度）",
     "quotaRemaining": "剩餘 {remaining}",
-    "bookBazi": "八字命書",
+    "bookBazi": "玉洞子八字紫微命書",
     "bookLiunian": "流年命書",
     "bookDaiyun": "大運命書",
     "benefitsTitle": "方案包含福利",
@@ -1122,8 +1116,8 @@
     "reportTypeSection": "命書類型",
     "reportTypeComprehensive": "綜合命書",
     "reportTypeComprehensiveDesc": "八字紫微全面鑑定",
-    "reportTypeBazi": "八字命書",
-    "reportTypeBaziDesc": "12章科學化一生命運剖析",
+    "reportTypeBazi": "玉洞子八字紫微命書",
+    "reportTypeBaziDesc": "八字紫微雙系統全方位命盤剖析",
     "reportTypeDaiyun": "大運命書",
     "reportTypeDaiyunDesc": "逐年吉凶大運推演",
     "reportTypeLiunian": "流年命書",
@@ -1145,7 +1139,7 @@
     "birthdateLockWarning": "請先確認出生日時正確。命書列印啟動成功後，出生時辰將永久鎖定不可更改。",
     "birthdateLockWarningAlert": "\n\n【重要提醒】命書列印啟動成功後，出生時辰將永久鎖定，不可再更改，請確認出生日時正確無誤。",
     "confirmComprehensive": "綜合命書本訂閱週期僅可使用 1 次。\n\n確認後即扣除本期使用次數，命書產生後可重複下載，但離開頁面後需再扣一次才可重新產生。{lockWarning}\n\n確定要執行嗎？",
-    "confirmBazi": "八字命書本訂閱週期僅可使用 1 次。\n\n確認後即扣除本期使用次數，命書產生後可重複下載，但離開頁面後需再扣一次才可重新產生。{lockWarning}\n\n確定要執行嗎？",
+    "confirmBazi": "玉洞子八字紫微命書本訂閱週期僅可使用 1 次。\n\n確認後即扣除本期使用次數，命書產生後可重複下載，但離開頁面後需再扣一次才可重新產生。{lockWarning}\n\n確定要執行嗎？",
     "confirmDaiyun": "大運命書（5年大運）本訂閱週期僅可使用 1 次。\n\n確認後即扣除本期使用次數，命書產生後可重複下載，但離開頁面後需再扣一次才可重新產生。{lockWarning}\n\n確定要執行嗎？",
     "confirmLiunian": "流年命書本訂閱週期僅可使用 1 次。\n鑑定年份：{year} 年（今年）\n\n確認後即扣除本期使用次數，命書產生後可重複下載，但離開頁面後需再扣一次才可重新產生。{lockWarning}\n\n確定要執行嗎？",
     "confirmDefault": "確定要執行嗎？",
@@ -1187,7 +1181,7 @@
     "trialBannerDays": "剩餘 {days} 天",
     "trialUpgradeBtn": "訂閱解鎖全功能",
     "subscribedBannerTitle": "訂閱方案",
-    "quotaBazi": "八字命書",
+    "quotaBazi": "玉洞子八字紫微命書",
     "quotaDaiyun": "大運命書",
     "quotaLiunian": "流年命書",
     "quotaRemaining": "剩餘 {remaining}/{total}",
@@ -1233,11 +1227,11 @@
     "adminIgTestSmall": "IG API 連線測試（小圖+正文）",
     "adminIgTestLarge": "立即觸發 Instagram 發文測試（大圖）",
     "reportTitleComprehensive": "綜合命理鑑定書",
-    "reportTitleBazi": "八字命書",
+    "reportTitleBazi": "玉洞子八字紫微命書",
     "reportTitleDaiyun": "5年大運鑑定書",
     "reportTitleLiunian": "{year} 年流年鑑定書",
     "reportTitleYudongzi": "玉洞子命書（內部版）",
-    "bookTitleBazi": "八 字 命 書",
+    "bookTitleBazi": "玉洞子八字紫微命書",
     "bookTitleDaiyun": "大 運 命 書",
     "bookTitleLiunian": "流 年 命 書",
     "bookTitleComprehensive": "命 理 鑑 定 書",
