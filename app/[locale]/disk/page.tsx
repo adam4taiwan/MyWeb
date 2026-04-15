@@ -1037,13 +1037,25 @@ export default function DiskPage() {
                     <div className="flex items-end gap-1 h-32">
                       {lifelongCycles.map((c) => {
                         const colorMap: Record<string, string> = {
-                          '大吉運': 'bg-amber-500', '中吉運': 'bg-amber-300',
-                          '平運': 'bg-gray-300', '中凶運': 'bg-orange-300', '大凶運': 'bg-red-400'
+                          '大吉運': 'bg-emerald-500',
+                          '中吉運': 'bg-emerald-300',
+                          '平吉運': 'bg-yellow-200',
+                          '平運':   'bg-yellow-400',
+                          '中凶運': 'bg-red-700',
+                          '大凶運': 'bg-red-950',
+                        };
+                        const scoreColor: Record<string, string> = {
+                          '大吉運': 'text-emerald-700',
+                          '中吉運': 'text-emerald-600',
+                          '平吉運': 'text-yellow-600',
+                          '平運':   'text-yellow-700',
+                          '中凶運': 'text-red-700',
+                          '大凶運': 'text-red-900',
                         };
                         const barH = Math.max(4, Math.round(c.score * 0.9));
                         return (
                           <div key={c.startAge} className="flex flex-col items-center flex-1 min-w-0">
-                            <div className="text-[9px] text-gray-500 mb-0.5 font-bold">{c.score}</div>
+                            <div className={`text-[9px] mb-0.5 font-bold ${scoreColor[c.level] || 'text-gray-500'}`}>{c.score}</div>
                             <div
                               className={`w-full rounded-t ${colorMap[c.level] || 'bg-gray-200'}`}
                               style={{ height: `${barH}px` }}
@@ -1056,7 +1068,11 @@ export default function DiskPage() {
                       })}
                     </div>
                     <div className="flex gap-2 mt-2 flex-wrap text-[9px]">
-                      {([[t('legendGreatLuck'),'bg-amber-500'],[t('legendGoodLuck'),'bg-amber-300'],[t('legendNeutral'),'bg-gray-300'],[t('legendMinorBad'),'bg-orange-300'],[t('legendGreatBad'),'bg-red-400']] as [string,string][]).map(([lv, cls]) => (
+                      {([
+                        ['大吉運','bg-emerald-500'],['中吉運','bg-emerald-300'],
+                        ['平吉運','bg-yellow-200'],['平運','bg-yellow-400'],
+                        ['中凶運','bg-red-700'],['大凶運','bg-red-950'],
+                      ] as [string,string][]).map(([lv, cls]) => (
                         <div key={lv} className="flex items-center gap-1"><div className={`w-2.5 h-2.5 rounded ${cls}`} /><span className="text-gray-500">{lv}</span></div>
                       ))}
                     </div>
