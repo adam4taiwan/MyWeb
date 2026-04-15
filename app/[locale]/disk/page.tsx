@@ -56,7 +56,7 @@ export default function DiskPage() {
   const [report, setReport] = useState('');
   const [reportTitle, setReportTitle] = useState('');
   const [lifelongCycles, setLifelongCycles] = useState<Array<{stem:string;branch:string;liuShen:string;startAge:number;endAge:number;score:number;level:string}> | null>(null);
-  const [annualForecasts, setAnnualForecasts] = useState<Array<{year:number;age:number;stemBranch:string;daiyunStem:string;daiyunBranch:string;baziScore:number;ziweiScore:number;crossClass:string;summary:string}> | null>(null);
+  const [annualForecasts, setAnnualForecasts] = useState<Array<{year:number;age:number;stemBranch:string;daiyunStem:string;daiyunBranch:string;baziScore:number;ziweiScore:number;crossClass:string;summary:string;detail?:string}> | null>(null);
   const [monthlyForecasts, setMonthlyForecasts] = useState<Array<{month:number;label:string;stemBranch:string;season:string;flowStar:string;baziHint:string;crossClass:string;baziScore:number;ziweiScore:number;tip:string}> | null>(null);
   const [baziTable, setBaziTable] = useState<{pillars:Array<{label:string;stem:string;branch:string;stemSS:string;naYin:string;hiddenPairs:Array<{ss:string;stem:string}>}>} | null>(null);
   const [yongJiTable, setYongJiTable] = useState<{
@@ -1176,22 +1176,29 @@ export default function DiskPage() {
                         };
                         const badgeClass = clsMap[f.crossClass] || 'bg-gray-200 text-gray-700';
                         return (
-                          <div key={f.year} className="flex items-start gap-2 p-2 rounded-lg bg-amber-50/60 border border-amber-100">
-                            <div className="flex-shrink-0 text-center min-w-[48px]">
-                              <div className="text-sm font-bold text-amber-800">{f.year}</div>
-                              <div className="text-[10px] text-gray-500">{t('ageSuffix', { age: f.age })}</div>
-                            </div>
-                            <div className="flex-shrink-0 text-center min-w-[36px]">
-                              <div className="text-xs font-bold text-amber-700">{f.stemBranch}</div>
-                              <div className="text-[9px] text-gray-400">{t('daiyunRunSuffix', { stem: f.daiyunStem, branch: f.daiyunBranch })}</div>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-1 mb-0.5">
-                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${badgeClass}`}>{f.crossClass}</span>
-                                <span className="text-[10px] text-gray-500">{t('baziZiweiScore', { bazi: f.baziScore, ziwei: f.ziweiScore })}</span>
+                          <div key={f.year} className="p-3 rounded-lg bg-amber-50/60 border border-amber-100">
+                            <div className="flex items-start gap-2">
+                              <div className="flex-shrink-0 text-center min-w-[48px]">
+                                <div className="text-sm font-bold text-amber-800">{f.year}</div>
+                                <div className="text-[10px] text-gray-500">{t('ageSuffix', { age: f.age })}</div>
                               </div>
-                              <div className="text-[10px] text-gray-600 leading-tight">{f.summary}</div>
+                              <div className="flex-shrink-0 text-center min-w-[36px]">
+                                <div className="text-xs font-bold text-amber-700">{f.stemBranch}</div>
+                                <div className="text-[9px] text-gray-400">{t('daiyunRunSuffix', { stem: f.daiyunStem, branch: f.daiyunBranch })}</div>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1 mb-0.5">
+                                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${badgeClass}`}>{f.crossClass}</span>
+                                  <span className="text-[10px] text-gray-500">{t('baziZiweiScore', { bazi: f.baziScore, ziwei: f.ziweiScore })}</span>
+                                </div>
+                                <div className="text-[10px] text-gray-700 font-medium leading-tight">{f.summary}</div>
+                              </div>
                             </div>
+                            {f.detail && (
+                              <div className="mt-2 pt-2 border-t border-amber-100 text-[10px] text-gray-500 leading-relaxed">
+                                {f.detail}
+                              </div>
+                            )}
                           </div>
                         );
                       })}
