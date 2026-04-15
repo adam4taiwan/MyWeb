@@ -34,8 +34,8 @@ export default function Home() {
       <main className="flex-grow">
         <HeroSection showSubscribeNudge={isAuthenticated && isSubscribed === false} />
         <FeaturesSection />
-        <TestimonialsSection />
         <FAQSection />
+        <TestimonialsSection />
         <PricingSection />
         <FinalCTASection />
       </main>
