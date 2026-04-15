@@ -54,8 +54,8 @@ export default function HeroSection({ showSubscribeNudge: _showSubscribeNudge = 
           </div>
         </div> */}
 
-        {/* CTA Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
+        {/* CTA Buttons - temporarily hidden */}
+        {/* <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
           <Link href="/disk" className="inline-block">
             <button className="btn-primary w-full sm:w-auto">
               {isAuthenticated ? t('ctaAuthenticated') : t('ctaGuest')}
@@ -68,13 +68,12 @@ export default function HeroSection({ showSubscribeNudge: _showSubscribeNudge = 
             </button>
           </Link>
 
-          {/* Subscribe nudge - temporarily hidden */}
-          {/* <Link href="/subscribe" className="inline-block">
+          <Link href="/subscribe" className="inline-block">
             <button className="w-full sm:w-auto px-6 py-3 rounded-lg font-semibold text-sm border border-amber-400 text-amber-300 hover:bg-amber-400/10 transition-colors">
               {t('ctaSubscribe')}
             </button>
-          </Link> */}
-        </div>
+          </Link>
+        </div> */}
 
         {/* Additional trust signal at bottom */}
         <div className="text-sm text-brand-200 pt-8 space-y-2">
