@@ -4,7 +4,7 @@ import { useAuth } from '@/components/AuthContext';
 import { Link } from '@/navigation';
 import { useTranslations } from 'next-intl';
 
-export default function HeroSection({ showSubscribeNudge = false }: { showSubscribeNudge?: boolean }) {
+export default function HeroSection({ showSubscribeNudge: _showSubscribeNudge = false }: { showSubscribeNudge?: boolean }) {
   const { isAuthenticated } = useAuth();
   const t = useTranslations('Hero');
 
@@ -38,8 +38,8 @@ export default function HeroSection({ showSubscribeNudge = false }: { showSubscr
           </p>
         </div>
 
-        {/* Trust metrics row */}
-        <div className="grid grid-cols-3 gap-6 md:gap-12 max-w-2xl mx-auto py-6 border-t border-b border-brand-600/30">
+        {/* Trust metrics row - temporarily hidden */}
+        {/* <div className="grid grid-cols-3 gap-6 md:gap-12 max-w-2xl mx-auto py-6 border-t border-b border-brand-600/30">
           <div className="text-center">
             <p className="text-3xl md:text-4xl font-bold text-brand-300">{t('stat1Value')}</p>
             <p className="text-sm text-brand-100 mt-2">{t('stat1Label')}</p>
@@ -52,7 +52,7 @@ export default function HeroSection({ showSubscribeNudge = false }: { showSubscr
             <p className="text-3xl md:text-4xl font-bold text-brand-300">{t('stat3Value')}</p>
             <p className="text-sm text-brand-100 mt-2">{t('stat3Label')}</p>
           </div>
-        </div>
+        </div> */}
 
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
@@ -68,11 +68,12 @@ export default function HeroSection({ showSubscribeNudge = false }: { showSubscr
             </button>
           </Link>
 
-          <Link href="/subscribe" className="inline-block">
+          {/* Subscribe nudge - temporarily hidden */}
+          {/* <Link href="/subscribe" className="inline-block">
             <button className="w-full sm:w-auto px-6 py-3 rounded-lg font-semibold text-sm border border-amber-400 text-amber-300 hover:bg-amber-400/10 transition-colors">
               {t('ctaSubscribe')}
             </button>
-          </Link>
+          </Link> */}
         </div>
 
         {/* Additional trust signal at bottom */}
