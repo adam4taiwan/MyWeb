@@ -8,6 +8,7 @@ import { useAuth } from '@/components/AuthContext';
 const navItems = [
   { href: '/admin',           label: '總覽'     },
   { href: '/admin/users',     label: '會員管理' },
+  { href: '/admin/bookings',  label: '預約管理' },
   { href: '/admin/atm',       label: 'ATM 審核' },
   { href: '/admin/knowledge', label: '命理知識庫' },
 ];

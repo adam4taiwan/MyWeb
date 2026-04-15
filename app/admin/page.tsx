@@ -8,6 +8,7 @@ interface Stats {
   totalUsers: number;
   totalPointsSold: number;
   pendingAtm: number;
+  pendingBookings: number;
 }
 
 export default function AdminDashboard() {
@@ -33,6 +34,7 @@ export default function AdminDashboard() {
     { label: '總會員數', value: stats?.totalUsers ?? '---', unit: '人', href: '/admin/users' },
     { label: '已售點數', value: stats?.totalPointsSold ?? '---', unit: '點', href: null },
     { label: '待審 ATM', value: stats?.pendingAtm ?? '---', unit: '筆', href: '/admin/atm', urgent: (stats?.pendingAtm ?? 0) > 0 },
+    { label: '待處理預約', value: stats?.pendingBookings ?? '---', unit: '筆', href: '/admin/bookings', urgent: (stats?.pendingBookings ?? 0) > 0 },
   ];
 
   return (
