@@ -353,7 +353,7 @@ export default function DiskPage() {
 
       let res: Response;
       if (reportType === '八字命書' && profileLoaded) {
-        res = await fetch(`${API_URL}/Consultation/analyze-yudongzi`, {
+        res = await fetch(`${API_URL}/Consultation/analyze-lifelong`, {
           method: 'GET',
           headers: { 'Authorization': `Bearer ${token}` },
           signal: controller.signal
