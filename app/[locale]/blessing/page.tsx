@@ -149,7 +149,7 @@ export default function BlessingPage() {
                           <span className="text-amber-500">{svc.icon}</span>
                           {svc.name}
                         </span>
-                        <span className="text-amber-400 text-xs font-bold flex-shrink-0 ml-1">{svc.price}</span>
+                        {/* <span className="text-amber-400 text-xs font-bold flex-shrink-0 ml-1">{svc.price}</span> */}
                       </div>
                       <p className="text-amber-100/55 text-xs leading-relaxed">{svc.desc}</p>
                     </button>
