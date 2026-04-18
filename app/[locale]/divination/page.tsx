@@ -8,7 +8,19 @@ import Footer from '@/components/Footer';
 import { useAuth } from '@/components/AuthContext';
 import { TOPICS, TRIGRAMS, EARTHLY_BRANCHES, ORACLE_POEMS, BRANCH_TIMING } from './data';
 
-type Step = 'intro' | 'step1' | 'confirm1' | 'step2' | 'confirm2' | 'step3' | 'result';
+type Step = 'intro' | 'step1' | 'step2' | 'confirm2' | 'step3' | 'result';
+
+// Topic groups: 8 rows of 8
+const TOPIC_GROUPS = [
+  { label: '天象・學業', indices: [0,1,2,3,4,5,6,7] },
+  { label: '居住・人事', indices: [8,9,10,11,12,13,14,15] },
+  { label: '財物・生計', indices: [16,17,18,19,20,21,22,23] },
+  { label: '農事・出行', indices: [24,25,26,27,28,29,30,31] },
+  { label: '商貿・官事', indices: [32,33,34,35,36,37,38,39] },
+  { label: '仕途・婚育', indices: [40,41,42,43,44,45,46,47] },
+  { label: '產業・訟事', indices: [48,49,50,51,52,53,54,55] },
+  { label: '壽命・家事', indices: [56,57,58,59,60,61,62,63] },
+];
 
 // Highlight earthly branches found in a poem text
 function highlightBranches(poem: string, drawnBranch: string): React.ReactNode[] {
@@ -37,12 +49,11 @@ function highlightBranches(poem: string, drawnBranch: string): React.ReactNode[]
   return parts;
 }
 
-// Check if drawn branch appears in the poem
 function branchInPoem(poem: string, branch: string): boolean {
   return poem.includes(branch);
 }
 
-// Slot reel component
+// Slot reel component (used for trigram only)
 function SlotReel({
   items,
   spinning,
@@ -57,7 +68,6 @@ function SlotReel({
   const visibleCount = 5;
   const halfVisible = Math.floor(visibleCount / 2);
 
-  // Build display items: wrap around
   const displayItems = Array.from({ length: visibleCount }, (_, i) => {
     const offset = i - halfVisible;
     const idx = ((currentIndex + offset) % items.length + items.length) % items.length;
@@ -69,11 +79,8 @@ function SlotReel({
       className="relative overflow-hidden"
       style={{ height: itemHeight * visibleCount }}
     >
-      {/* Top/bottom gradient fade */}
       <div className="absolute inset-x-0 top-0 h-16 z-10 bg-gradient-to-b from-[#0d0800] to-transparent pointer-events-none" />
       <div className="absolute inset-x-0 bottom-0 h-16 z-10 bg-gradient-to-t from-[#0d0800] to-transparent pointer-events-none" />
-
-      {/* Center highlight bar */}
       <div
         className="absolute inset-x-0 z-20 pointer-events-none border-y border-amber-500/50"
         style={{
@@ -83,12 +90,7 @@ function SlotReel({
           boxShadow: '0 0 20px rgba(200,164,74,0.15) inset',
         }}
       />
-
-      {/* Items */}
-      <div
-        className="flex flex-col transition-none"
-        style={{ willChange: 'transform' }}
-      >
+      <div className="flex flex-col transition-none" style={{ willChange: 'transform' }}>
         {displayItems.map(({ item, offset }, i) => {
           const isCenter = offset === 0;
           const dist = Math.abs(offset);
@@ -99,11 +101,7 @@ function SlotReel({
               style={{
                 height: itemHeight,
                 fontSize: isCenter ? '2rem' : dist === 1 ? '1.4rem' : '1rem',
-                color: isCenter
-                  ? '#f0d080'
-                  : dist === 1
-                  ? 'rgba(200,164,74,0.6)'
-                  : 'rgba(200,164,74,0.25)',
+                color: isCenter ? '#f0d080' : dist === 1 ? 'rgba(200,164,74,0.6)' : 'rgba(200,164,74,0.25)',
                 letterSpacing: '0.1em',
                 textShadow: isCenter ? '0 0 20px rgba(200,164,74,0.8)' : 'none',
               }}
@@ -113,14 +111,11 @@ function SlotReel({
           );
         })}
       </div>
-
-      {/* Spinning shimmer overlay */}
       {spinning && (
         <div
           className="absolute inset-0 z-30 pointer-events-none"
           style={{
-            background:
-              'linear-gradient(180deg, transparent 20%, rgba(200,164,74,0.03) 50%, transparent 80%)',
+            background: 'linear-gradient(180deg, transparent 20%, rgba(200,164,74,0.03) 50%, transparent 80%)',
             animation: 'shimmer 0.3s linear infinite',
           }}
         />
@@ -135,17 +130,11 @@ export default function DivinationPage() {
   const locale = (params?.locale as string) || 'zh-TW';
 
   const [step, setStep] = useState<Step>('intro');
-  const [topicIndex, setTopicIndex] = useState(0);
+  const [entered, setEntered] = useState(false);
+  const [topicIndex, setTopicIndex] = useState<number | null>(null);
   const [trigramIndex, setTrigramIndex] = useState(0);
   const [branchStr, setBranchStr] = useState('');
   const [branchDisplayIndex, setBranchDisplayIndex] = useState(0);
-
-  // Reel 1 - spinning state
-  const reel1Ref = useRef<ReturnType<typeof setInterval> | null>(null);
-  const [reel1Current, setReel1Current] = useState(0);
-  const [reel1Spinning, setReel1Spinning] = useState(false);
-  const reel1SpeedRef = useRef(60);
-  const reel1StoppingRef = useRef(false);
 
   // Reel 2 - spinning state
   const reel2Ref = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -158,53 +147,20 @@ export default function DivinationPage() {
   const branchRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [branchSpinning, setBranchSpinning] = useState(false);
 
-  const topicNames = TOPICS.map(t => t.name);
-  const trigramLabels = TRIGRAMS.map(t => `${t.name} ${t.num}`);
-
-  // Start reel 1
-  const startReel1 = useCallback(() => {
-    setStep('step1');
-    setReel1Spinning(true);
-    reel1SpeedRef.current = 60;
-    reel1StoppingRef.current = false;
-
-    const tick = () => {
-      if (reel1StoppingRef.current) return;
-      setReel1Current(prev => (prev + 1) % TOPICS.length);
-      reel1Ref.current = setTimeout(tick, reel1SpeedRef.current);
-    };
-    reel1Ref.current = setTimeout(tick, reel1SpeedRef.current);
+  // Scroll to top and trigger entry animation
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    const t = setTimeout(() => setEntered(true), 100);
+    return () => clearTimeout(t);
   }, []);
 
-  // Stop reel 1 - decelerate
-  const stopReel1 = useCallback(() => {
-    if (reel1StoppingRef.current) return;
-    reel1StoppingRef.current = true;
-    if (reel1Ref.current) clearTimeout(reel1Ref.current);
+  const handleSelectTopic = (idx: number) => {
+    setTopicIndex(idx);
+  };
 
-    let speed = 80;
-    let steps = 0;
-    const finalTarget = Math.floor(Math.random() * TOPICS.length);
-
-    const decel = () => {
-      steps++;
-      speed = Math.min(speed * 1.4, 500);
-      setReel1Current(prev => {
-        const next = (prev + 1) % TOPICS.length;
-        return next;
-      });
-      if (speed < 500) {
-        setTimeout(decel, speed);
-      } else {
-        // Snap to final
-        setReel1Current(finalTarget);
-        setTopicIndex(finalTarget);
-        setReel1Spinning(false);
-        setTimeout(() => setStep('confirm1'), 300);
-      }
-    };
-    decel();
-  }, []);
+  const confirmTopic = () => {
+    startReel2();
+  };
 
   // Start reel 2
   const startReel2 = useCallback(() => {
@@ -260,7 +216,6 @@ export default function DivinationPage() {
         const delay = count < totalCycles * 0.5 ? 80 : count < totalCycles * 0.8 ? 150 : 280;
         branchRef.current = setTimeout(tick, delay);
       } else {
-        // Land on final
         setBranchDisplayIndex(finalIdx);
         setBranchStr(EARTHLY_BRANCHES[finalIdx]);
         setBranchSpinning(false);
@@ -273,7 +228,6 @@ export default function DivinationPage() {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (reel1Ref.current) clearTimeout(reel1Ref.current);
       if (reel2Ref.current) clearTimeout(reel2Ref.current);
       if (branchRef.current) clearTimeout(branchRef.current);
     };
@@ -281,8 +235,9 @@ export default function DivinationPage() {
 
   // Compute oracle result
   const getOracleResult = () => {
+    if (topicIndex === null) return null;
     const topic = TOPICS[topicIndex];
-    const trigramNum = TRIGRAMS[trigramIndex].num; // 1-8
+    const trigramNum = TRIGRAMS[trigramIndex].num;
     const code = topic.codes[trigramNum - 1];
     const oracle = ORACLE_POEMS[code];
     return { topic, trigram: TRIGRAMS[trigramIndex], code, oracle };
@@ -290,18 +245,15 @@ export default function DivinationPage() {
 
   // Reset everything
   const reset = () => {
-    if (reel1Ref.current) clearTimeout(reel1Ref.current);
     if (reel2Ref.current) clearTimeout(reel2Ref.current);
     if (branchRef.current) clearTimeout(branchRef.current);
     setStep('intro');
-    setReel1Current(0);
+    setTopicIndex(null);
     setReel2Current(0);
     setBranchDisplayIndex(0);
     setBranchStr('');
-    setReel1Spinning(false);
     setReel2Spinning(false);
     setBranchSpinning(false);
-    reel1StoppingRef.current = false;
     reel2StoppingRef.current = false;
   };
 
@@ -314,34 +266,32 @@ export default function DivinationPage() {
         <div className="fixed inset-0 pointer-events-none z-0">
           <div
             className="absolute inset-0"
-            style={{
-              background:
-                'radial-gradient(ellipse at 50% 0%, rgba(160,80,0,0.15) 0%, transparent 70%)',
-            }}
+            style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(160,80,0,0.15) 0%, transparent 70%)' }}
           />
-          {/* Incense smoke pillars */}
           <div className="absolute left-[15%] top-0 w-px h-screen opacity-10"
             style={{ background: 'linear-gradient(to bottom, #c8a44a, transparent)', animation: 'float 6s ease-in-out infinite' }} />
           <div className="absolute right-[15%] top-0 w-px h-screen opacity-10"
             style={{ background: 'linear-gradient(to bottom, #c8a44a, transparent)', animation: 'float 8s ease-in-out infinite reverse' }} />
         </div>
 
-        <div className="relative z-10 max-w-lg mx-auto px-4 py-12 flex flex-col items-center">
+        <div
+          className="relative z-10 max-w-lg mx-auto px-4 py-12 flex flex-col items-center"
+          style={{
+            opacity: entered ? 1 : 0,
+            transform: entered ? 'translateY(0)' : 'translateY(24px)',
+            transition: 'opacity 0.6s ease, transform 0.6s ease',
+          }}
+        >
 
           {/* ── INTRO ── */}
           {step === 'intro' && (
-            <div className="w-full flex flex-col items-center text-center animate-fade-in">
-              {/* Temple header */}
+            <div className="w-full flex flex-col items-center text-center">
               <div className="mb-2 text-amber-500/60 tracking-[0.5em] text-xs uppercase">
                 玉洞子 · 先天占卜
               </div>
-
-              {/* Gold ornament top */}
               <div className="text-amber-600/40 text-2xl tracking-widest mb-4">
                 ◈─────────◈
               </div>
-
-              {/* Main title */}
               <h1
                 className="text-5xl font-bold mb-3 leading-tight"
                 style={{
@@ -362,23 +312,17 @@ export default function DivinationPage() {
               >
                 有求必應
               </h2>
-
-              {/* Gold ornament bottom */}
               <div className="text-amber-600/40 text-2xl tracking-widest mb-8">
                 ◈─────────◈
               </div>
-
-              {/* Description */}
               <p className="text-amber-200/60 text-sm leading-loose mb-8 max-w-xs">
                 周文王先天易數，以卦問事，<br />
                 自古靈驗，有求必應。<br />
                 誠心一問，天機自現。
               </p>
 
-              {/* CTA based on auth */}
               {!isAuthenticated ? (
                 <div className="w-full flex flex-col gap-4 items-center">
-                  {/* Non-member invitation */}
                   <div
                     className="w-full p-6 rounded-lg text-center"
                     style={{
@@ -404,7 +348,6 @@ export default function DivinationPage() {
                       立即免費加入
                     </Link>
                   </div>
-
                   <div className="text-amber-600/40 text-xs">
                     已有帳號？
                     <Link href={`/${locale}/login?redirect=/divination`} className="text-amber-500/60 underline ml-1">
@@ -414,7 +357,7 @@ export default function DivinationPage() {
                 </div>
               ) : (
                 <button
-                  onClick={startReel1}
+                  onClick={() => setStep('step1')}
                   className="px-12 py-4 rounded font-bold text-[#0d0800] text-lg tracking-widest transition-all hover:brightness-110 active:scale-95"
                   style={{
                     background: 'linear-gradient(135deg, #c8a44a 0%, #f0d080 50%, #c8a44a 100%)',
@@ -426,66 +369,87 @@ export default function DivinationPage() {
                 </button>
               )}
 
-              {/* Method brief */}
               <div className="mt-10 text-amber-700/40 text-xs leading-relaxed text-center">
-                選問事 → 選卦數 → 天抽地支 → 顯示卦詩
+                選問事類別 → 定卦數 → 天抽地支 → 顯示卦詩
               </div>
             </div>
           )}
 
-          {/* ── STEP 1: 問事類別 ── */}
-          {(step === 'step1' || step === 'confirm1') && (
+          {/* ── STEP 1: 問事類別（手動選擇）── */}
+          {step === 'step1' && (
             <div className="w-full flex flex-col items-center">
-              <StepHeader step={1} title="問事類別" desc="心中默想所問之事，點擊「定！」" />
+              <StepHeader step={1} title="選擇問事類別" desc="心中默想所問之事，點選對應類別" />
 
-              {/* Reel container */}
-              <div
-                className="w-72 my-6 rounded-xl overflow-hidden"
-                style={{
-                  background: '#0d0800',
-                  border: '2px solid rgba(200,164,74,0.5)',
-                  boxShadow: '0 0 40px rgba(200,164,74,0.2), inset 0 0 20px rgba(0,0,0,0.5)',
-                }}
-              >
-                <SlotReel
-                  items={topicNames}
-                  spinning={reel1Spinning}
-                  currentIndex={reel1Current}
-                />
+              <div className="w-full mt-4 space-y-3">
+                {TOPIC_GROUPS.map((group, gi) => (
+                  <div key={gi}>
+                    <div className="text-amber-700/50 text-xs tracking-widest mb-1.5 pl-1">{group.label}</div>
+                    <div className="grid grid-cols-4 gap-1.5">
+                      {group.indices.map(idx => {
+                        const topic = TOPICS[idx];
+                        const isSelected = topicIndex === idx;
+                        return (
+                          <button
+                            key={idx}
+                            onClick={() => handleSelectTopic(idx)}
+                            className="py-2 rounded text-xs font-bold tracking-wider transition-all active:scale-95"
+                            style={{
+                              background: isSelected
+                                ? 'linear-gradient(135deg, #c8a44a 0%, #f0d080 100%)'
+                                : 'rgba(200,164,74,0.06)',
+                              border: isSelected
+                                ? '1px solid #f0d080'
+                                : '1px solid rgba(200,164,74,0.2)',
+                              color: isSelected ? '#0d0800' : 'rgba(200,164,74,0.8)',
+                              boxShadow: isSelected ? '0 0 12px rgba(200,164,74,0.4)' : 'none',
+                            }}
+                          >
+                            {topic.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
 
-              {/* Topic description */}
-              {step === 'confirm1' && (
-                <div className="mb-4 text-amber-300/70 text-sm text-center">
-                  {TOPICS[topicIndex].desc}
-                </div>
-              )}
-
-              {/* Buttons */}
-              {step === 'step1' && (
-                <GoldButton onClick={stopReel1} label="定！" />
-              )}
-              {step === 'confirm1' && (
-                <div className="flex flex-col items-center gap-3">
-                  <ConfirmBadge label={`問：${TOPICS[topicIndex].name}`} />
-                  <GoldButton onClick={startReel2} label="確定，繼續" />
-                  <TextButton onClick={startReel1} label="重新選擇" />
-                </div>
-              )}
+              {/* Confirm bar */}
+              <div className="sticky bottom-4 mt-6 w-full flex flex-col items-center gap-3">
+                {topicIndex !== null && (
+                  <div
+                    className="w-full flex items-center justify-between px-4 py-3 rounded-lg"
+                    style={{
+                      background: 'rgba(200,164,74,0.12)',
+                      border: '1px solid rgba(200,164,74,0.4)',
+                    }}
+                  >
+                    <span className="text-amber-300 text-sm">
+                      已選：<span className="font-bold text-amber-100">{TOPICS[topicIndex].name}</span>
+                    </span>
+                    <span className="text-amber-600/60 text-xs">{TOPICS[topicIndex].desc}</span>
+                  </div>
+                )}
+                <GoldButton
+                  onClick={confirmTopic}
+                  label="確定，起卦"
+                  disabled={topicIndex === null}
+                />
+                <TextButton onClick={reset} label="返回" />
+              </div>
             </div>
           )}
 
-          {/* ── STEP 2: 八卦占數 ── */}
+          {/* ── STEP 2: 八卦占數（隨機轉盤）── */}
           {(step === 'step2' || step === 'confirm2') && (
             <div className="w-full flex flex-col items-center">
-              <StepHeader step={2} title="八卦占數" desc="心中默想一個數字，點擊「定！」" />
+              <StepHeader step={2} title="天定卦數" desc="心中默想一個數字，點擊「定！」停輪" />
 
-              {/* Selected topic reminder */}
-              <div className="mb-4 text-amber-600/50 text-xs tracking-widest">
-                問事：{TOPICS[topicIndex].name}
-              </div>
+              {topicIndex !== null && (
+                <div className="mb-4 text-amber-600/50 text-xs tracking-widest">
+                  問事：{TOPICS[topicIndex].name}
+                </div>
+              )}
 
-              {/* Reel */}
               <div
                 className="w-72 my-6 rounded-xl overflow-hidden"
                 style={{
@@ -514,7 +478,7 @@ export default function DivinationPage() {
                 <div className="flex flex-col items-center gap-3">
                   <ConfirmBadge label={`占數：${TRIGRAMS[trigramIndex].name} ${TRIGRAMS[trigramIndex].num}`} />
                   <GoldButton onClick={startBranchDraw} label="確定，天抽地支" />
-                  <TextButton onClick={startReel2} label="重新選擇" />
+                  <TextButton onClick={() => { setStep('step2'); startReel2(); }} label="重新選擇" />
                 </div>
               )}
             </div>
@@ -525,25 +489,20 @@ export default function DivinationPage() {
             <div className="w-full flex flex-col items-center">
               <StepHeader step={3} title="天抽地支" desc="祖師代為抽取，靜候天機..." />
 
-              {/* Circular branch display */}
               <div className="my-10 relative flex items-center justify-center">
-                {/* Outer glow ring */}
                 <div
                   className="absolute rounded-full"
                   style={{
-                    width: 220,
-                    height: 220,
+                    width: 220, height: 220,
                     background: 'radial-gradient(circle, rgba(200,164,74,0.1) 0%, transparent 70%)',
                     border: '1px solid rgba(200,164,74,0.2)',
                     animation: 'spin 8s linear infinite',
                   }}
                 />
-                {/* Inner display */}
                 <div
                   className="relative rounded-full flex flex-col items-center justify-center"
                   style={{
-                    width: 160,
-                    height: 160,
+                    width: 160, height: 160,
                     background: 'radial-gradient(circle, #1a0d00 0%, #0d0800 100%)',
                     border: '2px solid rgba(200,164,74,0.6)',
                     boxShadow: '0 0 40px rgba(200,164,74,0.3), inset 0 0 20px rgba(0,0,0,0.5)',
@@ -552,8 +511,7 @@ export default function DivinationPage() {
                   <div
                     className="font-bold"
                     style={{
-                      fontSize: '4rem',
-                      color: '#f0d080',
+                      fontSize: '4rem', color: '#f0d080',
                       textShadow: '0 0 30px rgba(200,164,74,0.9)',
                       lineHeight: 1,
                       transition: branchSpinning ? 'none' : 'all 0.5s ease',
@@ -571,25 +529,24 @@ export default function DivinationPage() {
 
           {/* ── RESULT ── */}
           {step === 'result' && (() => {
-            const { topic, trigram, code, oracle } = getOracleResult();
+            const result = getOracleResult();
+            if (!result) return null;
+            const { topic, trigram, code, oracle } = result;
             const hasOraclePoem = !!oracle;
             const branchFound = hasOraclePoem && branchInPoem(oracle.poem, branchStr);
 
             return (
               <div className="w-full flex flex-col items-center animate-fade-in">
-                {/* Title */}
                 <div className="text-amber-500/60 text-xs tracking-[0.3em] mb-4">
                   先天占卜・周文王先天易數・占卜結果
                 </div>
 
-                {/* Summary badges */}
                 <div className="flex gap-3 mb-6 flex-wrap justify-center">
                   <Badge color="amber" label={`問：${topic.name}`} />
                   <Badge color="red" label={`卦：${trigram.name}${trigram.num}`} />
                   <Badge color="gold" label={`地支：${branchStr}`} />
                 </div>
 
-                {/* Main oracle card - scroll style */}
                 <div
                   className="w-full rounded-xl p-6 mb-6"
                   style={{
@@ -598,29 +555,20 @@ export default function DivinationPage() {
                     boxShadow: '0 0 50px rgba(200,164,74,0.15)',
                   }}
                 >
-                  {/* Hexagram code + name */}
                   <div className="text-center mb-5">
-                    <div className="text-amber-600/40 text-xs tracking-widest mb-1">
-                      卦碼 {code}
-                    </div>
+                    <div className="text-amber-600/40 text-xs tracking-widest mb-1">卦碼 {code}</div>
                     <div
                       className="text-3xl font-bold"
-                      style={{
-                        color: '#f0d080',
-                        textShadow: '0 0 20px rgba(200,164,74,0.6)',
-                        letterSpacing: '0.2em',
-                      }}
+                      style={{ color: '#f0d080', textShadow: '0 0 20px rgba(200,164,74,0.6)', letterSpacing: '0.2em' }}
                     >
                       {hasOraclePoem ? `${oracle.hexagram}卦` : `卦碼 ${code}`}
                     </div>
                   </div>
 
-                  {/* Divider */}
                   <div className="text-amber-600/30 text-center text-lg tracking-widest mb-5">
                     ──── ◈ ────
                   </div>
 
-                  {/* Oracle poem */}
                   {hasOraclePoem ? (
                     <div className="space-y-3">
                       {oracle.poem.split(',').map((line, i) => (
@@ -641,7 +589,6 @@ export default function DivinationPage() {
                   )}
                 </div>
 
-                {/* Branch timing interpretation */}
                 <div
                   className="w-full rounded-xl p-5 mb-6"
                   style={{
@@ -654,20 +601,14 @@ export default function DivinationPage() {
                   }}
                 >
                   <div className="flex items-center gap-3 mb-3">
-                    <span
-                      className="text-2xl font-bold"
-                      style={{ color: '#f0d080', textShadow: '0 0 15px rgba(200,164,74,0.8)' }}
-                    >
+                    <span className="text-2xl font-bold" style={{ color: '#f0d080', textShadow: '0 0 15px rgba(200,164,74,0.8)' }}>
                       {branchStr}
                     </span>
                     <div>
                       <div className="text-amber-400 text-sm font-bold">地支時機</div>
-                      <div className="text-amber-700/60 text-xs">
-                        {BRANCH_TIMING[branchStr]}
-                      </div>
+                      <div className="text-amber-700/60 text-xs">{BRANCH_TIMING[branchStr]}</div>
                     </div>
                   </div>
-
                   {hasOraclePoem && (
                     branchFound ? (
                       <div className="text-amber-200/80 text-sm leading-relaxed border-t border-amber-800/30 pt-3">
@@ -685,13 +626,11 @@ export default function DivinationPage() {
                   )}
                 </div>
 
-                {/* Topic description reminder */}
                 <div className="text-amber-700/40 text-xs text-center mb-8 leading-relaxed">
                   本次問卜：{topic.desc}<br />
                   卦數：{trigram.element}（{trigram.direction}方）占數第 {trigram.num}
                 </div>
 
-                {/* Action buttons */}
                 <div className="flex flex-col gap-3 w-full max-w-xs">
                   <GoldButton onClick={reset} label="再問一卦" />
                   <TextButton
@@ -700,7 +639,6 @@ export default function DivinationPage() {
                   />
                 </div>
 
-                {/* Disclaimer */}
                 <p className="text-amber-900/40 text-xs text-center mt-8 leading-loose max-w-xs">
                   占卜僅供參考，如遇人生重大決策，
                   建議與命理師深入鑑定。
@@ -758,14 +696,15 @@ function StepHeader({ step, title, desc }: { step: number; title: string; desc: 
   );
 }
 
-function GoldButton({ onClick, label }: { onClick: () => void; label: string }) {
+function GoldButton({ onClick, label, disabled = false }: { onClick: () => void; label: string; disabled?: boolean }) {
   return (
     <button
       onClick={onClick}
-      className="px-10 py-3 rounded font-bold text-[#0d0800] tracking-widest transition-all hover:brightness-110 active:scale-95"
+      disabled={disabled}
+      className="px-10 py-3 rounded font-bold text-[#0d0800] tracking-widest transition-all hover:brightness-110 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
       style={{
         background: 'linear-gradient(135deg, #c8a44a 0%, #f0d080 50%, #c8a44a 100%)',
-        boxShadow: '0 0 25px rgba(200,164,74,0.4)',
+        boxShadow: disabled ? 'none' : '0 0 25px rgba(200,164,74,0.4)',
         letterSpacing: '0.2em',
       }}
     >
@@ -810,11 +749,7 @@ function Badge({ color, label }: { color: 'amber' | 'red' | 'gold'; label: strin
   return (
     <span
       className="px-3 py-1 rounded-full text-xs font-bold tracking-wider"
-      style={{
-        background: styles.bg,
-        border: `1px solid ${styles.border}`,
-        color: styles.color,
-      }}
+      style={{ background: styles.bg, border: `1px solid ${styles.border}`, color: styles.color }}
     >
       {label}
     </span>
