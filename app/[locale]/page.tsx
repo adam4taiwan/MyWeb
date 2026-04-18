@@ -9,6 +9,7 @@ import PricingSection from '@/components/PricingSection';
 import TestimonialsSection from '@/components/TestimonialsSection';
 import FAQSection from '@/components/FAQSection';
 import FinalCTASection from '@/components/FinalCTASection';
+import DivinationBanner from '@/components/DivinationBanner';
 import { useAuth } from '@/components/AuthContext';
 
 export default function Home() {
@@ -33,6 +34,7 @@ export default function Home() {
 
       <main className="flex-grow">
         <HeroSection showSubscribeNudge={isAuthenticated && isSubscribed === false} />
+        <DivinationBanner />
         <FeaturesSection />
         <FAQSection />
         <TestimonialsSection />

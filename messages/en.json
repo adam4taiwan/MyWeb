@@ -25,7 +25,8 @@
       "zhTW": "繁中",
       "en": "EN",
       "ja": "日本語"
-    }
+    },
+    "divination": "Divination"
   },
   "Footer": {
     "brand": "Yudongzi",
@@ -90,7 +91,14 @@
     "comingSoonBtn": "Stay Tuned",
     "vipName": "VIP Member",
     "vipDesc": "Ultimate prestige — the most complete service package",
-    "vipFeatures": ["Daily personalized guidance", "Lifelong fortune book (8 cycles) x1", "Yudongzi personal reading x1", "40% off annual fortune book", "20% off courses", "Free blessing service x1"],
+    "vipFeatures": [
+      "Daily personalized guidance",
+      "Lifelong fortune book (8 cycles) x1",
+      "Yudongzi personal reading x1",
+      "40% off annual fortune book",
+      "20% off courses",
+      "Free blessing service x1"
+    ],
     "trustTitle": "Secure ECPay Credit Card Payment: ",
     "trustBody": "Transactions are processed by ECPay. We never store your credit card information.",
     "trustNote": "This is a digital content service. Once generated, refunds are not available. Please review the service details before purchasing.",
@@ -98,19 +106,35 @@
       {
         "name": "Bronze Member",
         "description": "Entry-level subscription with essential member benefits",
-        "features": ["Unlimited daily guidance", "Yudongzi BaZi & ZiWei Fortune Book 1x/year", "Unlimited nine-star guidance", "Annual plan, no auto-renewal"],
+        "features": [
+          "Unlimited daily guidance",
+          "Yudongzi BaZi & ZiWei Fortune Book 1x/year",
+          "Unlimited nine-star guidance",
+          "Annual plan, no auto-renewal"
+        ],
         "cta": "Subscribe Bronze"
       },
       {
         "name": "Silver Member",
         "description": "Advanced plan with annual fortune book included",
-        "features": ["Unlimited daily guidance", "Yudongzi BaZi & ZiWei Fortune Book 1x/year", "Annual fortune book 1x/year", "Unlimited nine-star guidance"],
+        "features": [
+          "Unlimited daily guidance",
+          "Yudongzi BaZi & ZiWei Fortune Book 1x/year",
+          "Annual fortune book 1x/year",
+          "Unlimited nine-star guidance"
+        ],
         "cta": "Subscribe Silver"
       },
       {
         "name": "Gold Member",
         "description": "Premium plan with major cycle fortune book included",
-        "features": ["Unlimited daily guidance", "Yudongzi BaZi & ZiWei Fortune Book 1x/year", "Annual fortune book 1x/year", "Major cycle fortune book 1x/year", "Unlimited nine-star guidance"],
+        "features": [
+          "Unlimited daily guidance",
+          "Yudongzi BaZi & ZiWei Fortune Book 1x/year",
+          "Annual fortune book 1x/year",
+          "Major cycle fortune book 1x/year",
+          "Unlimited nine-star guidance"
+        ],
         "cta": "Subscribe Gold"
       }
     ]
@@ -154,19 +178,34 @@
         "name": "Yudongzi BaZi & ZiWei Fortune Book",
         "tag": "From Bronze",
         "desc": "Dual-system BaZi & Zi Wei Dou Shu comprehensive analysis",
-        "points": ["BaZi favorable/unfavorable element analysis", "Zi Wei Dou Shu cross-validation", "Six relations (parents/spouse/children)", "Career, wealth, and health in detail"]
+        "points": [
+          "BaZi favorable/unfavorable element analysis",
+          "Zi Wei Dou Shu cross-validation",
+          "Six relations (parents/spouse/children)",
+          "Career, wealth, and health in detail"
+        ]
       },
       {
         "name": "Major Cycle Book",
         "tag": "Medium-Long Term Planning",
         "desc": "5-year annual auspicious/inauspicious forecast",
-        "points": ["BaZi x Zi Wei Dou Shu cross-validation", "Year-by-year great/poor/neutral rating", "Key events and recommendations each year", "5-year overall trend overview"]
+        "points": [
+          "BaZi x Zi Wei Dou Shu cross-validation",
+          "Year-by-year great/poor/neutral rating",
+          "Key events and recommendations each year",
+          "5-year overall trend overview"
+        ]
       },
       {
         "name": "Annual Fortune Book",
         "tag": "Annual Essential",
         "desc": "Five-arts comprehensive annual analysis",
-        "points": ["BaZi · Tai Sui · Zodiac · Stars · Zi Wei", "Spring, Summer, Autumn, Winter highlights", "Monthly auspicious/inauspicious analysis", "Specific advice to attract luck and avoid misfortune"]
+        "points": [
+          "BaZi · Tai Sui · Zodiac · Stars · Zi Wei",
+          "Spring, Summer, Autumn, Winter highlights",
+          "Monthly auspicious/inauspicious analysis",
+          "Specific advice to attract luck and avoid misfortune"
+        ]
       }
     ]
   },
@@ -259,16 +298,38 @@
     "vipPlanValue": "Plan service value",
     "vipSaving": "Save NT$2,000+",
     "vipDesc": "Ultimate prestige — the most complete service package",
-    "vipFeatures": ["Daily personalized guidance", "Lifelong fortune book (8 cycles) x1", "Yudongzi personal reading x1", "40% off annual fortune book", "20% off courses", "Free blessing service x1"],
+    "vipFeatures": [
+      "Daily personalized guidance",
+      "Lifelong fortune book (8 cycles) x1",
+      "Yudongzi personal reading x1",
+      "40% off annual fortune book",
+      "20% off courses",
+      "Free blessing service x1"
+    ],
     "comingSoon": "Coming Soon",
     "comingSoonBtn": "Stay Tuned",
     "faqTitle": "Frequently Asked Questions",
     "faqs": [
-      ["When does the subscription take effect?", "It takes effect immediately after payment. Valid for 365 days."],
-      ["Can I upgrade my plan?", "Yes. After upgrading, the new plan expires 365 days from the purchase date, combined with your existing subscription."],
-      ["How do I use the blessing service?", "Silver and Gold members can claim 1 free blessing service per year (choose from: Tai Sui protection, Light blessing, Wealth blessing, or Prayer service), handled by Yudongzi."],
-      ["How are fortune book discounts calculated?", "After subscribing, discounts are automatically applied when purchasing fortune books. No coupon code needed."],
-      ["How do I cancel?", "Subscriptions are one-time annual fees with no auto-renewal. To continue enjoying benefits, manually renew before expiry."]
+      [
+        "When does the subscription take effect?",
+        "It takes effect immediately after payment. Valid for 365 days."
+      ],
+      [
+        "Can I upgrade my plan?",
+        "Yes. After upgrading, the new plan expires 365 days from the purchase date, combined with your existing subscription."
+      ],
+      [
+        "How do I use the blessing service?",
+        "Silver and Gold members can claim 1 free blessing service per year (choose from: Tai Sui protection, Light blessing, Wealth blessing, or Prayer service), handled by Yudongzi."
+      ],
+      [
+        "How are fortune book discounts calculated?",
+        "After subscribing, discounts are automatically applied when purchasing fortune books. No coupon code needed."
+      ],
+      [
+        "How do I cancel?",
+        "Subscriptions are one-time annual fees with no auto-renewal. To continue enjoying benefits, manually renew before expiry."
+      ]
     ],
     "backToMember": "Back to Member Center",
     "subscribeError": "Subscription failed. Please try again later.",
@@ -525,7 +586,14 @@
     "successDefault": "Booking successful! Yudongzi will contact you within 1–2 business days to arrange a time.",
     "errorDefault": "Submission failed. Please try again.",
     "errorNetwork": "Connection failed. Please try again.",
-    "topics": ["Romance & Marriage", "Career & Work", "Wealth & Investment", "Health & Body", "Children's Education", "Other"]
+    "topics": [
+      "Romance & Marriage",
+      "Career & Work",
+      "Wealth & Investment",
+      "Health & Body",
+      "Children's Education",
+      "Other"
+    ]
   },
   "Consultation": {
     "metaTitle": "Online Divination Consultation",
@@ -647,42 +715,72 @@
         "id": "personal-fortune",
         "title": "Personal Divination Analysis",
         "description": "In-depth BaZi chart analysis to understand life fortune trends",
-        "features": ["BaZi chart analysis", "Annual fortune forecast", "Personality trait reading", "Career development advice"],
+        "features": [
+          "BaZi chart analysis",
+          "Annual fortune forecast",
+          "Personality trait reading",
+          "Career development advice"
+        ],
         "symbol": "命"
       },
       {
         "id": "career-guidance",
         "title": "Career Development Consultation",
         "description": "Professional advice and direction for workplace development",
-        "features": ["Career aptitude analysis", "Promotion timing forecast", "Career change advice", "Business fortune planning"],
+        "features": [
+          "Career aptitude analysis",
+          "Promotion timing forecast",
+          "Career change advice",
+          "Business fortune planning"
+        ],
         "symbol": "業"
       },
       {
         "id": "relationship",
         "title": "Romance & Marriage Consultation",
         "description": "Analyze relationship fortune and provide marriage improvement advice",
-        "features": ["Compatibility analysis", "Marriage timing forecast", "Relationship improvement advice", "Romance luck guidance"],
+        "features": [
+          "Compatibility analysis",
+          "Marriage timing forecast",
+          "Relationship improvement advice",
+          "Romance luck guidance"
+        ],
         "symbol": "緣"
       },
       {
         "id": "health-wellness",
         "title": "Health & Wellness Guidance",
         "description": "Analyze health conditions and wellness direction from a divination perspective",
-        "features": ["Constitution analysis", "Health fortune forecast", "Wellness advice", "Disease prevention guidance"],
+        "features": [
+          "Constitution analysis",
+          "Health fortune forecast",
+          "Wellness advice",
+          "Disease prevention guidance"
+        ],
         "symbol": "壽"
       },
       {
         "id": "feng-shui",
         "title": "Home Feng Shui Adjustment",
         "description": "Residential Feng Shui analysis and improvement recommendations",
-        "features": ["Home Feng Shui diagnosis", "Layout optimization advice", "Arrangement adjustment guidance", "Fortune enhancement plan"],
+        "features": [
+          "Home Feng Shui diagnosis",
+          "Layout optimization advice",
+          "Arrangement adjustment guidance",
+          "Fortune enhancement plan"
+        ],
         "symbol": "宅"
       },
       {
         "id": "business-feng-shui",
         "title": "Commercial Feng Shui Planning",
         "description": "Office and storefront Feng Shui planning to boost business fortune",
-        "features": ["Commercial space diagnosis", "Wealth position planning", "Employee seating arrangement", "Prosperity layout design"],
+        "features": [
+          "Commercial space diagnosis",
+          "Wealth position planning",
+          "Employee seating arrangement",
+          "Prosperity layout design"
+        ],
         "symbol": "財"
       }
     ]
@@ -827,25 +925,45 @@
         "type": "Fine Dining",
         "title": "Culinary Divination Experience",
         "description": "Combining exquisite cuisine with divination culture for a unique dining experience",
-        "features": ["Themed set menu design", "Private room consultation", "Festive special events", "Exclusive member services"]
+        "features": [
+          "Themed set menu design",
+          "Private room consultation",
+          "Festive special events",
+          "Exclusive member services"
+        ]
       },
       {
         "type": "Boutique Hotel",
         "title": "Premium Accommodation Service",
         "description": "Providing professional divination consultation and Feng Shui advice for VIP guests",
-        "features": ["VIP exclusive consultation", "Suite Feng Shui assessment", "Business decision support", "Cultural experience itinerary"]
+        "features": [
+          "VIP exclusive consultation",
+          "Suite Feng Shui assessment",
+          "Business decision support",
+          "Cultural experience itinerary"
+        ]
       },
       {
         "type": "Corporate Training",
         "title": "Wisdom Management Lecture",
         "description": "Applying classical wisdom to modern corporate management",
-        "features": ["Leadership development", "Team harmony guidance", "Decision-making training", "Corporate culture integration"]
+        "features": [
+          "Leadership development",
+          "Team harmony guidance",
+          "Decision-making training",
+          "Corporate culture integration"
+        ]
       },
       {
         "type": "Cultural Academy",
         "title": "Traditional Culture Education",
         "description": "Systematic transmission of divination cultural knowledge",
-        "features": ["Curriculum system design", "Teacher training certification", "Teaching material compilation", "Student assessment system"]
+        "features": [
+          "Curriculum system design",
+          "Teacher training certification",
+          "Teaching material compilation",
+          "Student assessment system"
+        ]
       }
     ],
     "serviceTypes": [
@@ -853,7 +971,12 @@
         "key": "enterprise",
         "title": "Corporate Lecture Service",
         "description": "Providing divination wisdom and workplace applications for company employees",
-        "features": ["Employee mind-body balance", "Team harmony advice", "Corporate culture integration", "Leadership decision support"],
+        "features": [
+          "Employee mind-body balance",
+          "Team harmony advice",
+          "Corporate culture integration",
+          "Leadership decision support"
+        ],
         "price": "By negotiation",
         "duration": "2–4 hours"
       },
@@ -861,7 +984,12 @@
         "key": "restaurant",
         "title": "F&B Cooperation",
         "description": "A distinctive experience combining cuisine and divination culture",
-        "features": ["Themed restaurant design", "Menu divination analysis", "Auspicious dining time advice", "Five elements food pairing"],
+        "features": [
+          "Themed restaurant design",
+          "Menu divination analysis",
+          "Auspicious dining time advice",
+          "Five elements food pairing"
+        ],
         "price": "NT$15,000–30,000 per session",
         "duration": "1–2 hours"
       },
@@ -869,7 +997,12 @@
         "key": "hotel",
         "title": "Hotel Cooperation Service",
         "description": "Providing premium divination consultation experiences for guests",
-        "features": ["VIP custom service", "Room Feng Shui advice", "Auspicious travel date planning", "Business decision consultation"],
+        "features": [
+          "VIP custom service",
+          "Room Feng Shui advice",
+          "Auspicious travel date planning",
+          "Business decision consultation"
+        ],
         "price": "Monthly partnership plan",
         "duration": "Flexible arrangement"
       },
@@ -877,7 +1010,12 @@
         "key": "academy",
         "title": "Academy Education Cooperation",
         "description": "Integrating divination wisdom into lifelong learning programs",
-        "features": ["Curriculum design planning", "Teacher training services", "Teaching material writing assistance", "Certification assessment system"],
+        "features": [
+          "Curriculum design planning",
+          "Teacher training services",
+          "Teaching material writing assistance",
+          "Certification assessment system"
+        ],
         "price": "Long-term partnership plan",
         "duration": "Per curriculum"
       },
@@ -885,7 +1023,12 @@
         "key": "home",
         "title": "On-Site Service",
         "description": "Professional master visits in person to provide individual or small group services",
-        "features": ["Home Feng Shui inspection", "Family divination analysis", "Private exclusive consultation", "Small group lecture"],
+        "features": [
+          "Home Feng Shui inspection",
+          "Family divination analysis",
+          "Private exclusive consultation",
+          "Small group lecture"
+        ],
         "price": "NT$8,000–20,000 per visit",
         "duration": "2–3 hours"
       }
@@ -898,8 +1041,18 @@
         "duration": "2–3 hours",
         "capacity": "30–100 people",
         "price": "25,000–60,000",
-        "features": ["Zodiac fortune analysis", "Auspicious direction guidance", "Wealth Feng Shui layout", "New Year wish ceremony"],
-        "suitable": ["Year-end banquets", "Community events", "Mall promotions", "Restaurant theme events"]
+        "features": [
+          "Zodiac fortune analysis",
+          "Auspicious direction guidance",
+          "Wealth Feng Shui layout",
+          "New Year wish ceremony"
+        ],
+        "suitable": [
+          "Year-end banquets",
+          "Community events",
+          "Mall promotions",
+          "Restaurant theme events"
+        ]
       },
       {
         "title": "Workplace Feng Shui Lecture",
@@ -908,8 +1061,18 @@
         "duration": "1.5–2 hours",
         "capacity": "20–80 people",
         "price": "20,000–45,000",
-        "features": ["Desk arrangement", "Seating direction selection", "Plant placement advice", "Color coordination guidance"],
-        "suitable": ["Corporate in-house training", "Co-working spaces", "Business buildings", "Startup parks"]
+        "features": [
+          "Desk arrangement",
+          "Seating direction selection",
+          "Plant placement advice",
+          "Color coordination guidance"
+        ],
+        "suitable": [
+          "Corporate in-house training",
+          "Co-working spaces",
+          "Business buildings",
+          "Startup parks"
+        ]
       },
       {
         "title": "Love & Marriage Lecture",
@@ -918,8 +1081,18 @@
         "duration": "2 hours",
         "capacity": "15–60 people",
         "price": "18,000–40,000",
-        "features": ["BaZi compatibility analysis", "Romance luck enhancement", "Couples harmony tips", "Wedding auspicious date selection"],
-        "suitable": ["Bridal shops", "Banquet halls", "Dating platforms", "Cultural centers"]
+        "features": [
+          "BaZi compatibility analysis",
+          "Romance luck enhancement",
+          "Couples harmony tips",
+          "Wedding auspicious date selection"
+        ],
+        "suitable": [
+          "Bridal shops",
+          "Banquet halls",
+          "Dating platforms",
+          "Cultural centers"
+        ]
       },
       {
         "title": "Parent-Child Education Lecture",
@@ -928,8 +1101,18 @@
         "duration": "2–2.5 hours",
         "capacity": "20–50 people",
         "price": "22,000–35,000",
-        "features": ["Children's talent analysis", "Learning direction advice", "Parent-child communication skills", "Growth environment planning"],
-        "suitable": ["Kindergartens", "Cram schools", "Parent-child centers", "Community events"]
+        "features": [
+          "Children's talent analysis",
+          "Learning direction advice",
+          "Parent-child communication skills",
+          "Growth environment planning"
+        ],
+        "suitable": [
+          "Kindergartens",
+          "Cram schools",
+          "Parent-child centers",
+          "Community events"
+        ]
       },
       {
         "title": "Health & Wellness Lecture",
@@ -938,8 +1121,18 @@
         "duration": "1.5–2 hours",
         "capacity": "25–80 people",
         "price": "15,000–35,000",
-        "features": ["Constitution type analysis", "Seasonal wellness methods", "Dietary adjustment advice", "Exercise timing guidance"],
-        "suitable": ["Wellness centers", "TCM clinics", "Fitness centers", "Community halls"]
+        "features": [
+          "Constitution type analysis",
+          "Seasonal wellness methods",
+          "Dietary adjustment advice",
+          "Exercise timing guidance"
+        ],
+        "suitable": [
+          "Wellness centers",
+          "TCM clinics",
+          "Fitness centers",
+          "Community halls"
+        ]
       },
       {
         "title": "Wealth & Investment Lecture",
@@ -948,8 +1141,18 @@
         "duration": "2–3 hours",
         "capacity": "20–100 people",
         "price": "30,000–80,000",
-        "features": ["Wealth timing analysis", "Investment direction advice", "Financial planning guidance", "Business startup timing"],
-        "suitable": ["Bank financial advisors", "Investment consultants", "Business clubs", "Entrepreneur gatherings"]
+        "features": [
+          "Wealth timing analysis",
+          "Investment direction advice",
+          "Financial planning guidance",
+          "Business startup timing"
+        ],
+        "suitable": [
+          "Bank financial advisors",
+          "Investment consultants",
+          "Business clubs",
+          "Entrepreneur gatherings"
+        ]
       }
     ]
   },

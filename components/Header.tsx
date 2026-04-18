@@ -41,6 +41,7 @@ export default function Header() {
             {isAuthenticated && (
               <Link href="/disk" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">{t('disk')}</Link>
             )}
+            <Link href="/divination" className="text-amber-600 hover:text-amber-500 transition-colors cursor-pointer font-medium">{t('divination')}</Link>
             <Link href="/blessing" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">{t('blessing')}</Link>
             <Link href="/appointment" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">{t('appointment')}</Link>
           </nav>
@@ -108,6 +109,7 @@ export default function Header() {
               {isAuthenticated && (
                 <Link href="/disk" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>{t('disk')}</Link>
               )}
+              <Link href="/divination" className="text-amber-600 hover:text-amber-500 transition-colors cursor-pointer font-medium" onClick={() => setIsMenuOpen(false)}>{t('divination')}</Link>
               <Link href="/blessing" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>{t('blessing')}</Link>
               <Link href="/appointment" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>{t('appointment')}</Link>
               {isAuthenticated && (
