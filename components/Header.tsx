@@ -31,22 +31,22 @@ export default function Header() {
             <div className="w-10 h-10 bg-gradient-to-br from-amber-600 to-orange-600 rounded-full flex items-center justify-center">
               <i className="ri-book-open-line text-white text-xl"></i>
             </div>
-            <span className="text-2xl font-bold text-amber-800" style={currentLocale === 'zh-TW' ? {fontFamily: 'var(--font-pacifico)'} : {fontFamily: '"Arial Black", Arial, sans-serif', fontWeight: 900}}>{t('brand')}</span>
+            <span className="text-xl font-bold text-amber-800 whitespace-nowrap" style={currentLocale === 'zh-TW' ? {fontFamily: 'var(--font-pacifico)'} : {fontFamily: '"Arial Black", Arial, sans-serif', fontWeight: 900}}>{t('brand')}</span>
           </Link>
 
-          <nav className="hidden md:flex items-center space-x-8 ml-10">
-            <Link href="/" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">{t('home')}</Link>
-            <Link href="/heritage" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">{t('heritage')}</Link>
-            <Link href="/blog" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">{t('blog')}</Link>
+          <nav className="hidden md:flex items-center space-x-4 ml-6 text-sm">
+            <Link href="/" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer whitespace-nowrap">{t('home')}</Link>
+            <Link href="/heritage" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer whitespace-nowrap">{t('heritage')}</Link>
+            <Link href="/blog" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer whitespace-nowrap">{t('blog')}</Link>
             {isAuthenticated && (
-              <Link href="/disk" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">{t('disk')}</Link>
+              <Link href="/disk" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer whitespace-nowrap">{t('disk')}</Link>
             )}
-            <Link href="/divination" className="text-amber-600 hover:text-amber-500 transition-colors cursor-pointer font-medium">{t('divination')}</Link>
-            <Link href="/blessing" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">{t('blessing')}</Link>
-            <Link href="/appointment" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">{t('appointment')}</Link>
+            <Link href="/divination" className="text-amber-600 hover:text-amber-500 transition-colors cursor-pointer font-medium whitespace-nowrap">{t('divination')}</Link>
+            <Link href="/blessing" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer whitespace-nowrap">{t('blessing')}</Link>
+            <Link href="/appointment" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer whitespace-nowrap">{t('appointment')}</Link>
           </nav>
 
-          <div className="hidden md:flex items-center space-x-3 ml-6">
+          <div className="hidden md:flex items-center space-x-2 ml-4">
             {/* Language switcher */}
             <div className="flex items-center gap-1 text-xs">
               {locales.map(loc => (
@@ -61,7 +61,7 @@ export default function Header() {
             </div>
 
             <Link href="/consultation">
-              <button className="bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 transition-colors whitespace-nowrap cursor-pointer font-semibold">
+              <button className="bg-green-500 text-white px-3 py-1.5 rounded-full hover:bg-green-600 transition-colors whitespace-nowrap cursor-pointer font-semibold text-sm">
                 {t('consultation')}
               </button>
             </Link>
@@ -69,20 +69,20 @@ export default function Header() {
             {isAuthenticated ? (
               <div className="flex items-center space-x-2">
                 <Link href="/member">
-                  <button className="px-4 py-2 text-amber-700 border border-amber-300 rounded-full hover:bg-amber-50 transition-colors font-semibold whitespace-nowrap">
+                  <button className="px-3 py-1.5 text-amber-700 border border-amber-300 rounded-full hover:bg-amber-50 transition-colors font-semibold whitespace-nowrap text-sm">
                     {t('member')}
                   </button>
                 </Link>
                 <button
                   onClick={logout}
-                  className="px-4 py-2 text-white bg-red-500 rounded-full hover:bg-red-600 transition-colors font-semibold whitespace-nowrap"
+                  className="px-3 py-1.5 text-white bg-red-500 rounded-full hover:bg-red-600 transition-colors font-semibold whitespace-nowrap text-sm"
                 >
                   {t('logout')}
                 </button>
               </div>
             ) : (
               <Link href="/login">
-                <button className="px-4 py-2 text-white bg-amber-600 rounded-full hover:bg-amber-700 transition-colors font-semibold whitespace-nowrap">
+                <button className="px-3 py-1.5 text-white bg-amber-600 rounded-full hover:bg-amber-700 transition-colors font-semibold whitespace-nowrap text-sm">
                   {t('login')}
                 </button>
               </Link>
