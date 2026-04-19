@@ -1442,6 +1442,21 @@
     "igPostTestLabel": "Instagram 發文測試",
     "errorsDetail": "錯誤詳情：",
     "pushedSuccess": "成功",
-    "pushedFailed": "失敗"
+    "pushedFailed": "失敗",
+    "btnApply": "申請{label}",
+    "applySuccessTitle": "申請已送出",
+    "applySuccessDesc": "玉洞子將親自審閱命書內容，審核完成後將發送 Email 通知，請在 3 天內點擊下載。",
+    "myReportsTitle": "我的命書",
+    "myReportsEmpty": "尚無申請記錄",
+    "statusPending": "審核中",
+    "statusApproved": "已核准",
+    "statusRejected": "已退回",
+    "downloadTokenExpired": "下載期限已過",
+    "downloadTokenValid": "可下載",
+    "btnDownloadByToken": "下載命書",
+    "alertTokenExpired": "下載連結已過期，請聯繫玉洞子重新發送。",
+    "alertTokenFetchFailed": "取得命書失敗：",
+    "downloadTokenBanner": "命書已準備好，點擊下方按鈕下載",
+    "confirmApply": "{label}申請送出後將扣除本期使用次數，玉洞子審閱完成後發送 Email 通知下載。{lockWarning}\n\n確定要申請嗎？"
   }
 }

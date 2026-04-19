@@ -9,6 +9,7 @@ interface Stats {
   totalPointsSold: number;
   pendingAtm: number;
   pendingBookings: number;
+  pendingReports?: number;
 }
 
 export default function AdminDashboard() {
@@ -23,11 +24,14 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (!token) return;
-    fetch(`${API_URL}/Admin/stats`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(r => r.ok ? r.json() : null)
-      .then(data => { if (data) setStats(data); });
+    Promise.all([
+      fetch(`${API_URL}/Admin/stats`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.ok ? r.json() : null),
+      fetch(`${API_URL}/Reports/admin/list?status=pending_review`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.ok ? r.json() : []),
+    ]).then(([statsData, reportsData]) => {
+      if (statsData) {
+        setStats({ ...statsData, pendingReports: Array.isArray(reportsData) ? reportsData.length : 0 });
+      }
+    });
   }, [token, API_URL]);
 
   const cards = [
@@ -35,6 +39,7 @@ export default function AdminDashboard() {
     { label: '已售點數', value: stats?.totalPointsSold ?? '---', unit: '點', href: null },
     { label: '待審 ATM', value: stats?.pendingAtm ?? '---', unit: '筆', href: '/admin/atm', urgent: (stats?.pendingAtm ?? 0) > 0 },
     { label: '待處理預約', value: stats?.pendingBookings ?? '---', unit: '筆', href: '/admin/bookings', urgent: (stats?.pendingBookings ?? 0) > 0 },
+    { label: '待審命書', value: stats?.pendingReports ?? '---', unit: '份', href: '/admin/reports', urgent: (stats?.pendingReports ?? 0) > 0 },
   ];
 
   return (
@@ -74,6 +79,12 @@ export default function AdminDashboard() {
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:border-amber-300 transition-colors cursor-pointer">
             <h2 className="font-bold text-gray-700 mb-1">ATM 審核</h2>
             <p className="text-sm text-gray-500">審核會員 ATM 轉帳申請，批准後自動入帳點數</p>
+          </div>
+        </Link>
+        <Link href="/admin/reports">
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:border-amber-300 transition-colors cursor-pointer">
+            <h2 className="font-bold text-gray-700 mb-1">命書審核</h2>
+            <p className="text-sm text-gray-500">審閱用戶申請的命書，核准後自動發送 Email 下載連結</p>
           </div>
         </Link>
       </div>

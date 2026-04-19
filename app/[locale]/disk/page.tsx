@@ -5,6 +5,7 @@ import { Link } from '@/navigation';
 import { useTranslations } from 'next-intl';
 import Header from '@/components/Header';
 import { useAuth } from '@/components/AuthContext';
+import { useSearchParams } from 'next/navigation';
 
 const generateYears = () => {
   const currentYear = new Date().getFullYear();
@@ -33,6 +34,7 @@ const PRODUCT_CODE_MAP: Partial<Record<ReportTypeKey, string>> = {
 export default function DiskPage() {
   const { token } = useAuth();
   const t = useTranslations('Disk');
+  const searchParams = useSearchParams();
   const API_URL = process.env.NEXT_PUBLIC_API_URL
     ? process.env.NEXT_PUBLIC_API_URL
     : (typeof window !== 'undefined' && window.location.hostname === 'localhost')
@@ -65,6 +67,23 @@ export default function DiskPage() {
   const [loadingText, setLoadingText] = useState('');
   const [profileSaving, setProfileSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState('');
+
+  // Apply-review flow
+  const [applySuccess, setApplySuccess] = useState(false);
+
+  interface MyReportItem {
+    id: string;
+    reportType: string;
+    title: string;
+    status: 'pending_review' | 'approved' | 'rejected';
+    createdAt: string;
+    approvedAt?: string;
+    adminNote?: string;
+    hasDownloadToken: boolean;
+  }
+  const [myReports, setMyReports] = useState<MyReportItem[]>([]);
+  const [myReportsLoading, setMyReportsLoading] = useState(false);
+  const [tokenBanner, setTokenBanner] = useState<string | null>(null);
 
   type Palace = {
     palaceName: string; palaceStem: string; earthlyBranch: string;
@@ -158,6 +177,36 @@ export default function DiskPage() {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (token) loadProfile(); }, [token]);
+
+  const fetchMyReports = async () => {
+    if (!token) return;
+    setMyReportsLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/Reports/my`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMyReports(data);
+      }
+    } catch { /* silent */ } finally { setMyReportsLoading(false); }
+  };
+
+  useEffect(() => { if (token) fetchMyReports(); }, [token, API_URL]);
+
+  const handleDownloadByToken = (dlToken: string) => {
+    // Direct link to Ecanapi download endpoint (serves admin-approved DOCX)
+    const base = API_URL.replace('/api', '');
+    window.open(`${base}/api/Reports/download-approved?token=${dlToken}`, '_blank');
+  };
+
+  // Auto-download when page loads with downloadToken param
+  useEffect(() => {
+    const dlToken = searchParams?.get('downloadToken');
+    if (!dlToken || !token) return;
+    setTokenBanner(dlToken);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, token]);
 
   interface SubscriptionQuota {
     productCode: string;
@@ -325,12 +374,14 @@ export default function DiskPage() {
     const lockWarning = !subStatus?.birthdateLocked
       ? t('birthdateLockWarningAlert')
       : '';
-    const confirmMessages: Record<string, string> = {
-      '八字命書': t('confirmBazi', { lockWarning }),
-      '大運命書': t('confirmDaiyun', { lockWarning }),
-      '流年命書': t('confirmLiunian', { year: targetYear, lockWarning }),
-    };
-    if (!window.confirm(confirmMessages[reportType] ?? t('confirmDefault'))) return;
+    const selectedLabel = reportType === '八字命書' ? t('reportTypeBazi') :
+      reportType === '大運命書' ? t('reportTypeDaiyun') : t('reportTypeLiunian');
+    const confirmMsg = isAdmin
+      ? (reportType === '八字命書' ? t('confirmBazi', { lockWarning })
+        : reportType === '大運命書' ? t('confirmDaiyun', { lockWarning })
+        : t('confirmLiunian', { year: targetYear, lockWarning }))
+      : t('confirmApply', { label: selectedLabel, lockWarning });
+    if (!window.confirm(confirmMsg)) return;
 
     if ((reportType === '八字命書' || reportType === '大運命書' || reportType === '流年命書') && !profileLoaded) {
       return alert(t('alertNeedProfile', { type: reportType }));
@@ -381,25 +432,36 @@ export default function DiskPage() {
       clearTimeout(timer);
       const data = await res.json();
       if (res.ok) {
-        setReport(cleanReport(data.result || data.analysis || ''));
-        setPreviewChartData(null);
-        if (data.luckCycles) setLifelongCycles(data.luckCycles);
-        else setLifelongCycles(null);
-        if (data.baziTable) setBaziTable(data.baziTable);
-        else setBaziTable(null);
-        if (data.yongJiTable) setYongJiTable(data.yongJiTable);
-        else setYongJiTable(null);
-        if (data.annualForecasts) setAnnualForecasts(data.annualForecasts);
-        else setAnnualForecasts(null);
-        if (data.monthlyForecasts) setMonthlyForecasts(data.monthlyForecasts);
-        else setMonthlyForecasts(null);
-        // 設定報告標題
-        const titles: Record<ReportTypeKey, string> = {
-          '八字命書': t('reportTitleBazi'),
-          '大運命書': t('reportTitleDaiyun'),
-          '流年命書': t('reportTitleLiunian', { year: targetYear }),
-        };
-        setReportTitle(titles[reportType]);
+        if (isAdmin) {
+          // Admin: keep inline display behavior
+          setReport(cleanReport(data.result || data.analysis || ''));
+          setPreviewChartData(null);
+          if (data.luckCycles) setLifelongCycles(data.luckCycles); else setLifelongCycles(null);
+          if (data.baziTable) setBaziTable(data.baziTable); else setBaziTable(null);
+          if (data.yongJiTable) setYongJiTable(data.yongJiTable); else setYongJiTable(null);
+          if (data.annualForecasts) setAnnualForecasts(data.annualForecasts); else setAnnualForecasts(null);
+          if (data.monthlyForecasts) setMonthlyForecasts(data.monthlyForecasts); else setMonthlyForecasts(null);
+          const titles: Record<ReportTypeKey, string> = {
+            '八字命書': t('reportTitleBazi'),
+            '大運命書': t('reportTitleDaiyun'),
+            '流年命書': t('reportTitleLiunian', { year: targetYear }),
+          };
+          setReportTitle(titles[reportType]);
+        } else {
+          // User: apply-review flow - show success, refresh my reports list
+          setApplySuccess(true);
+          setReport('');
+          setPreviewChartData(null);
+          setLifelongCycles(null);
+          setBaziTable(null);
+          setYongJiTable(null);
+          setAnnualForecasts(null);
+          setMonthlyForecasts(null);
+          await fetchMyReports();
+          // Refresh subscription status
+          const subRes = await fetch(`${API_URL}/Subscription/status`, { headers: { Authorization: `Bearer ${token}` } });
+          if (subRes.ok) { const sd = await subRes.json(); setSubStatus(sd); }
+        }
       } else {
         const msg = data.error || t('alertAnalysisFailed');
         const detail = data.details ? `\n\n${data.details}` : '';
@@ -793,7 +855,8 @@ export default function DiskPage() {
                   : btnStatus === 'cross_year' ? t('btnCrossYear')
                   : btnStatus === 'locked' ? t('btnUpgrade')
                   : btnStatus === 'no_subscription' ? t('btnSubscribe')
-                  : t('btnActivate', { label: selectedLabel });
+                  : isAdmin ? t('btnActivate', { label: selectedLabel })
+                  : t('btnApply', { label: selectedLabel });
                 return (
                   <button
                     onClick={isDisabled ? undefined : isRedirect ? () => { window.location.href = '/subscribe'; } : handleAnalysis}
@@ -916,6 +979,82 @@ export default function DiskPage() {
               <div className="mb-4 bg-gray-100 border border-amber-200 p-4 rounded-[2rem] flex justify-between items-center">
                 <p className="text-sm text-gray-600">{t('trialEndedBanner')}</p>
                 <Link href="/subscribe" className="bg-amber-700 text-white px-5 py-2 rounded-full font-bold text-sm">{t('subscribeBtn')}</Link>
+              </div>
+            )}
+
+            {/* Token download banner (from email link) */}
+            {tokenBanner && (
+              <div className="mb-4 bg-gradient-to-r from-green-700 to-green-900 p-4 rounded-[2rem] text-white flex justify-between items-center shadow-lg">
+                <div>
+                  <p className="text-xs text-white/80">{t('downloadTokenBanner')}</p>
+                </div>
+                <button
+                  onClick={() => handleDownloadByToken(tokenBanner)}
+                  className="bg-white text-green-800 px-4 py-2 rounded-full font-bold text-sm hover:bg-green-50"
+                >
+                  {t('btnDownloadByToken')}
+                </button>
+              </div>
+            )}
+
+            {/* Apply success banner */}
+            {applySuccess && !report && (
+              <div className="mb-4 bg-gradient-to-r from-teal-700 to-teal-900 p-5 rounded-[2rem] text-white shadow-lg">
+                <p className="font-bold text-white text-base mb-1">{t('applySuccessTitle')}</p>
+                <p className="text-sm text-white/80 leading-relaxed">{t('applySuccessDesc')}</p>
+              </div>
+            )}
+
+            {/* My reports list */}
+            {token && !isAdmin && (myReports.length > 0 || myReportsLoading) && (
+              <div className="mb-4 bg-white rounded-2xl border border-amber-100 shadow-sm p-4">
+                <h3 className="font-bold text-amber-900 text-sm mb-3">{t('myReportsTitle')}</h3>
+                {myReportsLoading ? (
+                  <div className="flex justify-center py-3">
+                    <div className="w-5 h-5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                ) : myReports.length === 0 ? (
+                  <p className="text-xs text-gray-400 text-center">{t('myReportsEmpty')}</p>
+                ) : (
+                  <div className="space-y-2">
+                    {myReports.map(r => {
+                      const statusLabel = r.status === 'pending_review' ? t('statusPending')
+                        : r.status === 'approved' ? t('statusApproved')
+                        : t('statusRejected');
+                      const statusColor = r.status === 'pending_review' ? 'bg-yellow-100 text-yellow-700'
+                        : r.status === 'approved' ? 'bg-green-100 text-green-700'
+                        : 'bg-red-100 text-red-700';
+                      return (
+                        <div key={r.id} className="flex items-center justify-between gap-2 p-2 rounded-xl bg-amber-50/50 border border-amber-100">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-semibold text-gray-800 truncate">{r.title}</p>
+                            <p className="text-[10px] text-gray-400">{new Date(r.createdAt).toLocaleDateString('zh-TW')}</p>
+                            {r.status === 'rejected' && r.adminNote && (
+                              <p className="text-[10px] text-red-500 mt-0.5">{r.adminNote}</p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${statusColor}`}>{statusLabel}</span>
+                            {r.status === 'approved' && r.hasDownloadToken && (
+                              <button
+                                onClick={() => {
+                                  if (tokenBanner) {
+                                    handleDownloadByToken(tokenBanner);
+                                  } else {
+                                    alert('請使用 Email 中的下載連結，或聯繫玉洞子重新發送。');
+                                  }
+                                }}
+                                className="bg-green-600 text-white text-[10px] font-bold px-2 py-1 rounded-full hover:bg-green-700"
+                              >
+                                {t('downloadTokenValid')}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
 
