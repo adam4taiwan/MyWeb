@@ -316,9 +316,9 @@ export default function DivinationPage() {
                 ◈─────────◈
               </div>
               <p className="text-amber-200/60 text-sm leading-loose mb-8 max-w-xs">
-                周文王先天易數，以卦問事，<br />
-                自古靈驗，有求必應。<br />
-                誠心一問，天機自現。
+                以卦問事，自古靈驗，<br />
+                有求必應，誠心一問，<br />
+                天機自現。
               </p>
 
               {!isAuthenticated ? (
@@ -538,7 +538,7 @@ export default function DivinationPage() {
             return (
               <div className="w-full flex flex-col items-center animate-fade-in">
                 <div className="text-amber-500/60 text-xs tracking-[0.3em] mb-4">
-                  先天占卜・周文王先天易數・占卜結果
+                  先天占卜・占卜結果
                 </div>
 
                 <div className="flex gap-3 mb-6 flex-wrap justify-center">

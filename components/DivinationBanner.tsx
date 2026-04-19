@@ -61,7 +61,7 @@ export default function DivinationBanner() {
           className="text-sm leading-loose mb-8 max-w-xs mx-auto"
           style={{ color: 'rgba(200,164,74,0.5)' }}
         >
-          周文王先天易數<br />
+          以卦問事，自古靈驗<br />
           三步定卦，天機自現
         </p>
 
@@ -80,13 +80,13 @@ export default function DivinationBanner() {
               letterSpacing: '0.25em',
             }}
           >
-            叩問天機
+            誠心占卜
           </button>
         </Link>
 
         {/* Hint */}
         <p className="mt-4 text-amber-800/40 text-xs tracking-wider">
-          會員免費 · 先天占卜 · 周文王先天易數
+          會員免費 · 先天占卜
         </p>
       </div>
     </section>
