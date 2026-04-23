@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 
 const planHrefs = ['/subscribe', '/subscribe', '/subscribe'];
 const planRecommended = [false, true, false];
-const planPrices = [1000, 2000, 3000];
+const planPrices = [2500, 3000, 3600];
 const planCurrency = 'NT$';
 
 export default function PricingSection() {
