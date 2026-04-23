@@ -699,7 +699,7 @@ export default function DiskPage() {
         const blob = await res.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url; a.download = `${formData.name}_玉洞子命書.docx`;
+        a.href = url; a.download = `${formData.name}_玉洞子傳家寶典.docx`;
         document.body.appendChild(a); a.click(); a.remove();
       } catch (err) { alert(t('alertDocxFailedDetail', { err: String(err) })); }
       finally { setIsLoading(false); }
