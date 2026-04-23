@@ -224,18 +224,13 @@ export default function SubscribePage() {
           </div>
         )}
 
-        {/* VIP Coming Soon card */}
+        {/* VIP card */}
         {!loading && (
           <div className="max-w-4xl mx-auto mt-6">
-            <div className="relative rounded-2xl bg-gradient-to-r from-gray-800 to-gray-900 border border-gray-600 shadow-lg overflow-hidden opacity-80">
-              <div className="absolute top-4 right-4">
-                <span className="bg-gray-600 text-gray-200 px-3 py-1 rounded-full text-xs font-bold tracking-wide">
-                  {tPricing('comingSoon')}
-                </span>
-              </div>
+            <div className="relative rounded-2xl bg-gradient-to-r from-gray-800 to-gray-900 border border-yellow-500 shadow-lg overflow-hidden">
               <div className="p-6 flex flex-col md:flex-row md:items-center gap-5">
                 <div className="flex-shrink-0">
-                  <p className="text-xs text-gray-400 uppercase tracking-widest mb-1">VIP</p>
+                  <p className="text-xs text-yellow-400 uppercase tracking-widest mb-1">VIP</p>
                   <p className="text-2xl font-bold text-yellow-300">{tPricing('vipName')}</p>
                   <p className="text-3xl font-bold text-yellow-300 mt-2">NT$6,000<span className="text-sm font-normal text-gray-400 ml-1">{tPricing('perYear')}</span></p>
                   <div className="mt-2 bg-white/10 rounded-lg px-3 py-1.5">
@@ -255,10 +250,28 @@ export default function SubscribePage() {
                     </div>
                   ))}
                 </div>
-                <div className="flex-shrink-0">
-                  <button disabled className="w-full px-6 py-3 rounded-xl font-bold bg-gray-600 text-gray-400 cursor-not-allowed text-sm">
-                    {tPricing('comingSoonBtn')}
+                <div className="flex-shrink-0 flex flex-col gap-2">
+                  <button
+                    onClick={() => handleSubscribe('VIP')}
+                    disabled={purchasing !== null}
+                    className="w-full px-6 py-3 rounded-xl font-bold bg-yellow-500 hover:bg-yellow-400 text-gray-900 text-sm transition-colors disabled:opacity-50"
+                  >
+                    {purchasing === 'VIP' ? t('processing') : t('subscribePlan', { name: tPricing('vipName') })}
                   </button>
+                  <a
+                    href="https://paypal.me/chinesebook/6000TWD"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-bold text-sm bg-[#0070BA] hover:bg-[#005ea6] text-white transition-colors"
+                  >
+                    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.59 3.025-2.566 4.643-5.876 4.643h-1.77c-.386 0-.712.281-.772.662l-.93 5.89-.26 1.64H8.11l.243-1.54.928-5.886a1.95 1.95 0 0 1 1.923-1.655h1.77c3.956 0 6.58-1.888 7.362-5.59.28-1.36.14-2.5-.114-3.347z"/>
+                    </svg>
+                    PayPal 付款
+                  </a>
+                  <p className="text-xs text-gray-500 text-center leading-relaxed">
+                    PayPal 付款後請來信告知，將於24小時內手動開通
+                  </p>
                 </div>
               </div>
             </div>

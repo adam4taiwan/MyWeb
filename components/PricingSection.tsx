@@ -94,13 +94,8 @@ export default function PricingSection() {
           ))}
         </div>
 
-        {/* VIP Plan - Coming Soon */}
-        <div className="relative rounded-2xl bg-gradient-to-r from-gray-800 to-gray-900 border border-gray-600 shadow-lg overflow-hidden opacity-80">
-          <div className="absolute top-4 right-4">
-            <span className="bg-gray-600 text-gray-200 px-3 py-1 rounded-full text-xs font-bold tracking-wide">
-              {t('comingSoon')}
-            </span>
-          </div>
+        {/* VIP Plan */}
+        <div className="relative rounded-2xl bg-gradient-to-r from-gray-800 to-gray-900 border border-yellow-500 shadow-lg overflow-hidden">
           <div className="p-8 flex flex-col md:flex-row md:items-center gap-6">
             <div className="flex-shrink-0">
               <h3 className="text-2xl font-serif font-bold text-yellow-300">{t('vipName')}</h3>
@@ -116,9 +111,11 @@ export default function PricingSection() {
               ))}
             </div>
             <div className="flex-shrink-0">
-              <button disabled className="w-full md:w-auto px-8 py-3 rounded-lg font-bold bg-gray-600 text-gray-400 cursor-not-allowed">
-                {t('comingSoonBtn')}
-              </button>
+              <Link href="/subscribe">
+                <button className="w-full md:w-auto px-8 py-3 rounded-lg font-bold bg-yellow-500 hover:bg-yellow-400 text-gray-900 transition-colors">
+                  {t('vipCta')}
+                </button>
+              </Link>
             </div>
           </div>
         </div>
