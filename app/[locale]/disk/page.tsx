@@ -805,7 +805,7 @@ export default function DiskPage() {
             <div className="bg-white p-5 rounded-3xl shadow-sm border border-orange-100 text-sm">
               <h2 className="text-lg font-bold text-amber-950 mb-3">{t('reportTypeSection')}</h2>
               <div className="space-y-2">
-                {REPORT_TYPES.map(rt => {
+                {REPORT_TYPES.filter(rt => !(isVip && rt.key === '大運命書')).map(rt => {
                   const svcStatus = canUseService(rt.key);
                   const badge = svcStatus === 'available'
                     ? <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full shrink-0">{t('badgeAvailable')}</span>
@@ -828,12 +828,12 @@ export default function DiskPage() {
                       <div className="flex justify-between items-center gap-2">
                         <div className="min-w-0">
                           <div className="font-bold text-sm">{
-                            rt.key === '八字命書' ? t('reportTypeBazi') :
+                            rt.key === '八字命書' ? (isVip ? t('reportTypeVip') : t('reportTypeBazi')) :
                             rt.key === '大運命書' ? t('reportTypeDaiyun') :
                             t('reportTypeLiunian')
                           }</div>
                           <div className={`text-xs mt-0.5 ${reportType === rt.key ? 'text-amber-200' : 'text-gray-400'}`}>{
-                            rt.key === '八字命書' ? t('reportTypeBaziDesc') :
+                            rt.key === '八字命書' ? (isVip ? t('reportTypeVipDesc') : t('reportTypeBaziDesc')) :
                             rt.key === '大運命書' ? t('reportTypeDaiyunDesc') :
                             t('reportTypeLiunianDesc')
                           }</div>
