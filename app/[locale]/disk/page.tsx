@@ -622,13 +622,14 @@ export default function DiskPage() {
   const handleExportDocx = async () => {
     if (!report) return;
     // 封面顯示標題
+    const isVipOrAdmin = isVip || isAdmin;
     const bookTitleMap: Record<string, string> = {
-      '八字命書':  t('bookTitleBazi'),
+      '八字命書':  isVipOrAdmin ? t('bookTitleVip') : t('bookTitleBazi'),
       '大運命書':  t('bookTitleDaiyun'),
       '流年命書':  t('bookTitleLiunian'),
     };
     const skipTitleMap: Record<string, string> = {
-      '八字命書':  '八 字 命 書',
+      '八字命書':  isVipOrAdmin ? '玉 洞 子 傳 家 寶 典' : '八 字 命 書',
       '大運命書':  '大 運 命 書',
       '流年命書':  '流 年 命 書',
     };
