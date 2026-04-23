@@ -1346,6 +1346,7 @@
     "liunianInfo": "流年命書（{year}年・今年）",
     "liunianInfoDesc": "含む：八字・太歳・干支・流星・紫微四化 + 月別分析",
     "btnActivate": "{label}を起動",
+    "btnBaziFirst": "先に八字命書を申請してください",
     "btnUsed": "今期は使用済み",
     "btnCrossYear": "契約が年をまたぎました。再契約してください。",
     "btnUpgrade": "アップグレードで解放",

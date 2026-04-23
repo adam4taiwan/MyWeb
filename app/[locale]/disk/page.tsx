@@ -254,7 +254,7 @@ export default function DiskPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  const canUseService = (key: ReportTypeKey): 'available' | 'used' | 'locked' | 'no_subscription' | 'cross_year' => {
+  const canUseService = (key: ReportTypeKey): 'available' | 'used' | 'locked' | 'no_subscription' | 'cross_year' | 'bazi_first' => {
     if (isAdmin) return 'available';
     if (!token || !subStatus || !subStatus.isSubscribed) return 'no_subscription';
     // Cross-year check for 流年 and 大運: subscription must have started in the current year
@@ -267,6 +267,11 @@ export default function DiskPage() {
     const quota = subStatus.quotaStatus?.find(q => q.productCode === productCode);
     if (!quota) return 'locked';
     if (quota.remaining <= 0) return 'used';
+    // 流年/大運必須先申請八字命書（方案內含 BOOK_BAZI 且尚未使用）
+    if (key === '流年命書' || key === '大運命書') {
+      const baziQuota = subStatus.quotaStatus?.find(q => q.productCode === 'BOOK_BAZI');
+      if (baziQuota && baziQuota.remaining > 0) return 'bazi_first';
+    }
     return 'available';
   };
 
@@ -368,6 +373,9 @@ export default function DiskPage() {
     }
     if (serviceStatus === 'used') {
       return alert(t('alertUsed'));
+    }
+    if (serviceStatus === 'bazi_first') {
+      return;
     }
 
     // 執行前確認（扣配額不可逆）
@@ -846,13 +854,14 @@ export default function DiskPage() {
 
               {(() => {
                 const btnStatus = canUseService(reportType);
-                const isDisabled = btnStatus === 'used' || btnStatus === 'cross_year';
+                const isDisabled = btnStatus === 'used' || btnStatus === 'cross_year' || btnStatus === 'bazi_first';
                 const isRedirect = btnStatus === 'locked' || btnStatus === 'no_subscription' || btnStatus === 'cross_year';
                 const selectedLabel = reportType === '八字命書' ? t('reportTypeBazi') :
                   reportType === '大運命書' ? t('reportTypeDaiyun') :
                   t('reportTypeLiunian');
                 const btnLabel = btnStatus === 'used' ? t('btnUsed')
                   : btnStatus === 'cross_year' ? t('btnCrossYear')
+                  : btnStatus === 'bazi_first' ? t('btnBaziFirst')
                   : btnStatus === 'locked' ? t('btnUpgrade')
                   : btnStatus === 'no_subscription' ? t('btnSubscribe')
                   : isAdmin ? t('btnActivate', { label: selectedLabel })

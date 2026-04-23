@@ -1335,6 +1335,7 @@
     "liunianInfo": "流年命書（{year} 年 · 今年）",
     "liunianInfoDesc": "包含：八字·太歲·生肖·流星·紫微四化 + 逐月分析",
     "btnActivate": "啟動{label}",
+    "btnBaziFirst": "請先申請八字命書",
     "btnUsed": "本期已使用",
     "btnCrossYear": "訂閱已跨年，請重新訂閱",
     "btnUpgrade": "升級方案解鎖",

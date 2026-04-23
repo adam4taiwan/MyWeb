@@ -1335,6 +1335,7 @@
     "liunianInfo": "Annual Forecast Fortune Book ({year} · This Year)",
     "liunianInfoDesc": "Includes: BaZi, Tai Sui, Zodiac, Flow Stars, Zi Wei transformations + monthly analysis",
     "btnActivate": "Activate {label}",
+    "btnBaziFirst": "Please apply Bazi Report first",
     "btnUsed": "Used This Period",
     "btnCrossYear": "Subscription crossed year, please re-subscribe",
     "btnUpgrade": "Upgrade to Unlock",
