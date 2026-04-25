@@ -87,6 +87,12 @@ export default function AdminDashboard() {
             <p className="text-sm text-gray-500">審閱用戶申請的命書，核准後自動發送 Email 下載連結</p>
           </div>
         </Link>
+        <Link href="/admin/students">
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:border-amber-300 transition-colors cursor-pointer">
+            <h2 className="font-bold text-gray-700 mb-1">學生白名單</h2>
+            <p className="text-sm text-gray-500">設定允許使用學生練習排盤功能的會員 email</p>
+          </div>
+        </Link>
       </div>
     </div>
   );
