@@ -144,8 +144,8 @@ export default function AdminStudentsPage() {
                   key={m.id}
                   onClick={() => { if (!m.alreadyAdded) setSelectedUserId(m.id); }}
                   className={`flex items-center justify-between px-3 py-2 text-sm border-b border-neutral-700 last:border-0
-                    ${m.alreadyAdded ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:bg-neutral-700'}
-                    ${selectedUserId === m.id ? 'bg-amber-900/40' : ''}`}
+                    ${m.alreadyAdded ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:bg-amber-900/30'}
+                    ${selectedUserId === m.id ? 'bg-amber-800/50 border-l-2 border-l-amber-400' : ''}`}
                 >
                   <div>
                     <span className="font-medium">{m.name}</span>
@@ -177,14 +177,14 @@ export default function AdminStudentsPage() {
             </div>
             <button
               onClick={handleAdd}
-              disabled={addLoading || !selectedUserId}
+              disabled={addLoading}
               className="bg-amber-600 hover:bg-amber-500 disabled:opacity-40 text-white px-4 py-2 rounded-lg text-sm font-semibold transition whitespace-nowrap"
             >
               {addLoading ? '加入中...' : '加入白名單'}
             </button>
           </div>
           {addMsg && (
-            <p className={`text-xs mt-2 ${addMsg.startsWith('已加入') ? 'text-emerald-400' : 'text-red-400'}`}>{addMsg}</p>
+            <p className={`text-sm font-medium mt-2 ${addMsg.startsWith('已加入') ? 'text-emerald-400' : 'text-red-400'}`}>{addMsg}</p>
           )}
         </div>
 
