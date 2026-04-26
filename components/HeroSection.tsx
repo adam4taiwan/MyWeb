@@ -15,7 +15,6 @@ export default function HeroSection({ showSubscribeNudge: _showSubscribeNudge = 
         backgroundImage: `linear-gradient(135deg, rgba(61, 45, 26, 0.85) 0%, rgba(26, 26, 26, 0.9) 100%), url('/image/hero-main.jpg')`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
-        backgroundAttachment: 'fixed',
       }}
     >
       {/* Decorative elements for visual interest */}
