@@ -151,7 +151,7 @@ export default function StudentPage() {
     return (
       <div className="min-h-screen bg-neutral-900 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-amber-300 text-lg mb-4">請先登入才能使用學生練習排盤</p>
+          <p className="text-amber-300 text-lg mb-4">請先登入才能使用玉洞子專業排盤</p>
           <Link href="/login" className="bg-amber-600 text-white px-6 py-2 rounded-lg hover:bg-amber-700 transition">前往登入</Link>
         </div>
       </div>
@@ -181,7 +181,7 @@ export default function StudentPage() {
 
       <div className="max-w-xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-amber-300 mb-1">學生練習排盤</h1>
+          <h1 className="text-2xl font-bold text-amber-300 mb-1">玉洞子專業排盤</h1>
           <p className="text-neutral-400 text-sm">輸入生辰資料，下載完整命盤 XLS</p>
         </div>
 
