@@ -238,7 +238,20 @@ export default function DivinationPage() {
     if (topicIndex === null) return null;
     const topic = TOPICS[topicIndex];
     const trigramNum = TRIGRAMS[trigramIndex].num;
-    const code = topic.codes[trigramNum - 1];
+
+    // Each oracle number applies the cycle permutation f once to (group, pos):
+    // cycle: 1->6->7->4->5->3->8->2->1
+    const f = [0, 6, 1, 8, 5, 3, 7, 4, 2]; // 1-indexed; f[0] unused
+    const applyF = (x: number, n: number) => {
+      let v = x;
+      for (let i = 0; i < n; i++) v = f[v];
+      return v;
+    };
+    const group = Math.floor(topicIndex / 8) + 1;
+    const pos = (topicIndex % 8) + 1;
+    const n = trigramNum - 1;
+    const code = `${trigramNum}${applyF(group, n)}${applyF(pos, n)}`;
+
     const oracle = ORACLE_POEMS[code];
     return { topic, trigram: TRIGRAMS[trigramIndex], code, oracle };
   };
