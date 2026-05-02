@@ -6,11 +6,14 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthContext';
 
 const navItems = [
-  { href: '/admin',           label: '總覽'     },
-  { href: '/admin/users',     label: '會員管理' },
-  { href: '/admin/bookings',  label: '預約管理' },
-  { href: '/admin/atm',       label: 'ATM 審核' },
-  { href: '/admin/knowledge', label: '命理知識庫' },
+  { href: '/admin',                label: '總覽'       },
+  { href: '/admin/users',          label: '會員管理'   },
+  { href: '/admin/subscriptions',  label: '訂閱管理'   },
+  { href: '/admin/blessings',      label: '祈福服務'   },
+  { href: '/admin/bookings',       label: '預約管理'   },
+  { href: '/admin/line-push',      label: 'LINE 推播'  },
+  { href: '/admin/atm',            label: 'ATM 審核'   },
+  { href: '/admin/knowledge',      label: '命理知識庫' },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
