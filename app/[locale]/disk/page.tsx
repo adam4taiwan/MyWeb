@@ -61,6 +61,7 @@ export default function DiskPage() {
 
   const [report, setReport] = useState('');
   const [reportTitle, setReportTitle] = useState('');
+  const [generatedReportType, setGeneratedReportType] = useState<ReportTypeKey>('八字命書');
   const [lifelongCycles, setLifelongCycles] = useState<Array<{stem:string;branch:string;liuShen:string;startAge:number;endAge:number;score:number;level:string}> | null>(null);
   const [annualForecasts, setAnnualForecasts] = useState<Array<{year:number;age:number;stemBranch:string;daiyunStem:string;daiyunBranch:string;baziScore:number;ziweiScore:number;crossClass:string;summary:string;detail?:string}> | null>(null);
   const [monthlyForecasts, setMonthlyForecasts] = useState<Array<{month:number;label:string;stemBranch:string;season:string;flowStar:string;baziHint:string;crossClass:string;baziScore:number;ziweiScore:number;tip:string}> | null>(null);
@@ -457,6 +458,7 @@ export default function DiskPage() {
         if (isAdmin) {
           // Admin: keep inline display behavior
           setReport(cleanReport(data.result || data.analysis || ''));
+          setGeneratedReportType(reportType);
           setPreviewChartData(null);
           if (data.luckCycles) setLifelongCycles(data.luckCycles); else setLifelongCycles(null);
           if (data.baziTable) setBaziTable(data.baziTable); else setBaziTable(null);
@@ -607,6 +609,7 @@ export default function DiskPage() {
       const data = await res.json();
       if (!res.ok) return alert(data.error || t('alertYudongziFailed'));
       setReport(data.result);
+      setGeneratedReportType('八字命書');
       if (data.baziTable) setBaziTable(data.baziTable); else setBaziTable(null);
       if (data.yongJiTable) setYongJiTable(data.yongJiTable); else setYongJiTable(null);
       if (data.luckCycles) setLifelongCycles(data.luckCycles); else setLifelongCycles(null);
@@ -633,8 +636,8 @@ export default function DiskPage() {
       '大運命書':  '大 運 命 書',
       '流年命書':  '流 年 命 書',
     };
-    const bookTitle = bookTitleMap[reportType] ?? '命書';
-    const skipTitle = skipTitleMap[reportType] ?? bookTitle;
+    const bookTitle = bookTitleMap[generatedReportType] ?? '命書';
+    const skipTitle = skipTitleMap[generatedReportType] ?? bookTitle;
     try {
       setIsLoading(true);
       setLoadingText(t('loadingExportDocx'));
