@@ -427,7 +427,10 @@ export default function DiskPage() {
       let res: Response;
       if (reportType === '八字命書' && profileLoaded) {
         const endpoint = isVip ? 'analyze-yudongzi' : 'analyze-bazi-ziwei';
-        res = await fetch(`${API_URL}/Consultation/${endpoint}`, {
+        const ydUrl = isVip && formData.name
+          ? `${API_URL}/Consultation/${endpoint}?personName=${encodeURIComponent(formData.name)}`
+          : `${API_URL}/Consultation/${endpoint}`;
+        res = await fetch(ydUrl, {
           method: 'GET',
           headers: { 'Authorization': `Bearer ${token}` },
           signal: controller.signal
