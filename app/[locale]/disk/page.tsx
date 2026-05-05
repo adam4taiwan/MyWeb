@@ -468,7 +468,7 @@ export default function DiskPage() {
           const titles: Record<ReportTypeKey, string> = {
             '八字命書': t('reportTitleBazi'),
             '大運命書': t('reportTitleDaiyun'),
-            '流年命書': t('reportTitleLiunian', { year: targetYear }),
+            '流年命書': t('reportTitleLiunian'),
           };
           setReportTitle(titles[reportType]);
         } else {
