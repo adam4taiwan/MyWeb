@@ -624,17 +624,15 @@ export default function DiskPage() {
 
   const handleExportDocx = async () => {
     if (!report) return;
-    // 封面顯示標題
-    const isVipOrAdmin = isVip || isAdmin;
+    // 封面顯示標題：判斷內容是否為傳家寶典（由 reportTitle 決定，非身份）
+    const isYudongziContent = reportTitle === t('reportTitleYudongzi');
     const skipTitleMap: Record<string, string> = {
-      '八字命書':  isVipOrAdmin ? '玉 洞 子 傳 家 寶 典' : '八 字 命 書',
+      '八字命書':  isYudongziContent ? '玉 洞 子 傳 家 寶 典' : '八 字 命 書',
       '大運命書':  '大 運 命 書',
       '流年命書':  '流 年 命 書',
     };
-    // 八字命書 VIP/Admin 固定用傳家寶典標題，其餘命書直接沿用 reportTitle（與瀏覽器顯示標題一致）
-    const bookTitle = (generatedReportType === '八字命書' && isVipOrAdmin)
-      ? t('bookTitleVip')
-      : (reportTitle || '命書');
+    // bookTitle 直接沿用 reportTitle；傳家寶典內容改用有空格的版本供封面排版
+    const bookTitle = isYudongziContent ? t('bookTitleVip') : (reportTitle || '命書');
     const skipTitle = skipTitleMap[generatedReportType] ?? bookTitle;
     try {
       setIsLoading(true);
