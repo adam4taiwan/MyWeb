@@ -1,6 +1,7 @@
 ---
 name: ECPay 上線待辦清單
 description: 綠界科技正式帳號審核通過後，開通訂閱與點數付款的完整步驟
+status: 已完成（2026-05-01）
 type: project
 ---
 
