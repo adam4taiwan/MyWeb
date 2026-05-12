@@ -1108,15 +1108,14 @@ export default function MemberPage() {
               const bgBase = yearGodBorder[p.yearGod] ?? 'border-gray-200 bg-white';
               const txt    = yearGodText[p.yearGod] ?? 'text-gray-600';
               const ringCls = isSelected  ? 'ring-2 ring-blue-400' :
-                              isMingGong  ? 'ring-[3px] ring-amber-500' :
-                              isChong     ? 'ring-[3px] ring-red-500' :
-                              isSanhe     ? 'ring-[3px] ring-green-500' : '';
+                              isMingGong  ? 'ring-[3px] ring-gray-900' :
+                              (isChong || isSanhe) ? 'ring-[3px] ring-blue-500' : '';
               const badge = isMingGong ? (
-                <span className="text-[8px] bg-amber-500 text-white px-1 rounded leading-none">小限</span>
+                <span className="text-[8px] bg-gray-900 text-white px-1 rounded leading-none">小限</span>
               ) : isChong ? (
-                <span className="text-[8px] bg-red-500 text-white px-1 rounded leading-none">沖</span>
+                <span className="text-[8px] bg-blue-500 text-white px-1 rounded leading-none">沖</span>
               ) : isSanhe ? (
-                <span className="text-[8px] bg-green-600 text-white px-1 rounded leading-none">三合</span>
+                <span className="text-[8px] bg-blue-500 text-white px-1 rounded leading-none">三合</span>
               ) : null;
 
               return (
@@ -1213,9 +1212,8 @@ export default function MemberPage() {
                       <p className="text-[10px] font-bold text-gray-500">外框標示（命宮固定）</p>
                       <div className="grid grid-cols-3 gap-1.5 text-[10px] text-center">
                         {[
-                          { label: '小限（命宮）', cls: 'ring-2 ring-amber-500 bg-white text-amber-700' },
-                          { label: '三合宮', cls: 'ring-2 ring-green-500 bg-white text-green-700' },
-                          { label: '沖宮', cls: 'ring-2 ring-red-500 bg-white text-red-600' },
+                          { label: '小限（命宮）', cls: 'ring-2 ring-gray-900 bg-white text-gray-900' },
+                          { label: '三合宮 / 沖宮', cls: 'ring-2 ring-blue-500 bg-white text-blue-600' },
                         ].map(({ label, cls }) => (
                           <span key={label} className={`px-2 py-1 rounded border ${cls}`}>{label}</span>
                         ))}
