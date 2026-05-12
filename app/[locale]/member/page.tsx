@@ -1059,32 +1059,33 @@ export default function MemberPage() {
           {/* Ming Gong Chart tab */}
           {activeTab === 'mingGong' && (() => {
             const GRID_TO_PAL = [9, 8, 7, 6, 10, -1, -1, 5, 11, -1, -1, 4, 0, 1, 2, 3];
+            // 十二年神：太歲/青龍/喪門/六合/官符/小耗/大耗/朱雀/白虎/貴神/吊客/病符
             const yearGodBorder: Record<string, string> = {
-              '紫微': 'border-amber-400 bg-amber-50',
-              '太陽': 'border-green-400 bg-green-50',
-              '太陰': 'border-green-400 bg-green-50',
-              '天德': 'border-green-400 bg-green-50',
+              '青龍': 'border-amber-400 bg-amber-50',
+              '貴神': 'border-green-400 bg-green-50',
+              '六合': 'border-green-400 bg-green-50',
               '太歲': 'border-gray-300 bg-gray-50',
-              '驛馬': 'border-gray-300 bg-gray-50',
+              '朱雀': 'border-orange-300 bg-orange-50',
               '小耗': 'border-orange-400 bg-orange-50',
-              '百越': 'border-orange-400 bg-orange-50',
-              '五鬼': 'border-red-400 bg-red-50',
+              '喪門': 'border-red-400 bg-red-50',
+              '官符': 'border-red-400 bg-red-50',
               '白虎': 'border-red-400 bg-red-50',
-              '天狗': 'border-red-400 bg-red-50',
+              '吊客': 'border-red-400 bg-red-50',
+              '病符': 'border-red-400 bg-red-50',
               '大耗': 'border-red-600 bg-red-100',
             };
             const yearGodText: Record<string, string> = {
-              '紫微': 'text-amber-700 font-bold',
-              '太陽': 'text-green-700',
-              '太陰': 'text-green-700',
-              '天德': 'text-green-700',
+              '青龍': 'text-amber-700 font-bold',
+              '貴神': 'text-green-700',
+              '六合': 'text-green-700',
               '太歲': 'text-gray-600',
-              '驛馬': 'text-gray-600',
+              '朱雀': 'text-orange-500',
               '小耗': 'text-orange-600',
-              '百越': 'text-orange-600',
-              '五鬼': 'text-red-600',
+              '喪門': 'text-red-600',
+              '官符': 'text-red-600',
               '白虎': 'text-red-600',
-              '天狗': 'text-red-600',
+              '吊客': 'text-red-600',
+              '病符': 'text-red-600',
               '大耗': 'text-red-700 font-bold',
             };
             const curYear = new Date().getFullYear();
@@ -1183,12 +1184,12 @@ export default function MemberPage() {
 
                     <div className="grid grid-cols-3 gap-1.5 text-[10px] text-center pt-1">
                       {[
-                        { label: '大吉', cls: 'bg-amber-100 text-amber-700 border border-amber-300' },
-                        { label: '吉', cls: 'bg-green-100 text-green-700 border border-green-300' },
-                        { label: '中性', cls: 'bg-gray-100 text-gray-600 border border-gray-300' },
-                        { label: '小凶', cls: 'bg-orange-100 text-orange-600 border border-orange-300' },
-                        { label: '凶', cls: 'bg-red-100 text-red-600 border border-red-400' },
-                        { label: '大凶', cls: 'bg-red-200 text-red-700 border border-red-600' },
+                        { label: '大吉 青龍', cls: 'bg-amber-100 text-amber-700 border border-amber-300' },
+                        { label: '吉 六合 貴神', cls: 'bg-green-100 text-green-700 border border-green-300' },
+                        { label: '中性 太歲', cls: 'bg-gray-100 text-gray-600 border border-gray-300' },
+                        { label: '小凶 朱雀 小耗', cls: 'bg-orange-100 text-orange-600 border border-orange-300' },
+                        { label: '凶 白虎 喪門 吊客 官符 病符', cls: 'bg-red-100 text-red-600 border border-red-400' },
+                        { label: '大凶 大耗', cls: 'bg-red-200 text-red-700 border border-red-600' },
                       ].map(({ label, cls }) => (
                         <span key={label} className={`px-2 py-1 rounded ${cls}`}>{label}</span>
                       ))}
