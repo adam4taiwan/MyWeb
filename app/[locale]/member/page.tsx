@@ -1089,21 +1089,48 @@ export default function MemberPage() {
               '大耗': 'text-red-700 font-bold',
             };
             const curYear = new Date().getFullYear();
+            // 命宮 FlowID（子=1序），沖宮，三合 — 永遠不變
+            const stdOrder12 = ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"];
+            const mgFlowId = stdOrder12.indexOf(mingGongData?.mingGong ?? '') + 1;
+            const chongFlowId = mgFlowId > 0 ? ((mgFlowId - 1 + 6) % 12) + 1 : 0;
+            const sanheGroups = [[1,5,9],[2,6,10],[3,7,11],[4,8,12]];
+            const sanheGroup = sanheGroups.find(g => g.includes(mgFlowId)) ?? [];
+            const sanheFlowIds = sanheGroup.filter(id => id !== mgFlowId);
+
             const renderCell = (palIdx: number) => {
               const p = mingGongData!.palaces[palIdx];
-              const border = yearGodBorder[p.yearGod] ?? 'border-gray-200 bg-white';
-              const txt = yearGodText[p.yearGod] ?? 'text-gray-600';
-              const isMing = palIdx === 0;
+              const palFlowId = stdOrder12.indexOf(p.branch) + 1;
+              const isMingGong = palFlowId === mgFlowId;
+              const isChong    = palFlowId === chongFlowId;
+              const isSanhe    = sanheFlowIds.includes(palFlowId);
               const isSelected = selectedPalaceIdx === palIdx;
+
+              const bgBase = yearGodBorder[p.yearGod] ?? 'border-gray-200 bg-white';
+              const txt    = yearGodText[p.yearGod] ?? 'text-gray-600';
+              const ringCls = isSelected  ? 'ring-2 ring-blue-400' :
+                              isMingGong  ? 'ring-[3px] ring-amber-500' :
+                              isChong     ? 'ring-[3px] ring-red-500' :
+                              isSanhe     ? 'ring-[3px] ring-green-500' : '';
+              const badge = isMingGong ? (
+                <span className="text-[8px] bg-amber-500 text-white px-1 rounded leading-none">小限</span>
+              ) : isChong ? (
+                <span className="text-[8px] bg-red-500 text-white px-1 rounded leading-none">沖</span>
+              ) : isSanhe ? (
+                <span className="text-[8px] bg-green-600 text-white px-1 rounded leading-none">三合</span>
+              ) : null;
+
               return (
                 <button
                   key={palIdx}
                   onClick={() => setSelectedPalaceIdx(isSelected ? null : palIdx)}
-                  className={`border-2 rounded-lg p-1.5 text-left transition-all w-full h-full min-h-[76px] ${border} ${isMing ? 'ring-2 ring-amber-500' : ''} ${isSelected ? 'ring-2 ring-blue-400' : ''} hover:opacity-80`}
+                  className={`border-2 rounded-lg p-1.5 text-left transition-all w-full h-full min-h-[76px] ${bgBase} ${ringCls} hover:opacity-80`}
                 >
-                  <p className="text-[10px] font-bold text-gray-500 leading-none">{p.palName}</p>
-                  <p className="text-xs font-bold text-gray-800 mt-0.5">{p.branch}</p>
-                  <p className={`text-[11px] mt-1 leading-none ${txt}`}>{p.yearGod || '-'}</p>
+                  <div className="flex items-center justify-between mb-0.5">
+                    <p className="text-[10px] font-bold text-gray-500 leading-none">{p.palName}</p>
+                    {badge}
+                  </div>
+                  <p className="text-xs font-bold text-gray-800">{p.branch}</p>
+                  <p className={`text-[11px] mt-0.5 leading-none ${txt}`}>{p.yearGod || '-'}</p>
                   {p.goodStar && <p className="text-[9px] text-green-600 mt-0.5 leading-tight truncate">{p.goodStar}</p>}
                   {p.badStar && <p className="text-[9px] text-red-500 leading-tight truncate">{p.badStar}</p>}
                 </button>
@@ -1182,17 +1209,30 @@ export default function MemberPage() {
                       );
                     })()}
 
-                    <div className="grid grid-cols-3 gap-1.5 text-[10px] text-center pt-1">
-                      {[
-                        { label: '大吉 青龍', cls: 'bg-amber-100 text-amber-700 border border-amber-300' },
-                        { label: '吉 六合 貴神', cls: 'bg-green-100 text-green-700 border border-green-300' },
-                        { label: '中性 太歲', cls: 'bg-gray-100 text-gray-600 border border-gray-300' },
-                        { label: '小凶 朱雀 小耗', cls: 'bg-orange-100 text-orange-600 border border-orange-300' },
-                        { label: '凶 白虎 喪門 吊客 官符 病符', cls: 'bg-red-100 text-red-600 border border-red-400' },
-                        { label: '大凶 大耗', cls: 'bg-red-200 text-red-700 border border-red-600' },
-                      ].map(({ label, cls }) => (
-                        <span key={label} className={`px-2 py-1 rounded ${cls}`}>{label}</span>
-                      ))}
+                    <div className="space-y-2 pt-1">
+                      <p className="text-[10px] font-bold text-gray-500">外框標示（命宮固定）</p>
+                      <div className="grid grid-cols-3 gap-1.5 text-[10px] text-center">
+                        {[
+                          { label: '小限（命宮）', cls: 'ring-2 ring-amber-500 bg-white text-amber-700' },
+                          { label: '三合宮', cls: 'ring-2 ring-green-500 bg-white text-green-700' },
+                          { label: '沖宮', cls: 'ring-2 ring-red-500 bg-white text-red-600' },
+                        ].map(({ label, cls }) => (
+                          <span key={label} className={`px-2 py-1 rounded border ${cls}`}>{label}</span>
+                        ))}
+                      </div>
+                      <p className="text-[10px] font-bold text-gray-500 mt-1">底色（年神吉凶）</p>
+                      <div className="grid grid-cols-3 gap-1.5 text-[10px] text-center">
+                        {[
+                          { label: '大吉 青龍', cls: 'bg-amber-100 text-amber-700 border border-amber-300' },
+                          { label: '吉 六合 貴神', cls: 'bg-green-100 text-green-700 border border-green-300' },
+                          { label: '中性 太歲', cls: 'bg-gray-100 text-gray-600 border border-gray-300' },
+                          { label: '小凶 朱雀 小耗', cls: 'bg-orange-100 text-orange-600 border border-orange-300' },
+                          { label: '凶 白虎 喪門等', cls: 'bg-red-100 text-red-600 border border-red-400' },
+                          { label: '大凶 大耗', cls: 'bg-red-200 text-red-700 border border-red-600' },
+                        ].map(({ label, cls }) => (
+                          <span key={label} className={`px-2 py-1 rounded ${cls}`}>{label}</span>
+                        ))}
+                      </div>
                     </div>
                   </>
                 )}
