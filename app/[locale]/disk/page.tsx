@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import Header from '@/components/Header';
 import { useAuth } from '@/components/AuthContext';
 import { useSearchParams } from 'next/navigation';
+import MingGongChart from '@/components/MingGongChart';
 
 const generateYears = () => {
   const currentYear = new Date().getFullYear();
@@ -1385,6 +1386,13 @@ export default function DiskPage() {
                         );
                       })}
                     </div>
+                  </div>
+                )}
+                {/* 流年命書：歲星臨命圖 */}
+                {generatedReportType === '流年命書' && (
+                  <div className="bg-white p-5 rounded-2xl border border-amber-100 shadow-sm">
+                    <h3 className="text-base font-bold text-amber-900 mb-3">歲星臨命圖</h3>
+                    <MingGongChart token={token ?? ''} apiUrl={API_URL} initialYear={targetYear} showYearSelector={false} />
                   </div>
                 )}
               </div>
