@@ -222,17 +222,25 @@ export default function MemberPage() {
         ? `${API_URL}/Fortune/daily-personal`
         : `${API_URL}/Fortune/daily`;
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
       const res = await fetch(fortuneUrl, {
         headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
       if (res.ok) {
         const data = await res.json();
         setDailyFortune(data);
       } else {
         setFortuneError(t('fortuneError'));
       }
-    } catch {
-      setFortuneError(t('fortuneNetworkError'));
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        setFortuneError('運勢載入逾時，請稍後重試');
+      } else {
+        setFortuneError(t('fortuneNetworkError'));
+      }
     } finally {
       setFortuneLoading(false);
     }
