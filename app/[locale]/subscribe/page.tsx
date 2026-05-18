@@ -232,11 +232,11 @@ export default function SubscribePage() {
                 <div className="flex-shrink-0">
                   <p className="text-xs text-yellow-400 uppercase tracking-widest mb-1">VIP</p>
                   <p className="text-2xl font-bold text-yellow-300">{tPricing('vipName')}</p>
-                  <p className="text-3xl font-bold text-yellow-300 mt-2">NT$6,000<span className="text-sm font-normal text-gray-400 ml-1">{tPricing('perYear')}</span></p>
+                  <p className="text-3xl font-bold text-yellow-300 mt-2">NT$8,000<span className="text-sm font-normal text-gray-400 ml-1">{tPricing('perYear')}</span></p>
                   <div className="mt-2 bg-white/10 rounded-lg px-3 py-1.5">
                     <p className="text-xs text-gray-400 mb-0.5">{t('vipPlanValue')}</p>
                     <div className="flex items-center gap-2">
-                      <span className="text-base font-bold text-yellow-300">NT$8,000+</span>
+                      <span className="text-base font-bold text-yellow-300">NT$10,000+</span>
                       <span className="bg-yellow-500/30 text-yellow-300 text-xs font-bold px-2 py-0.5 rounded-full">{t('vipSaving')}</span>
                     </div>
                   </div>
@@ -259,7 +259,7 @@ export default function SubscribePage() {
                     {purchasing === 'VIP' ? t('processing') : t('subscribePlan', { name: tPricing('vipName') })}
                   </button>
                   <a
-                    href="https://paypal.me/chinesebook/6000TWD"
+                    href="https://paypal.me/chinesebook/8000TWD"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-bold text-sm bg-[#0070BA] hover:bg-[#005ea6] text-white transition-colors"
