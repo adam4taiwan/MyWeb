@@ -437,7 +437,7 @@ export default function DiskPage() {
           signal: controller.signal
         });
       } else if (reportType === '大運命書' && profileLoaded) {
-        res = await fetch(`${API_URL}/Consultation/analyze-daiyun?years=5&v=2`, {
+        res = await fetch(`${API_URL}/Consultation/analyze-daiyun?years=5&v=3`, {
           method: 'GET',
           headers: { 'Authorization': `Bearer ${token}` },
           signal: controller.signal
