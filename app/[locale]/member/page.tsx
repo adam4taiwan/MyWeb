@@ -98,10 +98,6 @@ export default function MemberPage() {
   const [ordersLoaded, setOrdersLoaded] = useState(false);
   const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [hasLineLinked, setHasLineLinked] = useState(false);
-  const [notifyEnabled, setNotifyEnabled] = useState(false);
-  const [notifyLoading, setNotifyLoading] = useState(false);
-
   const [dailyFortune, setDailyFortune] = useState<DailyFortune | null>(null);
   const [fortuneLoading, setFortuneLoading] = useState(false);
   const [fortuneError, setFortuneError] = useState('');
@@ -148,15 +144,8 @@ export default function MemberPage() {
       .then(data => {
         if (data) {
           setIsAdmin(data.isAdmin === true);
-          setHasLineLinked(data.hasLineLinked === true);
         }
       })
-      .catch(() => {});
-    fetch(`${API_URL}/NineStar/notify`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(r => r.ok ? r.json() : null)
-      .then(data => { if (data) setNotifyEnabled(data.notifyEnabled === true); })
       .catch(() => {});
   }, [token, API_URL]);
 
@@ -274,19 +263,6 @@ export default function MemberPage() {
     }
   }, [token, API_URL, nineStarLoaded, t]);
 
-  const handleToggleNotify = async () => {
-    if (!token || !hasLineLinked) return;
-    setNotifyLoading(true);
-    try {
-      const res = await fetch(`${API_URL}/NineStar/notify`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ enabled: !notifyEnabled }),
-      });
-      if (res.ok) setNotifyEnabled(v => !v);
-    } catch { /* ignore */ }
-    finally { setNotifyLoading(false); }
-  };
 
   const fetchReports = async () => {
     if (!token || reportsLoaded) return;
@@ -621,54 +597,6 @@ export default function MemberPage() {
                         days: subscription.daysRemaining ?? 0,
                       })}
                     </p>
-                  </div>
-
-                  {/* LINE daily push settings */}
-                  <div className="bg-green-50 border border-green-200 rounded-xl p-4 space-y-3">
-                    <p className="text-sm font-bold text-green-800">{t('linePushTitle')}</p>
-                    <p className="text-xs text-green-700 leading-relaxed">
-                      {t('linePushDesc')}
-                    </p>
-
-                    {!hasLineLinked ? (
-                      <div className="space-y-2">
-                        <p className="text-xs font-medium text-green-800">{t('lineSetupStepsTitle')}</p>
-                        <ol className="text-xs text-green-700 space-y-1.5 list-decimal list-inside">
-                          <li>
-                            {t('lineStep1')}
-                            <a
-                              href="https://line.me/R/ti/p/@213qrysy"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="ml-1 underline font-medium text-green-900"
-                            >
-                              {t('lineStep1Link')}
-                            </a>
-                          </li>
-                          <li>{t('lineStep2')}</li>
-                          <li>
-                            <Link href="/login" className="underline font-medium text-green-900">
-                              {t('lineStep3Prefix')}
-                            </Link>
-                            {t('lineStep3Suffix')}
-                          </li>
-                        </ol>
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-between pt-1">
-                        <div>
-                          <p className="text-xs font-medium text-green-800">{t('lineLinked')}</p>
-                          <p className="text-xs text-green-600">{notifyEnabled ? t('lineNotifyOn') : t('lineNotifyOff')}</p>
-                        </div>
-                        <button
-                          onClick={handleToggleNotify}
-                          disabled={notifyLoading}
-                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${notifyEnabled ? 'bg-green-500' : 'bg-gray-300'} ${notifyLoading ? 'opacity-50' : ''}`}
-                        >
-                          <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${notifyEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
-                        </button>
-                      </div>
-                    )}
                   </div>
 
                   {/* Quota usage */}

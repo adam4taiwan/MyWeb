@@ -23,6 +23,9 @@ export default function AdminLinePushPage() {
   const [pushing, setPushing] = useState(false);
   const [result, setResult] = useState<PushResult | null>(null);
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
+  const [hasLineLinked, setHasLineLinked] = useState(false);
+  const [notifyEnabled, setNotifyEnabled] = useState(false);
+  const [notifyLoading, setNotifyLoading] = useState(false);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL
     ? process.env.NEXT_PUBLIC_API_URL
@@ -37,7 +40,33 @@ export default function AdminLinePushPage() {
     })
       .then(r => r.ok ? r.json() : null)
       .then(data => { if (data) setStats(data); });
+    fetch(`${API_URL}/Auth/profile`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data) setHasLineLinked(data.hasLineLinked === true); })
+      .catch(() => {});
+    fetch(`${API_URL}/NineStar/notify`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data) setNotifyEnabled(data.notifyEnabled === true); })
+      .catch(() => {});
   }, [token, API_URL]);
+
+  const handleToggleNotify = async () => {
+    if (!token || !hasLineLinked) return;
+    setNotifyLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/NineStar/notify`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ enabled: !notifyEnabled }),
+      });
+      if (res.ok) setNotifyEnabled(v => !v);
+    } catch { /* ignore */ }
+    finally { setNotifyLoading(false); }
+  };
 
   const handlePushNow = async () => {
     if (!confirm('確定要立即推播今日九星運勢給所有訂閱者？')) return;
@@ -70,6 +99,39 @@ export default function AdminLinePushPage() {
           {msg.text}
         </div>
       )}
+
+      {/* Admin LINE binding & notify settings */}
+      <div className="bg-green-50 border border-green-200 rounded-xl p-5 mb-8">
+        <h2 className="font-bold text-green-800 mb-3">管理員 LINE 設定</h2>
+        {!hasLineLinked ? (
+          <div className="space-y-2">
+            <p className="text-sm text-green-700">尚未綁定 LINE 帳號，完成以下步驟後即可啟用推播：</p>
+            <ol className="text-sm text-green-700 space-y-1 list-decimal list-inside">
+              <li>
+                加入官方 LINE 帳號
+                <a href="https://line.me/R/ti/p/@213qrysy" target="_blank" rel="noopener noreferrer"
+                  className="ml-1 underline font-medium text-green-900">點此加入 @213qrysy</a>
+              </li>
+              <li>在排盤工具填寫並儲存生辰資料</li>
+              <li>用 LINE 帳號登入本平台（綁定 LINE ID）</li>
+            </ol>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-green-800">LINE 帳號已綁定</p>
+              <p className="text-xs text-green-600 mt-0.5">{notifyEnabled ? '推播已開啟，每日 7:30 自動發送' : '推播已關閉'}</p>
+            </div>
+            <button
+              onClick={handleToggleNotify}
+              disabled={notifyLoading}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${notifyEnabled ? 'bg-green-500' : 'bg-gray-300'} ${notifyLoading ? 'opacity-50' : ''}`}
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${notifyEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
