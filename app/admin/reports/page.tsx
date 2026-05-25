@@ -202,6 +202,26 @@ export default function AdminReportsPage() {
     } finally { setActionLoading(false); }
   };
 
+  const handleDelete = async (id: string, title: string) => {
+    if (!token) return;
+    if (!confirm(`確定刪除「${title}」？此操作無法復原。`)) return;
+    setActionLoading(true);
+    setMsg('');
+    try {
+      const res = await fetch(`${API_URL}/Reports/admin/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMsg('已刪除');
+        setReports(prev => prev.filter(r => r.id !== id));
+      } else {
+        setMsg(`錯誤：${data.error}`);
+      }
+    } finally { setActionLoading(false); }
+  };
+
   const handleResend = async (id: string) => {
     if (!token) return;
     if (!confirm('重新發送 Email（產生新的 72hr 下載連結）？')) return;
@@ -341,6 +361,15 @@ export default function AdminReportsPage() {
                       重發 Email
                     </button>
                   )}
+
+                  {/* Delete */}
+                  <button
+                    onClick={() => handleDelete(r.id, r.title)}
+                    disabled={actionLoading}
+                    className="px-3 py-1.5 bg-red-50 text-red-600 text-xs rounded-lg hover:bg-red-100 disabled:opacity-50"
+                  >
+                    刪除
+                  </button>
                 </div>
               </div>
             );
