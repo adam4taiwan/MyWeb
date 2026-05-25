@@ -110,7 +110,8 @@ export default function AdminReportsPage() {
           reportText: data.content,
           personName: data.personName,
           bookTitle: data.bookTitle,
-          skipTitle: data.skipTitle
+          skipTitle: data.skipTitle,
+          addWatermark: false
         })
       });
       if (!docxRes.ok) { alert('DOCX 生成失敗'); return; }
@@ -170,7 +171,7 @@ export default function AdminReportsPage() {
       if (res.ok) {
         setMsg(`已核准！Email 已發送。`);
         setSelectedReport(null);
-        await fetchReports();
+        setStatusFilter('approved');
       } else {
         setMsg(`錯誤：${data.error || JSON.stringify(data)}`);
       }
