@@ -88,6 +88,7 @@ export default function DiskPage() {
     approvedAt?: string;
     adminNote?: string;
     hasDownloadToken: boolean;
+    downloadToken?: string;
   }
   const [myReports, setMyReports] = useState<MyReportItem[]>([]);
   const [myReportsLoading, setMyReportsLoading] = useState(false);
@@ -1066,8 +1067,9 @@ export default function DiskPage() {
                             {r.status === 'approved' && r.hasDownloadToken && (
                               <button
                                 onClick={() => {
-                                  if (tokenBanner) {
-                                    handleDownloadByToken(tokenBanner);
+                                  const dlToken = r.downloadToken ?? tokenBanner;
+                                  if (dlToken) {
+                                    handleDownloadByToken(dlToken);
                                   } else {
                                     alert('請使用 Email 中的下載連結，或聯繫玉洞子重新發送。');
                                   }
