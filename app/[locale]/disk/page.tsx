@@ -707,7 +707,9 @@ export default function DiskPage() {
     if (!captureMode || !ziweiGridRef.current) return;
     let cancelled = false;
     (async () => {
-      await new Promise(r => setTimeout(r, 200));
+      // 等字型就緒（防止標楷體未載入導致截圖文字變糊）
+      await document.fonts.ready;
+      await new Promise(r => setTimeout(r, 300));
       if (cancelled || !ziweiGridRef.current) return;
       try {
         setLoadingText(t('loadingYudongziDocx'));
