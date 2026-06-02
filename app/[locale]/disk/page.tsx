@@ -109,6 +109,7 @@ export default function DiskPage() {
   const [captureMode, setCaptureMode] = useState(false);
   const ziweiGridRef = useRef<HTMLDivElement>(null);
   const exportChartJsonRef = useRef<string>('');
+  const pendingGenericDocxRef = useRef<{ reportText: string; personName: string; bookTitle: string; skipTitle: string; fileName: string } | null>(null);
 
   // 登入後自動載入會員生辰資料
   const loadProfile = async () => {
@@ -629,16 +630,40 @@ export default function DiskPage() {
 
   const handleExportDocx = async () => {
     if (!report) return;
-    // 封面顯示標題：判斷內容是否為傳家寶典（由 reportTitle 決定，非身份）
     const isYudongziContent = reportTitle === t('reportTitleYudongzi');
     const skipTitleMap: Record<string, string> = {
       '八字命書':  isYudongziContent ? '玉 洞 子 傳 家 寶 典' : '八 字 命 書',
       '大運命書':  '大 運 命 書',
       '流年命書':  '流 年 命 書',
     };
-    // bookTitle 直接沿用 reportTitle；傳家寶典內容改用有空格的版本供封面排版
     const bookTitle = isYudongziContent ? t('bookTitleVip') : (reportTitle || '命書');
     const skipTitle = skipTitleMap[generatedReportType] ?? bookTitle;
+    const safeTitle = reportTitle.replace(/[\s/\\:*?"<>|]/g, '_');
+    const fileName = `${formData.name}_${safeTitle}.docx`;
+
+    // 先天元神圖：先計算命盤 + 截圖，再帶圖匯出 DOCX
+    if (profileLoaded && formData.year) {
+      try {
+        setIsLoading(true);
+        setLoadingText(t('loadingExportDocx'));
+        const calcRes = await fetch(`${API_URL}/Astrology/calculate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify(formData),
+        });
+        if (!calcRes.ok) { alert(t('alertCalcFailed')); setIsLoading(false); return; }
+        const chartData = await calcRes.json();
+        pendingGenericDocxRef.current = { reportText: report, personName: formData.name, bookTitle, skipTitle, fileName };
+        setExportChart(chartData);
+        setCaptureMode(true);
+      } catch (err) {
+        alert(t('alertCalcError', { err: String(err) }));
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    // fallback：無生辰資料時不帶圖直接匯出
     try {
       setIsLoading(true);
       setLoadingText(t('loadingExportDocx'));
@@ -651,8 +676,7 @@ export default function DiskPage() {
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
-      const safeTitle = reportTitle.replace(/[\s/\\:*?"<>|]/g, '_');
-      a.href = url; a.download = `${formData.name}_${safeTitle}.docx`;
+      a.href = url; a.download = fileName;
       document.body.appendChild(a); a.click(); a.remove();
     } catch (err) { alert(t('alertDocxFailedDetail', { err: String(err) })); }
     finally { setIsLoading(false); }
@@ -691,21 +715,46 @@ export default function DiskPage() {
         const imgBase64 = canvas.toDataURL('image/png').split(',')[1];
         setCaptureMode(false);
         setExportChart(null);
-        const res = await fetch(`${API_URL}/Consultation/export-yudongzi-docx`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify({
-            chartImageBase64: imgBase64,
-            chartJson: exportChartJsonRef.current,
-            personName: formData.name,
-          }),
-        });
-        if (!res.ok) { const d = await res.json().catch(() => ({})); alert(d.error || t('alertDocxFailed')); return; }
-        const blob = await res.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = `${formData.name}_玉洞子命書.docx`;
-        document.body.appendChild(a); a.click(); a.remove();
+
+        const pending = pendingGenericDocxRef.current;
+        if (pending) {
+          // 八字紫微/大運/流年命書：帶先天元神圖匯出
+          pendingGenericDocxRef.current = null;
+          const res = await fetch(`${API_URL}/Consultation/export-generic-docx`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({
+              reportText: pending.reportText,
+              personName: pending.personName,
+              bookTitle: pending.bookTitle,
+              skipTitle: pending.skipTitle,
+              chartImageBase64: imgBase64,
+            }),
+          });
+          if (!res.ok) { const d = await res.json().catch(() => ({})); alert(d.error || t('alertDocxFailed')); return; }
+          const blob = await res.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url; a.download = pending.fileName;
+          document.body.appendChild(a); a.click(); a.remove();
+        } else {
+          // 玉洞子傳家寶典：原有路徑
+          const res = await fetch(`${API_URL}/Consultation/export-yudongzi-docx`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({
+              chartImageBase64: imgBase64,
+              chartJson: exportChartJsonRef.current,
+              personName: formData.name,
+            }),
+          });
+          if (!res.ok) { const d = await res.json().catch(() => ({})); alert(d.error || t('alertDocxFailed')); return; }
+          const blob = await res.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url; a.download = `${formData.name}_玉洞子命書.docx`;
+          document.body.appendChild(a); a.click(); a.remove();
+        }
       } catch (err) { alert(t('alertDocxFailedDetail', { err: String(err) })); }
       finally { setIsLoading(false); }
     })();
