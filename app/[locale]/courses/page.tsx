@@ -59,6 +59,7 @@ export default function CoursesPage() {
   const t = useTranslations('Courses');
   const { token } = useAuth();
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
@@ -67,12 +68,17 @@ export default function CoursesPage() {
       setLoadingAuth(false);
       return;
     }
-    fetch(`${API_URL}/Subscription/status`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(r => r.json())
-      .then(data => setIsSubscribed(!!data?.isSubscribed))
-      .catch(() => setIsSubscribed(false))
+    Promise.all([
+      fetch(`${API_URL}/Subscription/status`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(r => r.ok ? r.json() : null),
+      fetch(`${API_URL}/Auth/profile`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(r => r.ok ? r.json() : null),
+    ])
+      .then(([subData, profileData]) => {
+        setIsSubscribed(!!subData?.isSubscribed);
+        setIsAdmin(profileData?.isAdmin === true);
+      })
+      .catch(() => {})
       .finally(() => setLoadingAuth(false));
   }, [token]);
 
@@ -100,6 +106,9 @@ export default function CoursesPage() {
         <div className="space-y-4">
           {BAZI_LESSONS.map(lesson => {
             const isOpen = expandedId === lesson.id;
+            // Lesson 1 is free; lessons 2+ require subscription or admin
+            const isFree = lesson.id === 1;
+            const canAccess = isFree || isSubscribed || isAdmin;
             return (
               <div
                 key={lesson.id}
@@ -127,6 +136,9 @@ export default function CoursesPage() {
                       </span>
                     ))}
                   </div>
+                  {!isFree && !isAdmin && !isSubscribed && !loadingAuth && (
+                    <i className="ri-lock-2-line text-amber-400 text-lg flex-shrink-0" />
+                  )}
                   <i
                     className={`ri-arrow-${isOpen ? 'up' : 'down'}-s-line text-amber-500 text-xl flex-shrink-0 ml-2`}
                   />
@@ -151,8 +163,8 @@ export default function CoursesPage() {
                       <div className="px-6 py-8 flex justify-center">
                         <div className="w-6 h-6 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
                       </div>
-                    ) : !isSubscribed ? (
-                      // Lock overlay for non-subscribers
+                    ) : !canAccess ? (
+                      // Lock overlay for non-subscribers (lesson 2+)
                       <div className="px-6 py-10 text-center bg-amber-50">
                         <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-amber-100 flex items-center justify-center">
                           <i className="ri-lock-2-line text-amber-500 text-2xl" />
@@ -202,7 +214,7 @@ export default function CoursesPage() {
         </div>
 
         {/* Non-subscriber CTA banner */}
-        {!loadingAuth && !isSubscribed && (
+        {!loadingAuth && !isSubscribed && !isAdmin && (
           <div className="mt-10 bg-gradient-to-r from-amber-700 to-orange-700 text-white rounded-2xl p-8 text-center">
             <p className="text-lg font-bold mb-2">{t('lockedTitle')}</p>
             <p className="text-amber-100 text-sm mb-5">{t('lockedDesc')}</p>
