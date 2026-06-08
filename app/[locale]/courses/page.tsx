@@ -396,6 +396,11 @@ export default function CoursesPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [slideIndexMap, setSlideIndexMap] = useState<Record<number, number>>({});
+
+  const getSlideIndex = (id: number) => slideIndexMap[id] ?? 0;
+  const setSlideIndex = (id: number, idx: number) =>
+    setSlideIndexMap(prev => ({ ...prev, [id]: idx }));
 
   useEffect(() => {
     if (!token) {
@@ -417,7 +422,10 @@ export default function CoursesPage() {
   }, [token]);
 
   const toggleLesson = (id: number) => {
-    setExpandedId(prev => (prev === id ? null : id));
+    setExpandedId(prev => {
+      if (prev !== id) setSlideIndex(id, 0);
+      return prev === id ? null : id;
+    });
   };
 
   return (
@@ -512,26 +520,71 @@ export default function CoursesPage() {
                         </Link>
                       </div>
                     ) : lesson.content ? (
-                      // Member content (populated from PPT)
-                      <div className="px-6 py-6">
-                        <p className="font-semibold text-gray-800 mb-4">{t('contentTitle')}</p>
-                        <div className="space-y-4 text-gray-700 text-sm leading-relaxed">
-                          {(lesson.content as { heading: string; points: string[] }[]).map(
-                            (section, i) => (
-                              <div key={i}>
-                                <p className="font-semibold text-amber-800 mb-1">
-                                  {section.heading}
-                                </p>
-                                <ul className="list-disc list-inside space-y-1 ml-2">
-                                  {section.points.map((pt, j) => (
-                                    <li key={j}>{pt}</li>
-                                  ))}
-                                </ul>
+                      // Slideshow viewer
+                      (() => {
+                        const slides = lesson.content as { heading: string; points: string[] }[];
+                        const si = getSlideIndex(lesson.id);
+                        const slide = slides[si];
+                        return (
+                          <div className="bg-gray-950">
+                            {/* Slide area */}
+                            <div className="px-6 py-8 min-h-[280px] flex flex-col justify-between">
+                              {/* Slide header */}
+                              <div className="flex items-start justify-between mb-5 gap-4">
+                                <h3 className="text-amber-300 font-bold text-lg leading-snug">
+                                  {slide.heading}
+                                </h3>
+                                <span className="flex-shrink-0 text-xs text-gray-500 mt-1">
+                                  {si + 1} / {slides.length}
+                                </span>
                               </div>
-                            )
-                          )}
-                        </div>
-                      </div>
+                              {/* Bullet points */}
+                              <ul className="flex-1 space-y-3 mb-6">
+                                {slide.points.map((pt, j) => (
+                                  <li key={j} className="flex items-start gap-2 text-gray-200 text-sm leading-relaxed">
+                                    <span className="flex-shrink-0 mt-1.5 w-1.5 h-1.5 rounded-full bg-amber-400" />
+                                    <span>{pt}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                              {/* Progress bar */}
+                              <div className="w-full bg-gray-800 rounded-full h-1 mb-4">
+                                <div
+                                  className="bg-amber-500 h-1 rounded-full transition-all duration-300"
+                                  style={{ width: `${((si + 1) / slides.length) * 100}%` }}
+                                />
+                              </div>
+                              {/* Navigation */}
+                              <div className="flex items-center justify-between gap-3">
+                                <button
+                                  onClick={e => { e.stopPropagation(); setSlideIndex(lesson.id, si - 1); }}
+                                  disabled={si === 0}
+                                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-gray-800 text-gray-300 hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                >
+                                  <i className="ri-arrow-left-line" /> 上一張
+                                </button>
+                                {/* Dot indicators */}
+                                <div className="flex gap-1">
+                                  {slides.map((_, dotIdx) => (
+                                    <button
+                                      key={dotIdx}
+                                      onClick={e => { e.stopPropagation(); setSlideIndex(lesson.id, dotIdx); }}
+                                      className={`w-2 h-2 rounded-full transition-colors ${dotIdx === si ? 'bg-amber-400' : 'bg-gray-700 hover:bg-gray-500'}`}
+                                    />
+                                  ))}
+                                </div>
+                                <button
+                                  onClick={e => { e.stopPropagation(); setSlideIndex(lesson.id, si + 1); }}
+                                  disabled={si === slides.length - 1}
+                                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-amber-700 text-white hover:bg-amber-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                >
+                                  下一張 <i className="ri-arrow-right-line" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()
                     ) : (
                       // Content not ready yet
                       <div className="px-6 py-8 text-center bg-gray-50">
