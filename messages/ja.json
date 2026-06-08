@@ -13,6 +13,7 @@
     "home": "ホーム",
     "heritage": "命学の継承",
     "blog": "命理コラム",
+    "courses": "オンライン講座",
     "disk": "命盤鑑定",
     "blessing": "祈福サービス",
     "appointment": "ご相談予約",
@@ -1447,5 +1448,24 @@
     "errorsDetail": "エラー詳細：",
     "pushedSuccess": "成功",
     "pushedFailed": "失敗"
+  },
+  "Courses": {
+    "metaTitle": "オンライン講座 | 玉洞子星相古学堂",
+    "metaDesc": "基礎から応用まで体系的に学ぶ八字命理オンライン講座。会員登録でコンテンツをすべて解放。",
+    "heroTitle": "命理オンライン講座",
+    "heroDesc": "伝統的な八字命理を体系的に学びましょう。会員登録ですべての講座コンテンツを利用できます。",
+    "seriesBazi": "八字命理シリーズ",
+    "seriesLessonsCount": "全6講",
+    "lessonLabel": "第{n}講",
+    "topicsLabel": "学習テーマ",
+    "contentTitle": "講座ノート",
+    "lockedTitle": "会員限定コンテンツ",
+    "lockedDesc": "いずれかのプランに登録すると、すべての講座コンテンツが解放されます。",
+    "subscribeCta": "今すぐ登録",
+    "comingSoonLabel": "近日公開",
+    "comingSoonDesc": "講座ノートを準備中です。しばらくお待ちください。",
+    "readingLabel": "閲覧中",
+    "expandBtn": "講座を見る",
+    "collapseBtn": "閉じる"
   }
 }

@@ -38,6 +38,7 @@ export default function Header() {
             <Link href="/" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer whitespace-nowrap">{t('home')}</Link>
             <Link href="/heritage" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer whitespace-nowrap">{t('heritage')}</Link>
             <Link href="/blog" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer whitespace-nowrap">{t('blog')}</Link>
+            <Link href="/courses" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer whitespace-nowrap">{t('courses')}</Link>
             {isAuthenticated && (
               <Link href="/disk" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer whitespace-nowrap">{t('disk')}</Link>
             )}
@@ -105,6 +106,7 @@ export default function Header() {
               <Link href="/" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>{t('home')}</Link>
               <Link href="/heritage" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>{t('heritage')}</Link>
               <Link href="/blog" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>{t('blog')}</Link>
+              <Link href="/courses" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>{t('courses')}</Link>
               <Link href="/consultation" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>{t('consultationMobile')}</Link>
               {isAuthenticated && (
                 <Link href="/disk" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>{t('disk')}</Link>

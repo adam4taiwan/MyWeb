@@ -13,6 +13,7 @@
     "home": "Home",
     "heritage": "Divination Heritage",
     "blog": "Astrology Blog",
+    "courses": "Online Courses",
     "disk": "Chart Reading",
     "blessing": "Blessing Services",
     "appointment": "Consultation Booking",
@@ -1436,5 +1437,24 @@
     "errorsDetail": "Error details:",
     "pushedSuccess": "Success",
     "pushedFailed": "Failed"
+  },
+  "Courses": {
+    "metaTitle": "Online Courses | Yudongzi Academy",
+    "metaDesc": "Systematic BaZi astrology courses from fundamentals to advanced analysis. Subscribe to unlock all course content.",
+    "heroTitle": "Online Astrology Courses",
+    "heroDesc": "A structured curriculum for learning traditional BaZi astrology. Subscribe to access all course content.",
+    "seriesBazi": "BaZi Astrology Series",
+    "seriesLessonsCount": "6 Lessons",
+    "lessonLabel": "Lesson {n}",
+    "topicsLabel": "Topics",
+    "contentTitle": "Course Notes",
+    "lockedTitle": "Members Only",
+    "lockedDesc": "Subscribe to any plan to unlock all course content.",
+    "subscribeCta": "Subscribe Now",
+    "comingSoonLabel": "Coming Soon",
+    "comingSoonDesc": "Course notes are being prepared. Please check back soon.",
+    "readingLabel": "Reading",
+    "expandBtn": "View Course",
+    "collapseBtn": "Collapse"
   }
 }

@@ -13,6 +13,7 @@
     "home": "首頁",
     "heritage": "命學傳承",
     "blog": "命理文章",
+    "courses": "線上教學",
     "disk": "排盤鑑定",
     "blessing": "祈福服務",
     "appointment": "問事預約",
@@ -1452,5 +1453,24 @@
     "alertTokenFetchFailed": "取得命書失敗：",
     "downloadTokenBanner": "命書已準備好，點擊下方按鈕下載",
     "confirmApply": "{label}申請送出後將扣除本期使用次數，玉洞子審閱完成後發送 Email 通知下載。{lockWarning}\n\n確定要申請嗎？"
+  },
+  "Courses": {
+    "metaTitle": "線上教學課程 | 玉洞子星相古學堂",
+    "metaDesc": "系統化命理線上教學，從基礎天干地支到高階論斷，完整六課八字命理課程。訂閱會員解鎖全部內容。",
+    "heroTitle": "命理線上教學",
+    "heroDesc": "系統化學習傳統八字命理，由淺入深掌握推命精髓。訂閱會員可解鎖所有課程內容。",
+    "seriesBazi": "八字命理系列",
+    "seriesLessonsCount": "共六課",
+    "lessonLabel": "第 {n} 課",
+    "topicsLabel": "課程主題",
+    "contentTitle": "課程重點",
+    "lockedTitle": "訂閱會員限定",
+    "lockedDesc": "訂閱任一方案，即可解鎖所有課程完整內容。",
+    "subscribeCta": "立即訂閱",
+    "comingSoonLabel": "內容即將上線",
+    "comingSoonDesc": "課程筆記整理中，敬請期待。",
+    "readingLabel": "閱讀中",
+    "expandBtn": "展開課程",
+    "collapseBtn": "收合"
   }
 }
