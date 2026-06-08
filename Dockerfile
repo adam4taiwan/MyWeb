@@ -38,6 +38,9 @@ COPY --from=builder /app/.next/static ./.next/static
 # 2. 複製 public/ 資料夾內容
 COPY --from=builder /app/public ./public
 
+# 3. 複製受保護課程 PDF（不在 public/，需透過 API route 驗證存取）
+COPY --from=builder /app/private-pdfs ./private-pdfs
+
 # 暴露端口 (Next.js 預設使用 3000)
 EXPOSE 3000
 

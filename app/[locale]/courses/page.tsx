@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/navigation';
 import Header from '@/components/Header';
@@ -389,6 +389,66 @@ const BAZI_LESSONS = [
   },
 ];
 
+function PdfViewer({ lessonId, token, isFree }: { lessonId: number; token: string | null; isFree: boolean }) {
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const prevBlobUrl = useRef<string | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    setError(false);
+    setBlobUrl(null);
+
+    const headers: HeadersInit = {};
+    if (!isFree && token) headers['Authorization'] = `Bearer ${token}`;
+
+    fetch(`/api/course-pdf/${lessonId}`, { headers })
+      .then(r => {
+        if (!r.ok) throw new Error();
+        return r.blob();
+      })
+      .then(blob => {
+        if (prevBlobUrl.current) URL.revokeObjectURL(prevBlobUrl.current);
+        const url = URL.createObjectURL(blob);
+        prevBlobUrl.current = url;
+        setBlobUrl(url);
+        setLoading(false);
+      })
+      .catch(() => { setError(true); setLoading(false); });
+
+    return () => {
+      if (prevBlobUrl.current) URL.revokeObjectURL(prevBlobUrl.current);
+    };
+  }, [lessonId, token, isFree]);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 bg-gray-950">
+        <div className="w-8 h-8 border-2 border-amber-400 border-t-transparent rounded-full animate-spin mb-3" />
+        <p className="text-amber-300 text-sm">載入課程簡報中...</p>
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="flex items-center justify-center py-12 bg-gray-950">
+        <p className="text-gray-400 text-sm">載入失敗，請重新整理頁面</p>
+      </div>
+    );
+  }
+  return (
+    <div className="bg-black">
+      <iframe
+        src={`${blobUrl}#toolbar=0&navpanes=0`}
+        className="w-full border-0"
+        style={{ height: 'min(75vh, 720px)' }}
+        title={`第${lessonId}課課程簡報`}
+      />
+    </div>
+  );
+}
+
 export default function CoursesPage() {
   const t = useTranslations('Courses');
   const { token } = useAuth();
@@ -396,11 +456,6 @@ export default function CoursesPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [expandedId, setExpandedId] = useState<number | null>(null);
-  const [slideIndexMap, setSlideIndexMap] = useState<Record<number, number>>({});
-
-  const getSlideIndex = (id: number) => slideIndexMap[id] ?? 0;
-  const setSlideIndex = (id: number, idx: number) =>
-    setSlideIndexMap(prev => ({ ...prev, [id]: idx }));
 
   useEffect(() => {
     if (!token) {
@@ -422,10 +477,7 @@ export default function CoursesPage() {
   }, [token]);
 
   const toggleLesson = (id: number) => {
-    setExpandedId(prev => {
-      if (prev !== id) setSlideIndex(id, 0);
-      return prev === id ? null : id;
-    });
+    setExpandedId(prev => (prev === id ? null : id));
   };
 
   return (
@@ -520,71 +572,7 @@ export default function CoursesPage() {
                         </Link>
                       </div>
                     ) : lesson.content ? (
-                      // Slideshow viewer
-                      (() => {
-                        const slides = lesson.content as { heading: string; points: string[] }[];
-                        const si = getSlideIndex(lesson.id);
-                        const slide = slides[si];
-                        return (
-                          <div className="bg-gray-950">
-                            {/* Slide area */}
-                            <div className="px-6 py-8 min-h-[280px] flex flex-col justify-between">
-                              {/* Slide header */}
-                              <div className="flex items-start justify-between mb-5 gap-4">
-                                <h3 className="text-amber-300 font-bold text-lg leading-snug">
-                                  {slide.heading}
-                                </h3>
-                                <span className="flex-shrink-0 text-xs text-gray-500 mt-1">
-                                  {si + 1} / {slides.length}
-                                </span>
-                              </div>
-                              {/* Bullet points */}
-                              <ul className="flex-1 space-y-3 mb-6">
-                                {slide.points.map((pt, j) => (
-                                  <li key={j} className="flex items-start gap-2 text-gray-200 text-sm leading-relaxed">
-                                    <span className="flex-shrink-0 mt-1.5 w-1.5 h-1.5 rounded-full bg-amber-400" />
-                                    <span>{pt}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                              {/* Progress bar */}
-                              <div className="w-full bg-gray-800 rounded-full h-1 mb-4">
-                                <div
-                                  className="bg-amber-500 h-1 rounded-full transition-all duration-300"
-                                  style={{ width: `${((si + 1) / slides.length) * 100}%` }}
-                                />
-                              </div>
-                              {/* Navigation */}
-                              <div className="flex items-center justify-between gap-3">
-                                <button
-                                  onClick={e => { e.stopPropagation(); setSlideIndex(lesson.id, si - 1); }}
-                                  disabled={si === 0}
-                                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-gray-800 text-gray-300 hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                                >
-                                  <i className="ri-arrow-left-line" /> 上一張
-                                </button>
-                                {/* Dot indicators */}
-                                <div className="flex gap-1">
-                                  {slides.map((_, dotIdx) => (
-                                    <button
-                                      key={dotIdx}
-                                      onClick={e => { e.stopPropagation(); setSlideIndex(lesson.id, dotIdx); }}
-                                      className={`w-2 h-2 rounded-full transition-colors ${dotIdx === si ? 'bg-amber-400' : 'bg-gray-700 hover:bg-gray-500'}`}
-                                    />
-                                  ))}
-                                </div>
-                                <button
-                                  onClick={e => { e.stopPropagation(); setSlideIndex(lesson.id, si + 1); }}
-                                  disabled={si === slides.length - 1}
-                                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-amber-700 text-white hover:bg-amber-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                                >
-                                  下一張 <i className="ri-arrow-right-line" />
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })()
+                      <PdfViewer lessonId={lesson.id} token={token} isFree={isFree} />
                     ) : (
                       // Content not ready yet
                       <div className="px-6 py-8 text-center bg-gray-50">
