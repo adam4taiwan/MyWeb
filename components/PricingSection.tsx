@@ -100,7 +100,7 @@ export default function PricingSection() {
             <div className="flex-shrink-0">
               <h3 className="text-2xl font-serif font-bold text-yellow-300">{t('vipName')}</h3>
               <p className="text-gray-400 text-sm mt-1">{t('vipDesc')}</p>
-              <p className="text-4xl font-bold text-yellow-300 mt-3">NT$6,000<span className="text-sm font-normal text-gray-400 ml-1">{t('perYear')}</span></p>
+              <p className="text-4xl font-bold text-yellow-300 mt-3">NT$8,000<span className="text-sm font-normal text-gray-400 ml-1">{t('perYear')}</span></p>
             </div>
             <div className="flex-grow grid grid-cols-2 md:grid-cols-3 gap-2">
               {vipFeatures.map((f, i) => (
