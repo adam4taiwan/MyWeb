@@ -26,6 +26,8 @@ interface LunarInfo {
   monthGanzhi: string;
   dayGanzhi: string;
   solarTerm?: string;
+  currentSolarTerm?: string;
+  currentSolarTermDate?: string;
   isLeap?: boolean;
 }
 
@@ -85,6 +87,8 @@ export default function StudentPage() {
             monthGanzhi: data.monthGanzhi,
             dayGanzhi: data.dayGanzhi,
             solarTerm: data.solarTerm || '',
+            currentSolarTerm: data.currentSolarTerm || '',
+            currentSolarTermDate: data.currentSolarTermDate || '',
           });
         }
       })
@@ -258,8 +262,13 @@ export default function StudentPage() {
                   <span>年柱 {lunarInfo.yearGanzhi}</span>
                   <span>月柱 {lunarInfo.monthGanzhi}</span>
                   <span>日柱 {lunarInfo.dayGanzhi}</span>
-                  {lunarInfo.solarTerm && <span className="text-emerald-300">節氣：{lunarInfo.solarTerm}</span>}
                 </div>
+                {lunarInfo.currentSolarTerm && (
+                  <div className="text-emerald-300 text-sm">
+                    節氣：{lunarInfo.currentSolarTerm}（{lunarInfo.currentSolarTermDate}）
+                    {lunarInfo.solarTerm && <span className="text-emerald-400 ml-1">← 當日即節氣</span>}
+                  </div>
+                )}
               </div>
             ) : (
               <span className="text-neutral-500">選擇日期後自動顯示農曆</span>
