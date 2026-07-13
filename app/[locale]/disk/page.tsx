@@ -21,6 +21,7 @@ const REPORT_TYPES = [
   { key: '八字命書', label: '玉洞子八字紫微命書', desc: '八字紫微雙系統全方位命盤剖析' },
   { key: '大運命書', label: '大運命書', desc: '逐年吉凶大運推演' },
   { key: '流年命書', label: '流年命書', desc: '五術合一年度全方位推演' },
+  { key: '八字真經', label: '八字真經命書', desc: '純八字真經盲派方法論命（管理員專用）' },
 ] as const;
 
 
@@ -408,7 +409,7 @@ export default function DiskPage() {
       : t('confirmApply', { label: selectedLabel, lockWarning });
     if (!window.confirm(confirmMsg)) return;
 
-    if ((reportType === '八字命書' || reportType === '大運命書' || reportType === '流年命書') && !profileLoaded) {
+    if ((reportType === '八字命書' || reportType === '大運命書' || reportType === '流年命書' || reportType === '八字真經') && !profileLoaded) {
       return alert(t('alertNeedProfile', { type: reportType }));
     }
     setLoadingText(reportType === '大運命書' && profileLoaded
@@ -450,6 +451,15 @@ export default function DiskPage() {
           headers: { 'Authorization': `Bearer ${token}` },
           signal: controller.signal
         });
+      } else if (reportType === '八字真經' && profileLoaded) {
+        const bjUrl = formData.name
+          ? `${API_URL}/Consultation/analyze-bazijing?personName=${encodeURIComponent(formData.name)}`
+          : `${API_URL}/Consultation/analyze-bazijing`;
+        res = await fetch(bjUrl, {
+          method: 'GET',
+          headers: { 'Authorization': `Bearer ${token}` },
+          signal: controller.signal
+        });
       } else {
         res = await fetch(`${API_URL}/Consultation/analyze`, {
           method: 'POST',
@@ -463,7 +473,7 @@ export default function DiskPage() {
       if (res.ok) {
         if (isAdmin) {
           // Admin: keep inline display behavior
-          setReport(cleanReport(data.result || data.analysis || ''));
+          setReport(cleanReport(data.report || data.result || data.analysis || ''));
           setGeneratedReportType(reportType);
           setPreviewChartData(null);
           if (data.luckCycles) setLifelongCycles(data.luckCycles); else setLifelongCycles(null);
@@ -475,6 +485,7 @@ export default function DiskPage() {
             '八字命書': t('reportTitleBazi'),
             '大運命書': t('reportTitleDaiyun'),
             '流年命書': t('reportTitleLiunian'),
+            '八字真經': '八字真經命書',
           };
           setReportTitle(titles[reportType]);
         } else {
@@ -861,7 +872,7 @@ export default function DiskPage() {
             <div className="bg-white p-5 rounded-3xl shadow-sm border border-orange-100 text-sm">
               <h2 className="text-lg font-bold text-amber-950 mb-3">{t('reportTypeSection')}</h2>
               <div className="space-y-2">
-                {REPORT_TYPES.filter(rt => !(isVip && rt.key === '大運命書')).map(rt => {
+                {REPORT_TYPES.filter(rt => !(isVip && rt.key === '大運命書') && !(rt.key === '八字真經' && !isAdmin)).map(rt => {
                   const svcStatus = canUseService(rt.key);
                   const badge = svcStatus === 'available'
                     ? <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full shrink-0">{t('badgeAvailable')}</span>
@@ -886,11 +897,13 @@ export default function DiskPage() {
                           <div className="font-bold text-sm">{
                             rt.key === '八字命書' ? (isVip ? t('reportTypeVip') : t('reportTypeBazi')) :
                             rt.key === '大運命書' ? t('reportTypeDaiyun') :
+                            rt.key === '八字真經' ? '八字真經命書' :
                             t('reportTypeLiunian')
                           }</div>
                           <div className={`text-xs mt-0.5 ${reportType === rt.key ? 'text-amber-200' : 'text-gray-400'}`}>{
                             rt.key === '八字命書' ? (isVip ? t('reportTypeVipDesc') : t('reportTypeBaziDesc')) :
                             rt.key === '大運命書' ? t('reportTypeDaiyunDesc') :
+                            rt.key === '八字真經' ? '純八字真經盲派方法論命（管理員專用）' :
                             t('reportTypeLiunianDesc')
                           }</div>
                         </div>
