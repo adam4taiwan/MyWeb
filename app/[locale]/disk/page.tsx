@@ -401,10 +401,12 @@ export default function DiskPage() {
       ? t('birthdateLockWarningAlert')
       : '';
     const selectedLabel = reportType === '八字命書' ? t('reportTypeBazi') :
-      reportType === '大運命書' ? t('reportTypeDaiyun') : t('reportTypeLiunian');
+      reportType === '大運命書' ? t('reportTypeDaiyun') :
+      reportType === '八字真經' ? '八字真經命書' : t('reportTypeLiunian');
     const confirmMsg = isAdmin
       ? (reportType === '八字命書' ? t('confirmBazi', { lockWarning })
         : reportType === '大運命書' ? t('confirmDaiyun', { lockWarning })
+        : reportType === '八字真經' ? `確定啟動八字真經命書分析？${lockWarning}`
         : t('confirmLiunian', { year: targetYear, lockWarning }))
       : t('confirmApply', { label: selectedLabel, lockWarning });
     if (!window.confirm(confirmMsg)) return;
@@ -942,6 +944,7 @@ export default function DiskPage() {
                 const selectedLabel = reportType === '八字命書'
                   ? (isVip ? t('reportTypeVip') : t('reportTypeBazi'))
                   : reportType === '大運命書' ? t('reportTypeDaiyun')
+                  : reportType === '八字真經' ? '八字真經命書'
                   : t('reportTypeLiunian');
                 const btnLabel = btnStatus === 'used' ? t('btnUsed')
                   : btnStatus === 'cross_year' ? t('btnCrossYear')
