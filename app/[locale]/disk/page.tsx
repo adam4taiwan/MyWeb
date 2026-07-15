@@ -111,6 +111,7 @@ export default function DiskPage() {
   const ziweiGridRef = useRef<HTMLDivElement>(null);
   const exportChartJsonRef = useRef<string>('');
   const pendingGenericDocxRef = useRef<{ reportText: string; personName: string; bookTitle: string; skipTitle: string; fileName: string } | null>(null);
+  const pendingBaziJingDocxRef = useRef<{ personName: string; fileName: string } | null>(null);
 
   // 登入後自動載入會員生辰資料
   const loadProfile = async () => {
@@ -666,7 +667,12 @@ export default function DiskPage() {
         });
         if (!calcRes.ok) { alert(t('alertCalcFailed')); setIsLoading(false); return; }
         const chartData = await calcRes.json();
-        pendingGenericDocxRef.current = { reportText: report, personName: formData.name, bookTitle, skipTitle, fileName };
+        if (generatedReportType === '八字真經') {
+          // 八字真經：走 export-bazijing-docx（Server 端重新生成，確保跳頁正確）
+          pendingBaziJingDocxRef.current = { personName: formData.name, fileName };
+        } else {
+          pendingGenericDocxRef.current = { reportText: report, personName: formData.name, bookTitle, skipTitle, fileName };
+        }
         setExportChart(chartData);
         setCaptureMode(true);
       } catch (err) {
@@ -731,6 +737,25 @@ export default function DiskPage() {
         setCaptureMode(false);
         setExportChart(null);
 
+        const pendingBaziJing = pendingBaziJingDocxRef.current;
+        if (pendingBaziJing) {
+          // 八字真經命書：Server 端重新生成報告（確保跳頁正確）
+          pendingBaziJingDocxRef.current = null;
+          const res = await fetch(`${API_URL}/Consultation/export-bazijing-docx`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({
+              personName: pendingBaziJing.personName,
+              chartImageBase64: imgBase64,
+            }),
+          });
+          if (!res.ok) { const d = await res.json().catch(() => ({})); alert(d.error || t('alertDocxFailed')); return; }
+          const blob = await res.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url; a.download = pendingBaziJing.fileName;
+          document.body.appendChild(a); a.click(); a.remove();
+        } else {
         const pending = pendingGenericDocxRef.current;
         if (pending) {
           // 八字紫微/大運/流年命書：帶先天元神圖匯出
@@ -770,6 +795,7 @@ export default function DiskPage() {
           a.href = url; a.download = `${formData.name}_玉洞子命書.docx`;
           document.body.appendChild(a); a.click(); a.remove();
         }
+        } // end else (pendingBaziJing)
       } catch (err) { alert(t('alertDocxFailedDetail', { err: String(err) })); }
       finally { setIsLoading(false); }
     })();
