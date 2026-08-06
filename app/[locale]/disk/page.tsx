@@ -1020,23 +1020,24 @@ export default function DiskPage() {
 
                     {/* 搜尋結果 */}
                     {custResults.length > 0 && (
-                      <div className="border border-gray-100 rounded-xl overflow-hidden">
-                        {custResults.map(c => (
-                          <button
-                            key={c.id}
-                            onClick={() => loadCustomer(c)}
-                            className="w-full text-left px-3 py-2 hover:bg-amber-50 border-b border-gray-100 last:border-0 transition-colors"
-                          >
-                            <div className="flex justify-between items-center">
-                              <span className="font-bold text-amber-900 text-xs">{c.name}</span>
-                              <span className="text-[10px] text-gray-400">{c.gender === 1 ? '男' : '女'}</span>
-                            </div>
-                            <div className="text-[10px] text-gray-500 mt-0.5">
-                              編號：{c.customerCode} | {new Date(c.birthDateTime).toLocaleDateString('zh-TW')}
-                            </div>
-                            {c.notes && <div className="text-[10px] text-gray-400 truncate">{c.notes}</div>}
-                          </button>
-                        ))}
+                      <div className="border border-gray-100 rounded-xl overflow-hidden max-h-48 overflow-y-auto">
+                        {custResults.map(c => {
+                          const bp = c.birthDateTime.replace('Z','').replace(/\+.*/,'').split(/[-T:]/);
+                          const bStr = `${bp[0]}/${bp[1]}/${bp[2]} ${bp[3]}:${bp[4]}`;
+                          return (
+                            <button
+                              key={c.id}
+                              onClick={() => loadCustomer(c)}
+                              className="w-full text-left px-3 py-1.5 hover:bg-amber-50 border-b border-gray-100 last:border-0 transition-colors"
+                            >
+                              <div className="flex justify-between items-center gap-1">
+                                <span className="font-bold text-amber-900 text-xs">{c.name}</span>
+                                <span className="text-[10px] text-gray-400 shrink-0">{c.gender === 1 ? '男' : '女'} {bStr}</span>
+                              </div>
+                              {c.notes && <div className="text-[10px] text-gray-400 truncate">{c.notes}</div>}
+                            </button>
+                          );
+                        })}
                       </div>
                     )}
                     {!custSearching && custResults.length === 0 && custSearchQ && (
