@@ -168,10 +168,9 @@ export default function DiskPage() {
     setCustCreating(true);
     setCustCreateError('');
     try {
-      const birthDateTime = new Date(
-        custCreateForm.year, custCreateForm.month - 1, custCreateForm.day,
-        custCreateForm.hour, custCreateForm.minute, 0
-      ).toISOString();
+      // 直接拼 UTC ISO 字串（不做時區轉換），讓數字原封不動存入 DB
+      const pad = (n: number) => String(n).padStart(2, '0');
+      const birthDateTime = `${custCreateForm.year}-${pad(custCreateForm.month)}-${pad(custCreateForm.day)}T${pad(custCreateForm.hour)}:${pad(custCreateForm.minute)}:00Z`;
       const res = await fetch(`${API_URL}/Customers`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
