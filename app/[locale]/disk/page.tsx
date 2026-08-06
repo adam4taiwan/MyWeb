@@ -113,6 +113,94 @@ export default function DiskPage() {
   const pendingGenericDocxRef = useRef<{ reportText: string; personName: string; bookTitle: string; skipTitle: string; fileName: string } | null>(null);
   const pendingBaziJingDocxRef = useRef<{ personName: string; fileName: string } | null>(null);
 
+  // === 客戶管理（Admin Only）===
+  interface CustomerItem {
+    id: number;
+    customerCode: string;
+    name: string;
+    email: string;
+    gender: number;
+    birthDateTime: string;
+    notes?: string;
+    createdAt: string;
+  }
+  const [custPanelOpen, setCustPanelOpen] = useState(false);
+  const [custSearchQ, setCustSearchQ] = useState('');
+  const [custResults, setCustResults] = useState<CustomerItem[]>([]);
+  const [custSearching, setCustSearching] = useState(false);
+  const [custCreateOpen, setCustCreateOpen] = useState(false);
+  const [custCreateForm, setCustCreateForm] = useState({ name: '', gender: '1', year: 2000, month: 1, day: 1, hour: 1, notes: '' });
+  const [custCreating, setCustCreating] = useState(false);
+  const [custCreateResult, setCustCreateResult] = useState<CustomerItem | null>(null);
+  const [custCreateError, setCustCreateError] = useState('');
+
+  const searchCustomers = async (q: string) => {
+    if (!token) return;
+    setCustSearching(true);
+    try {
+      const res = await fetch(`${API_URL}/Customers/search?q=${encodeURIComponent(q)}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) setCustResults(await res.json());
+    } finally {
+      setCustSearching(false);
+    }
+  };
+
+  const loadCustomer = (c: CustomerItem) => {
+    const dt = new Date(c.birthDateTime);
+    setFormData({
+      dateType: 'solar',
+      name: c.name,
+      gender: String(c.gender),
+      year: dt.getFullYear(),
+      month: dt.getMonth() + 1,
+      day: dt.getDate(),
+      hour: dt.getHours(),
+      minute: dt.getMinutes(),
+    });
+    setCustPanelOpen(false);
+  };
+
+  const createCustomer = async () => {
+    if (!token || !custCreateForm.name.trim()) { setCustCreateError('請輸入姓名'); return; }
+    setCustCreating(true);
+    setCustCreateError('');
+    try {
+      const birthDateTime = new Date(
+        custCreateForm.year, custCreateForm.month - 1, custCreateForm.day,
+        custCreateForm.hour, 0, 0
+      ).toISOString();
+      const res = await fetch(`${API_URL}/Customers`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: custCreateForm.name.trim(),
+          gender: parseInt(custCreateForm.gender),
+          birthDateTime,
+          notes: custCreateForm.notes || null,
+        }),
+      });
+      if (res.ok) {
+        const created: CustomerItem = await res.json();
+        setCustCreateResult(created);
+        // 自動帶入表單
+        loadCustomer(created);
+        setCustCreateForm({ name: '', gender: '1', year: 2000, month: 1, day: 1, hour: 1, notes: '' });
+        setCustCreateOpen(false);
+        // 重新搜尋以顯示新客戶
+        searchCustomers('');
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setCustCreateError(err?.message || '建立失敗，請重試');
+      }
+    } catch {
+      setCustCreateError('網路錯誤，請重試');
+    } finally {
+      setCustCreating(false);
+    }
+  };
+
   // 登入後自動載入會員生辰資料
   const loadProfile = async () => {
     if (!token) return;
@@ -895,6 +983,136 @@ export default function DiskPage() {
                 )}
               </div>
             </div>
+
+            {/* 客戶管理（Admin Only）*/}
+            {isAdmin && (
+              <div className="bg-white p-5 rounded-3xl shadow-sm border border-amber-200 text-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-base font-bold text-amber-900">客戶管理</h2>
+                  <button
+                    onClick={() => { setCustPanelOpen(v => !v); if (!custPanelOpen) searchCustomers(''); }}
+                    className="text-xs text-amber-700 underline"
+                  >
+                    {custPanelOpen ? '收起' : '展開'}
+                  </button>
+                </div>
+
+                {custPanelOpen && (
+                  <div className="space-y-3">
+                    {/* 搜尋 */}
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={custSearchQ}
+                        onChange={e => setCustSearchQ(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && searchCustomers(custSearchQ)}
+                        placeholder="輸入姓名或客戶編號"
+                        className="flex-1 px-3 py-1.5 rounded-xl border border-gray-200 text-xs outline-none focus:border-amber-500"
+                      />
+                      <button
+                        onClick={() => searchCustomers(custSearchQ)}
+                        disabled={custSearching}
+                        className="px-3 py-1.5 bg-amber-700 text-white rounded-xl text-xs disabled:opacity-50"
+                      >
+                        {custSearching ? '搜尋中' : '搜尋'}
+                      </button>
+                    </div>
+
+                    {/* 搜尋結果 */}
+                    {custResults.length > 0 && (
+                      <div className="border border-gray-100 rounded-xl overflow-hidden">
+                        {custResults.map(c => (
+                          <button
+                            key={c.id}
+                            onClick={() => loadCustomer(c)}
+                            className="w-full text-left px-3 py-2 hover:bg-amber-50 border-b border-gray-100 last:border-0 transition-colors"
+                          >
+                            <div className="flex justify-between items-center">
+                              <span className="font-bold text-amber-900 text-xs">{c.name}</span>
+                              <span className="text-[10px] text-gray-400">{c.gender === 1 ? '男' : '女'}</span>
+                            </div>
+                            <div className="text-[10px] text-gray-500 mt-0.5">
+                              編號：{c.customerCode} | {new Date(c.birthDateTime).toLocaleDateString('zh-TW')}
+                            </div>
+                            {c.notes && <div className="text-[10px] text-gray-400 truncate">{c.notes}</div>}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {!custSearching && custResults.length === 0 && custSearchQ && (
+                      <p className="text-xs text-gray-400 text-center">查無客戶，可新增</p>
+                    )}
+
+                    {/* 新增客戶 */}
+                    {!custCreateOpen ? (
+                      <button
+                        onClick={() => { setCustCreateOpen(true); setCustCreateResult(null); setCustCreateError(''); }}
+                        className="w-full bg-emerald-700 text-white font-bold py-2 rounded-xl text-xs shadow-sm"
+                      >
+                        + 新增客戶
+                      </button>
+                    ) : (
+                      <div className="border border-emerald-200 rounded-xl p-3 space-y-2 bg-emerald-50">
+                        <p className="text-xs font-bold text-emerald-800">新增客戶資料</p>
+                        <input
+                          type="text"
+                          value={custCreateForm.name}
+                          onChange={e => setCustCreateForm(f => ({ ...f, name: e.target.value }))}
+                          placeholder="姓名（必填）"
+                          className="w-full px-3 py-1.5 rounded-lg border border-gray-200 text-xs outline-none focus:border-amber-500"
+                        />
+                        <select
+                          value={custCreateForm.gender}
+                          onChange={e => setCustCreateForm(f => ({ ...f, gender: e.target.value }))}
+                          className="w-full px-3 py-1.5 rounded-lg border border-gray-200 text-xs"
+                        >
+                          <option value="1">男</option>
+                          <option value="2">女</option>
+                        </select>
+                        <div className="grid grid-cols-3 gap-1">
+                          <select value={custCreateForm.year} onChange={e => setCustCreateForm(f => ({ ...f, year: parseInt(e.target.value) }))} className="border rounded p-1 text-xs">
+                            {generateYears().map(y => <option key={y} value={y}>{y}年</option>)}
+                          </select>
+                          <select value={custCreateForm.month} onChange={e => setCustCreateForm(f => ({ ...f, month: parseInt(e.target.value) }))} className="border rounded p-1 text-xs">
+                            {months.map(m => <option key={m} value={m}>{m}月</option>)}
+                          </select>
+                          <select value={custCreateForm.day} onChange={e => setCustCreateForm(f => ({ ...f, day: parseInt(e.target.value) }))} className="border rounded p-1 text-xs">
+                            {days.map(d => <option key={d} value={d}>{d}日</option>)}
+                          </select>
+                        </div>
+                        <select value={custCreateForm.hour} onChange={e => setCustCreateForm(f => ({ ...f, hour: parseInt(e.target.value) }))} className="w-full border rounded p-1 text-xs">
+                          {hours.map(h => <option key={h} value={h}>{h}時</option>)}
+                        </select>
+                        <input
+                          type="text"
+                          value={custCreateForm.notes}
+                          onChange={e => setCustCreateForm(f => ({ ...f, notes: e.target.value }))}
+                          placeholder="備注（可選）"
+                          className="w-full px-3 py-1.5 rounded-lg border border-gray-200 text-xs outline-none"
+                        />
+                        {custCreateError && <p className="text-xs text-red-500">{custCreateError}</p>}
+                        <div className="flex gap-2">
+                          <button onClick={createCustomer} disabled={custCreating} className="flex-1 bg-emerald-700 text-white py-1.5 rounded-lg text-xs font-bold disabled:opacity-50">
+                            {custCreating ? '建立中...' : '確認建立'}
+                          </button>
+                          <button onClick={() => setCustCreateOpen(false)} className="flex-1 bg-gray-200 text-gray-700 py-1.5 rounded-lg text-xs">
+                            取消
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 建立成功訊息 */}
+                    {custCreateResult && (
+                      <div className="bg-green-50 border border-green-200 rounded-xl p-2 text-xs text-green-800">
+                        客戶已建立！編號：<span className="font-bold font-mono">{custCreateResult.customerCode}</span>
+                        <br />姓名：{custCreateResult.name}（已自動帶入排盤表單）
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* 命書類型選擇 */}
             <div className="bg-white p-5 rounded-3xl shadow-sm border border-orange-100 text-sm">
