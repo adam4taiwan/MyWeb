@@ -129,7 +129,7 @@ export default function DiskPage() {
   const [custResults, setCustResults] = useState<CustomerItem[]>([]);
   const [custSearching, setCustSearching] = useState(false);
   const [custCreateOpen, setCustCreateOpen] = useState(false);
-  const [custCreateForm, setCustCreateForm] = useState({ name: '', gender: '1', year: 2000, month: 1, day: 1, hour: 1, notes: '' });
+  const [custCreateForm, setCustCreateForm] = useState({ name: '', gender: '1', year: 2000, month: 1, day: 1, hour: 1, minute: 0, notes: '' });
   const [custCreating, setCustCreating] = useState(false);
   const [custCreateResult, setCustCreateResult] = useState<CustomerItem | null>(null);
   const [custCreateError, setCustCreateError] = useState('');
@@ -148,16 +148,17 @@ export default function DiskPage() {
   };
 
   const loadCustomer = (c: CustomerItem) => {
-    const dt = new Date(c.birthDateTime);
+    // BirthDateTime is stored as UTC; interpret as local (Taiwan time stored without offset)
+    const raw = c.birthDateTime.replace('Z', '').replace(/\+.*$/, '');
+    const parts = raw.split(/[-T:]/);
+    const year = parseInt(parts[0]), month = parseInt(parts[1]), day = parseInt(parts[2]);
+    const hour = parts.length > 3 ? parseInt(parts[3]) : 0;
+    const minute = parts.length > 4 ? parseInt(parts[4]) : 0;
     setFormData({
       dateType: 'solar',
       name: c.name,
       gender: String(c.gender),
-      year: dt.getFullYear(),
-      month: dt.getMonth() + 1,
-      day: dt.getDate(),
-      hour: dt.getHours(),
-      minute: dt.getMinutes(),
+      year, month, day, hour, minute,
     });
     setCustPanelOpen(false);
   };
@@ -169,7 +170,7 @@ export default function DiskPage() {
     try {
       const birthDateTime = new Date(
         custCreateForm.year, custCreateForm.month - 1, custCreateForm.day,
-        custCreateForm.hour, 0, 0
+        custCreateForm.hour, custCreateForm.minute, 0
       ).toISOString();
       const res = await fetch(`${API_URL}/Customers`, {
         method: 'POST',
@@ -186,7 +187,7 @@ export default function DiskPage() {
         setCustCreateResult(created);
         // 自動帶入表單
         loadCustomer(created);
-        setCustCreateForm({ name: '', gender: '1', year: 2000, month: 1, day: 1, hour: 1, notes: '' });
+        setCustCreateForm({ name: '', gender: '1', year: 2000, month: 1, day: 1, hour: 1, minute: 0, notes: '' });
         setCustCreateOpen(false);
         // 重新搜尋以顯示新客戶
         searchCustomers('');
@@ -1080,9 +1081,14 @@ export default function DiskPage() {
                             {days.map(d => <option key={d} value={d}>{d}日</option>)}
                           </select>
                         </div>
-                        <select value={custCreateForm.hour} onChange={e => setCustCreateForm(f => ({ ...f, hour: parseInt(e.target.value) }))} className="w-full border rounded p-1 text-xs">
-                          {hours.map(h => <option key={h} value={h}>{h}時</option>)}
-                        </select>
+                        <div className="grid grid-cols-2 gap-1">
+                          <select value={custCreateForm.hour} onChange={e => setCustCreateForm(f => ({ ...f, hour: parseInt(e.target.value) }))} className="border rounded p-1 text-xs">
+                            {hours.map(h => <option key={h} value={h}>{h}時</option>)}
+                          </select>
+                          <select value={custCreateForm.minute} onChange={e => setCustCreateForm(f => ({ ...f, minute: parseInt(e.target.value) }))} className="border rounded p-1 text-xs">
+                            {minutes.map(m => <option key={m} value={m}>{m}分</option>)}
+                          </select>
+                        </div>
                         <input
                           type="text"
                           value={custCreateForm.notes}
