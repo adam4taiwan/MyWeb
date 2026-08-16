@@ -503,6 +503,46 @@ export default function DiskPage() {
     if ((reportType === '八字命書' || reportType === '大運命書' || reportType === '流年命書' || reportType === '八字真經') && !profileLoaded) {
       return alert(t('alertNeedProfile', { type: reportType }));
     }
+
+    // Admin: auto-save formData to UserChart before calling GET analyze endpoints
+    // This ensures backend reads customer data (not stale admin profile) from UserCharts table
+    if (isAdmin && (reportType === '八字命書' || reportType === '大運命書' || reportType === '流年命書' || reportType === '八字真經')) {
+      setLoadingText('正在準備資料，請稍候...');
+      setIsLoading(true);
+      try {
+        const profileRes = await fetch(`${API_URL}/Auth/profile`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({
+            chartName: formData.name,
+            birthYear: formData.year,
+            birthMonth: formData.month,
+            birthDay: formData.day,
+            birthHour: formData.hour,
+            birthMinute: formData.minute,
+            birthGender: parseInt(formData.gender),
+            dateType: formData.dateType,
+          }),
+        });
+        if (!profileRes.ok) { setIsLoading(false); alert('儲存生辰失敗，請重試'); return; }
+
+        const calcRes = await fetch(`${API_URL}/Astrology/calculate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify(formData),
+        });
+        if (!calcRes.ok) { setIsLoading(false); alert('計算命盤失敗，請重試'); return; }
+        const chartData = await calcRes.json();
+
+        const saveRes = await fetch(`${API_URL}/Astrology/save-chart`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify(chartData),
+        });
+        if (!saveRes.ok) { setIsLoading(false); alert('儲存命盤失敗，請重試'); return; }
+      } catch { setIsLoading(false); alert('準備資料時發生錯誤，請重試'); return; }
+    }
+
     setLoadingText(reportType === '大運命書' && profileLoaded
       ? t('loadingDaiyun5yr')
       : reportType === '流年命書'
