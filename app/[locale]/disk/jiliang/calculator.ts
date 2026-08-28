@@ -135,6 +135,31 @@ export function mapStemToElement(stem: string): Element {
   return 'Water'; // ren, gui
 }
 
+export const STEM_YIN_YANG: Record<string, '陽' | '陰'> = {
+  '甲': '陽', '乙': '陰', '丙': '陽', '丁': '陰', '戊': '陽',
+  '己': '陰', '庚': '陽', '辛': '陰', '壬': '陽', '癸': '陰',
+};
+
+export const BRANCH_YIN_YANG: Record<string, '陽' | '陰'> = {
+  '子': '陽', '丑': '陰', '寅': '陽', '卯': '陰', '辰': '陽', '巳': '陰',
+  '午': '陽', '未': '陰', '申': '陽', '酉': '陰', '戌': '陽', '亥': '陰',
+};
+
+export function getStemTenGodLabel(stem: string, dayStem: string): string {
+  if (stem === dayStem) return '日元(自身)';
+  const stemEl = mapStemToElement(stem);
+  const dayEl = mapStemToElement(dayStem);
+  const samePolarity = STEM_YIN_YANG[stem] === STEM_YIN_YANG[dayStem];
+  const GEN: Record<Element, Element> = { Wood: 'Fire', Fire: 'Earth', Earth: 'Metal', Metal: 'Water', Water: 'Wood' };
+  const CTRL: Record<Element, Element> = { Wood: 'Earth', Earth: 'Water', Water: 'Fire', Fire: 'Metal', Metal: 'Wood' };
+  if (stemEl === dayEl) return samePolarity ? '比肩' : '劫財';
+  if (GEN[dayEl] === stemEl) return samePolarity ? '食神' : '傷官';
+  if (CTRL[dayEl] === stemEl) return samePolarity ? '偏財' : '正財';
+  if (CTRL[stemEl] === dayEl) return samePolarity ? '七殺' : '正官';
+  if (GEN[stemEl] === dayEl) return samePolarity ? '偏印' : '正印';
+  return '';
+}
+
 function isMatch(b1: string, b2: string, t1: string, t2: string): boolean {
   return (b1 === t1 && b2 === t2) || (b1 === t2 && b2 === t1);
 }

@@ -22,9 +22,14 @@ import {
   generateDynamicTimeline,
   applyXingChongHeHai,
   mapStemToElement,
+  STEM_YIN_YANG,
+  BRANCH_YIN_YANG,
+  getStemTenGodLabel,
   DynamicYearScore,
   DaYunPeriod,
   XCHHEntry,
+  ScoreStepBreakdown,
+  EarthlyBranchInfo,
 } from './calculator';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
@@ -49,17 +54,102 @@ function ElementBadge({ el }: { el: Element }) {
   );
 }
 
-function PillarCard({ label, stem, branch }: { label: string; stem: string; branch: string }) {
+const PILLAR_NAMES = ['年柱', '月柱', '日柱', '時柱'];
+const PILLAR_SUBTITLES = ['祖上 / 根基 / 早年', '父母 / 格局 / 青年', '日主自身 / 夫妻 / 中年', '子息 / 歸宿 / 晚年'];
+
+interface PillarCardProps {
+  pillarIndex: number;
+  stem: string;
+  branchInfo: EarthlyBranchInfo;
+  dayMaster: string;
+  branchBreakdown: ScoreStepBreakdown['tier2Branches'][0];
+}
+
+function PillarCard({ pillarIndex, stem, branchInfo, dayMaster, branchBreakdown }: PillarCardProps) {
   const stemEl = mapStemToElement(stem);
-  const branchEl = EARTHLY_BRANCH_DATA[branch]?.mainElement || 'Earth';
+  const branchEl = branchInfo.mainElement;
+  const isDay   = pillarIndex === 2;
+  const isMonth = pillarIndex === 1;
+
+  const tenGodLabel = isDay ? '日元(自身)' : getStemTenGodLabel(stem, dayMaster);
+  const stemYY  = STEM_YIN_YANG[stem]  || '陽';
+  const branchYY = BRANCH_YIN_YANG[branchInfo.name] || '陽';
+
+  // 本氣 stem (hiddenStems[0] = main element stem)
+  const mainStem    = branchInfo.hiddenStems[0] || '';
+  const mainTenGod  = getStemTenGodLabel(mainStem, dayMaster);
+
+  const borderCls = isDay
+    ? 'border-2 border-stone-400'
+    : isMonth
+    ? 'border-2 border-red-600'
+    : 'border border-stone-700';
+
   return (
-    <div className="bg-stone-800 border border-stone-700 rounded-lg p-3 text-center">
-      <div className="text-[10px] text-stone-400 uppercase tracking-widest mb-1">{label}</div>
-      <div className={`text-2xl font-bold mb-0.5 ${ELEMENT_COLORS[stemEl].text}`}>{stem}</div>
-      <div className={`text-xl font-bold ${ELEMENT_COLORS[branchEl].text}`}>{branch}</div>
-      <div className="mt-1 flex justify-center gap-1">
-        <ElementBadge el={stemEl} />
-        <ElementBadge el={branchEl} />
+    <div className={`bg-stone-900 rounded-lg overflow-hidden flex flex-col ${borderCls}`}>
+      {/* Special header */}
+      {isDay   && <div className="bg-stone-600 text-stone-100 text-[9px] text-center py-1 font-bold tracking-widest">本命元神</div>}
+      {isMonth && <div className="bg-red-900/80 text-red-200 text-[9px] text-center py-1 font-bold tracking-widest">提綱月令（×1.3）</div>}
+
+      {/* 柱 label */}
+      <div className="px-3 pt-2 pb-1.5 border-b border-stone-800">
+        <div className="text-xs font-bold text-stone-200">{PILLAR_NAMES[pillarIndex]}</div>
+        <div className="text-[9px] text-stone-500 mt-0.5">{PILLAR_SUBTITLES[pillarIndex]}</div>
+      </div>
+
+      {/* 天干 */}
+      <div className="px-3 py-2 border-b border-stone-800">
+        {tenGodLabel && (
+          <div className="mb-1">
+            <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold ${isDay ? 'bg-stone-600 text-stone-200' : ELEMENT_COLORS[stemEl].badge}`}>
+              {tenGodLabel}
+            </span>
+          </div>
+        )}
+        <div className="flex items-center gap-2">
+          <span className={`text-4xl font-bold leading-none ${ELEMENT_COLORS[stemEl].text}`}>{stem}</span>
+          <div>
+            <ElementBadge el={stemEl} />
+            <div className="text-[9px] text-stone-400 mt-0.5">{stemYY}干 · +10分</div>
+          </div>
+        </div>
+      </div>
+
+      {/* 地支 */}
+      <div className="px-3 py-2 border-b border-stone-800">
+        <div className="flex items-center gap-2">
+          <span className={`text-4xl font-bold leading-none ${ELEMENT_COLORS[branchEl].text}`}>{branchInfo.name}</span>
+          <div>
+            <ElementBadge el={branchEl} />
+            <div className="text-[9px] text-stone-400 mt-0.5">{branchInfo.animal}·{branchYY}支</div>
+          </div>
+        </div>
+        <div className="text-[9px] text-stone-500 mt-1.5">本氣有力通根：+15分</div>
+      </div>
+
+      {/* 地支藏干表 */}
+      <div className="px-2 py-2 flex-1">
+        <div className="flex justify-between text-[8px] text-stone-600 mb-1">
+          <span>地支藏干（中餘氣）</span><span>+5分/神</span>
+        </div>
+        <div className="space-y-0.5">
+          {/* 本氣 */}
+          <div className="flex items-center gap-1 bg-stone-800/60 rounded px-1 py-0.5">
+            <span className={`text-[10px] font-bold w-3 ${ELEMENT_COLORS[branchEl].text}`}>{mainStem}</span>
+            <ElementBadge el={branchEl} />
+            <span className="text-[8px] text-stone-400 flex-1 ml-0.5">{mainTenGod}</span>
+            <span className="text-[8px] text-stone-500">本氣(+15)</span>
+          </div>
+          {/* 餘氣 */}
+          {branchBreakdown.hidden.map((h, j) => (
+            <div key={j} className="flex items-center gap-1 rounded px-1 py-0.5">
+              <span className={`text-[10px] font-bold w-3 ${ELEMENT_COLORS[h.element].text}`}>{h.stem}</span>
+              <ElementBadge el={h.element} />
+              <span className="text-[8px] text-stone-400 flex-1 ml-0.5">{getStemTenGodLabel(h.stem, dayMaster)}</span>
+              <span className="text-[8px] text-stone-500">餘氣(+5)</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -128,14 +218,16 @@ function EngineTab({
     <div className="space-y-6">
       {/* 四柱排盤 */}
       <div className="bg-stone-900 border border-stone-700 rounded-xl p-5">
-        <div className="text-xs text-amber-400 uppercase tracking-widest mb-3 font-bold">四柱排盤</div>
+        <div className="text-xs text-amber-400 uppercase tracking-widest mb-3 font-bold">四柱排盤（時→日→月→年）</div>
         <div className="grid grid-cols-4 gap-3">
-          {(['年柱', '月柱', '日柱', '時柱'] as const).map((label, i) => (
+          {[3, 2, 1, 0].map(i => (
             <PillarCard
               key={i}
-              label={label}
+              pillarIndex={i}
               stem={chart.heavenlyStems[i]}
-              branch={chart.earthlyBranches[i].name}
+              branchInfo={chart.earthlyBranches[i]}
+              dayMaster={dayMaster}
+              branchBreakdown={breakdown.tier2Branches[i]}
             />
           ))}
         </div>
