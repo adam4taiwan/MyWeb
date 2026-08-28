@@ -743,6 +743,46 @@ export default function DiskPage() {
 
   const handleYudongziReport = async () => {
     if (!profileLoaded) return alert(t('alertYudongziNeedProfile'));
+
+    // Admin: auto-save formData to UserChart before calling GET analyze-yudongzi
+    // This ensures backend reads the currently loaded customer's data, not stale admin profile
+    if (isAdmin) {
+      setLoadingText('正在準備資料，請稍候...');
+      setIsLoading(true);
+      try {
+        const profileRes = await fetch(`${API_URL}/Auth/profile`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({
+            chartName: formData.name,
+            birthYear: formData.year,
+            birthMonth: formData.month,
+            birthDay: formData.day,
+            birthHour: formData.hour,
+            birthMinute: formData.minute,
+            birthGender: parseInt(formData.gender),
+            dateType: formData.dateType,
+          }),
+        });
+        if (!profileRes.ok) { setIsLoading(false); alert('儲存生辰失敗，請重試'); return; }
+
+        const calcRes = await fetch(`${API_URL}/Astrology/calculate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify(formData),
+        });
+        if (!calcRes.ok) { setIsLoading(false); alert('計算命盤失敗，請重試'); return; }
+        const chartData = await calcRes.json();
+
+        const saveRes = await fetch(`${API_URL}/Astrology/save-chart`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify(chartData),
+        });
+        if (!saveRes.ok) { setIsLoading(false); alert('儲存命盤失敗，請重試'); return; }
+      } catch { setIsLoading(false); alert('準備資料時發生錯誤，請重試'); return; }
+    }
+
     setLoadingText(t('loadingYudongziReport'));
     setIsLoading(true);
     try {
