@@ -34,13 +34,8 @@ interface CustomerItem {
   id: number;
   name: string;
   customerCode: string;
-  birthYear?: number;
-  birthMonth?: number;
-  birthDay?: number;
-  birthHour?: number;
-  birthMinute?: number;
-  birthGender?: number;
-  dateType?: string;
+  birthDateTime: string;
+  gender: number;
 }
 
 // ---- Helper Components ----
@@ -659,28 +654,33 @@ export default function JiLiangPage() {
     setIsLoading(true);
 
     try {
+      // Parse birthDateTime (stored as UTC ISO, no timezone shift)
+      const raw = c.birthDateTime.replace('Z', '').replace(/\+.*$/, '');
+      const parts = raw.split(/[-T:]/);
+      const birthYear   = parseInt(parts[0]);
+      const birthMonth  = parseInt(parts[1]);
+      const birthDay    = parseInt(parts[2]);
+      const birthHour   = parts.length > 3 ? parseInt(parts[3]) : 0;
+      const birthMinute = parts.length > 4 ? parseInt(parts[4]) : 0;
+      const birthGender = c.gender;
+
       // Auto-save: PUT profile
       const profileRes = await fetch(`${API_URL}/Auth/profile`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           chartName: c.name,
-          birthYear: c.birthYear,
-          birthMonth: c.birthMonth,
-          birthDay: c.birthDay,
-          birthHour: c.birthHour,
-          birthMinute: c.birthMinute ?? 0,
-          birthGender: c.birthGender,
-          dateType: c.dateType || 'solar',
+          birthYear, birthMonth, birthDay, birthHour,
+          birthMinute, birthGender, dateType: 'solar',
         }),
       });
       if (!profileRes.ok) throw new Error('儲存生辰失敗');
 
       // POST calculate
       const calcBody = {
-        year: c.birthYear, month: c.birthMonth, day: c.birthDay,
-        hour: c.birthHour, minute: c.birthMinute ?? 0,
-        gender: c.birthGender, name: c.name, dateType: c.dateType || 'solar',
+        year: birthYear, month: birthMonth, day: birthDay,
+        hour: birthHour, minute: birthMinute,
+        gender: birthGender, name: c.name, dateType: 'solar',
       };
       const calcRes = await fetch(`${API_URL}/Astrology/calculate`, {
         method: 'POST',
@@ -791,7 +791,7 @@ export default function JiLiangPage() {
                   <div>
                     <div className="text-sm text-stone-200 font-medium">{c.name}</div>
                     <div className="text-xs text-stone-500">
-                      #{c.customerCode} · {c.birthYear}/{c.birthMonth}/{c.birthDay} · {c.birthGender === 2 ? '女' : '男'}
+                      #{c.customerCode} · {c.birthDateTime?.substring(0, 10)} · {c.gender === 2 ? '女' : '男'}
                     </div>
                   </div>
                   <span className="text-xs text-amber-400">分析 →</span>
