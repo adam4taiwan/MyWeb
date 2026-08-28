@@ -1315,6 +1315,14 @@ export default function DiskPage() {
                 </button>
               )}
               {isAdmin && (
+                <Link
+                  href="/disk/jiliang"
+                  className="mt-1 w-full bg-indigo-900 text-indigo-100 font-bold py-2.5 rounded-2xl text-xs shadow-md hover:bg-indigo-800 transition-all border border-indigo-700 block text-center"
+                >
+                  八字科學計量分析
+                </Link>
+              )}
+              {isAdmin && (
                 <button
                   onClick={handlePushNow}
                   className="mt-1 w-full bg-blue-900 text-blue-100 font-bold py-2.5 rounded-2xl text-xs shadow-md hover:bg-blue-950 transition-all border border-blue-700"
