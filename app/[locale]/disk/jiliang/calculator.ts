@@ -241,6 +241,269 @@ export function getTenGodsElements(dayMaster: string): {
   };
 }
 
+// ============================================================
+// Step 5: 刑沖合害破 修正模組 (Xing-Chong-He-Hai Modifiers)
+// ============================================================
+
+export type XCHHType = '六沖' | '三刑' | '子卯刑' | '六合(絆住)' | '六合(化)' | '六害';
+
+export interface XCHHEntry {
+  type: XCHHType;
+  branches: string[];
+  pillarLabels: string[];
+  description: string;
+  severity: 'major' | 'moderate' | 'minor';
+  deltas: Partial<Record<Element, number>>;
+}
+
+// 五行相克對照
+const OVERCOMES: Record<Element, Element> = {
+  Wood: 'Earth', Fire: 'Metal', Earth: 'Water', Metal: 'Wood', Water: 'Fire',
+};
+
+// 六沖: [b1, b2, 克方El, 被克方El] (同元素者填相同)
+const SIX_CLASH_DATA: [string, string, Element, Element][] = [
+  ['\u5b50', '\u5348', 'Water', 'Fire'],   // 子午 水克火
+  ['\u4e11', '\u672a', 'Earth', 'Earth'],  // 丑未 土土互沖
+  ['\u5bc5', '\u7533', 'Metal', 'Wood'],   // 寅申 金克木
+  ['\u536f', '\u9149', 'Metal', 'Wood'],   // 卯酉 金克木
+  ['\u8fb0', '\u620c', 'Earth', 'Earth'],  // 辰戌 土土互沖
+  ['\u5df3', '\u4ea5', 'Water', 'Fire'],   // 巳亥 水克火
+];
+
+// 三刑: 3字組 [a, b, c]
+const THREE_PUNISH_DATA: [string, string, string][] = [
+  ['\u5bc5', '\u5df3', '\u7533'],  // 寅巳申 無恩之刑
+  ['\u4e11', '\u620c', '\u672a'],  // 丑戌未 持勢之刑
+];
+
+// 子卯相刑
+const SELF_PUNISH_PAIRS: [string, string][] = [
+  ['\u5b50', '\u536f'],  // 子卯
+];
+
+// 六合: [b1, b2, 化神El]
+const SIX_COMBO_DATA: [string, string, Element][] = [
+  ['\u5b50', '\u4e11', 'Earth'],  // 子丑合土
+  ['\u5bc5', '\u4ea5', 'Wood'],   // 寅亥合木
+  ['\u536f', '\u620c', 'Fire'],   // 卯戌合火
+  ['\u8fb0', '\u9149', 'Metal'],  // 辰酉合金
+  ['\u5df3', '\u7533', 'Water'],  // 巳申合水
+  ['\u5348', '\u672a', 'Fire'],   // 午未合火
+];
+
+// 月令支持合化 lookup: 化神El -> 支持月支集合
+const COMBO_SUPPORT_BRANCHES: Record<Element, string[]> = {
+  Earth: ['\u8fb0', '\u620c', '\u4e11', '\u672a'],               // 辰戌丑未
+  Wood:  ['\u5bc5', '\u536f', '\u8fb0'],                         // 寅卯辰
+  Fire:  ['\u5df3', '\u5348', '\u672a'],                         // 巳午未
+  Metal: ['\u7533', '\u9149', '\u620c'],                         // 申酉戌
+  Water: ['\u4ea5', '\u5b50', '\u4e11'],                         // 亥子丑
+};
+
+// 六害: [b1, b2]
+const SIX_HARM_DATA: [string, string][] = [
+  ['\u5b50', '\u672a'],  // 子未
+  ['\u4e11', '\u5348'],  // 丑午
+  ['\u5bc5', '\u5df3'],  // 寅巳
+  ['\u536f', '\u8fb0'],  // 卯辰
+  ['\u7533', '\u4ea5'],  // 申亥
+  ['\u9149', '\u620c'],  // 酉戌
+];
+
+export function applyXingChongHeHai(
+  chart: BaziChart,
+  inputScores: Record<Element, number>
+): { scores: Record<Element, number>; entries: XCHHEntry[] } {
+  const scores: Record<Element, number> = { ...inputScores };
+  const entries: XCHHEntry[] = [];
+  const branches = chart.earthlyBranches.map(b => b.name);
+  const PILLAR_LABELS = ['\u5e74\u652f', '\u6708\u652f', '\u65e5\u652f', '\u6642\u652f'];
+  const monthBranch = branches[1];
+
+  const clamp = () => {
+    for (const el of Object.keys(scores) as Element[]) {
+      scores[el] = Math.max(0, Math.round(scores[el] * 10) / 10);
+    }
+  };
+
+  const findIdx = (b: string) => branches.indexOf(b);
+
+  // ---------- 六沖 ----------
+  for (const [c1, c2, strongEl, weakEl] of SIX_CLASH_DATA) {
+    const i1 = findIdx(c1); const i2 = findIdx(c2);
+    if (i1 === -1 || i2 === -1) continue;
+
+    const isSame = strongEl === weakEl;
+    const deltas: Partial<Record<Element, number>> = {};
+
+    if (isSame) {
+      // 土土互沖: 各扣 35%
+      const d = -(15 * 0.35);
+      scores[strongEl] += d * 2;
+      deltas[strongEl] = d * 2;
+    } else {
+      // 克方自傷 30%, 被克方受損 60%
+      const dStrong = -(15 * 0.30);
+      const dWeak   = -(15 * 0.60);
+      scores[strongEl] += dStrong;
+      scores[weakEl]   += dWeak;
+      deltas[strongEl] = dStrong;
+      deltas[weakEl]   = dWeak;
+    }
+    clamp();
+
+    entries.push({
+      type: '\u516d\u6c96',
+      branches: [c1, c2],
+      pillarLabels: [PILLAR_LABELS[i1], PILLAR_LABELS[i2]],
+      description: isSame
+        ? `\u3010${c1}${c2}\u6c96\u3011\u571f\u571f\u4e92\u6c96\uff0c\u5169\u65b9\u5404\u626b35%\u627f\u88c5`
+        : `\u3010${c1}${c2}\u6c96\u3011${ELEMENT_NAMES[strongEl]}\u514b${ELEMENT_NAMES[weakEl]}\uff0c${c2}\u88ab\u514b\u65b9\u641b\u6e1b60%\uff0c${c1}\u514b\u65b9\u81ea\u50b730%`,
+      severity: 'major',
+      deltas,
+    });
+  }
+
+  // ---------- 三刑 ----------
+  for (const [a, b, c] of THREE_PUNISH_DATA) {
+    const ia = findIdx(a); const ib = findIdx(b); const ic = findIdx(c);
+    const presentIdxs = [ia, ib, ic].filter(i => i !== -1);
+    if (presentIdxs.length < 2) continue;
+
+    const presentBranches = [a, b, c].filter((_, k) => [ia, ib, ic][k] !== -1);
+    const deltas: Partial<Record<Element, number>> = {};
+
+    for (const br of presentBranches) {
+      const el = EARTHLY_BRANCH_DATA[br]?.mainElement;
+      if (!el) continue;
+      const d = -(15 * 0.35);
+      scores[el] += d;
+      deltas[el] = (deltas[el] || 0) + d;
+    }
+    clamp();
+
+    const suffix = presentBranches.length === 3 ? '\u5168\u5211' : '\u534a\u5211';
+    entries.push({
+      type: '\u4e09\u5211',
+      branches: presentBranches,
+      pillarLabels: [a, b, c].map((br, k) => [ia, ib, ic][k] !== -1 ? PILLAR_LABELS[[ia, ib, ic][k]] : '').filter(Boolean),
+      description: `\u3010${presentBranches.join('')}\u4e09\u5211${suffix}\u3011\u70ba\u6301\u52e2\u4e4b\u5211\uff0c\u5404\u65b9\u6e1b\u635f35%\u80fd\u91cf`,
+      severity: 'moderate',
+      deltas,
+    });
+  }
+
+  // ---------- 子卯相刑 ----------
+  for (const [a, b] of SELF_PUNISH_PAIRS) {
+    const ia = findIdx(a); const ib = findIdx(b);
+    if (ia === -1 || ib === -1) continue;
+
+    const deltas: Partial<Record<Element, number>> = {};
+    for (const br of [a, b]) {
+      const el = EARTHLY_BRANCH_DATA[br]?.mainElement;
+      if (!el) continue;
+      const d = -(15 * 0.30);
+      scores[el] += d;
+      deltas[el] = (deltas[el] || 0) + d;
+    }
+    clamp();
+
+    entries.push({
+      type: '\u5b50\u536f\u5211',
+      branches: [a, b],
+      pillarLabels: [PILLAR_LABELS[ia], PILLAR_LABELS[ib]],
+      description: `\u3010${a}${b}\u76f8\u5211\u3011\u7121\u79ae\u4e4b\u5211\uff0c\u6c34\u6728\u4e92\u5211\uff0c\u5404\u6e1b30%\u80fd\u91cf`,
+      severity: 'moderate',
+      deltas,
+    });
+  }
+
+  // ---------- 六合 ----------
+  for (const [c1, c2, huaEl] of SIX_COMBO_DATA) {
+    const i1 = findIdx(c1); const i2 = findIdx(c2);
+    if (i1 === -1 || i2 === -1) continue;
+
+    const el1 = EARTHLY_BRANCH_DATA[c1]?.mainElement;
+    const el2 = EARTHLY_BRANCH_DATA[c2]?.mainElement;
+    if (!el1 || !el2) continue;
+
+    // Check if 合化 succeeds: month branch supports 化神
+    const canHua = COMBO_SUPPORT_BRANCHES[huaEl]?.includes(monthBranch) ?? false;
+
+    const deltas: Partial<Record<Element, number>> = {};
+
+    if (canHua) {
+      // 合化成功: 原五行分數各扣減後注入化神
+      const contrib1 = 15;
+      const contrib2 = 15;
+      const inject = (contrib1 + contrib2) * 1.35;  // 1.2~1.5 → take 1.35
+      if (el1 !== huaEl) { scores[el1] -= contrib1 * 0.8; deltas[el1] = (deltas[el1] || 0) - contrib1 * 0.8; }
+      if (el2 !== huaEl) { scores[el2] -= contrib2 * 0.8; deltas[el2] = (deltas[el2] || 0) - contrib2 * 0.8; }
+      scores[huaEl] += inject;
+      deltas[huaEl] = (deltas[huaEl] || 0) + inject;
+      clamp();
+
+      entries.push({
+        type: '\u516d\u5408(\u5316)',
+        branches: [c1, c2],
+        pillarLabels: [PILLAR_LABELS[i1], PILLAR_LABELS[i2]],
+        description: `\u3010${c1}${c2}\u5408\u5316${ELEMENT_NAMES[huaEl]}\u3011\u6708\u4ee4\u652f\u6301\u5316\u795e\uff0c\u5408\u5316\u6210\u529f\uff01\u539f\u4e94\u884c\u8f49\u5316\u6ce8\u5165${ELEMENT_NAMES[huaEl]}\u5927\u8ecd(+${inject.toFixed(1)})`,
+        severity: 'major',
+        deltas,
+      });
+    } else {
+      // 合而不化: 兩字能量各打 8 折
+      const d1 = scores[el1] * (1 - 0.8);  // reduction amount
+      const d2 = el1 !== el2 ? scores[el2] * (1 - 0.8) : 0;
+      scores[el1] *= 0.8;
+      if (el1 !== el2) scores[el2] *= 0.8;
+      deltas[el1] = (deltas[el1] || 0) - d1;
+      if (el1 !== el2) deltas[el2] = (deltas[el2] || 0) - d2;
+      clamp();
+
+      entries.push({
+        type: '六合(絆住)',
+        branches: [c1, c2],
+        pillarLabels: [PILLAR_LABELS[i1], PILLAR_LABELS[i2]],
+        description: `\u3010${c1}${c2}\u5408\u800c\u4e0d\u5316\u3011\u6708\u4ee4\u4e0d\u652f\u6301\uff0c\u4e92\u76f8\u7275\u7d55\u8d8a\u52e2\u5404\u62538\u6298`,
+        severity: 'moderate',
+        deltas,
+      });
+    }
+  }
+
+  // ---------- 六害 ----------
+  for (const [a, b] of SIX_HARM_DATA) {
+    const ia = findIdx(a); const ib = findIdx(b);
+    if (ia === -1 || ib === -1) continue;
+
+    const deltas: Partial<Record<Element, number>> = {};
+    // 六害只傷中氣餘氣 (5分 × 25%)
+    for (const br of [a, b]) {
+      const brInfo = EARTHLY_BRANCH_DATA[br];
+      if (!brInfo) continue;
+      for (const hEl of brInfo.hiddenElements) {
+        const d = -(5 * 0.25);
+        scores[hEl] += d;
+        deltas[hEl] = (deltas[hEl] || 0) + d;
+      }
+    }
+    clamp();
+
+    entries.push({
+      type: '\u516d\u5bb3',
+      branches: [a, b],
+      pillarLabels: [PILLAR_LABELS[ia], PILLAR_LABELS[ib]],
+      description: `\u3010${a}${b}\u76f8\u5bb3\u3011\u85cf\u5e72\u4e2d\u4f59\u6c23\u8a71\u640d25%\uff0c\u5c0f\u4eba\u6697\u4e2d\u7b97\u8a08\u6027\u6d88\u8017`,
+      severity: 'minor',
+      deltas,
+    });
+  }
+
+  return { scores, entries };
+}
+
 export function getFortuneAnalysis(score: number, category: 'GOV' | 'WEALTH', targetElement: Element) {
   const rounded = Math.round(score);
   let targetLevel = 1;

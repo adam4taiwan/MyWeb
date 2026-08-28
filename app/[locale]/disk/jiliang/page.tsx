@@ -20,9 +20,11 @@ import {
   getTenGodsElements,
   getFortuneAnalysis,
   generateDynamicTimeline,
+  applyXingChongHeHai,
   mapStemToElement,
   DynamicYearScore,
   DaYunPeriod,
+  XCHHEntry,
 } from './calculator';
 
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
@@ -81,24 +83,49 @@ function ScoreBar({ label, score, maxScore, color }: { label: string; score: num
   );
 }
 
+// ---- XCHH severity label ----
+
+const XCHH_SEVERITY_COLORS: Record<XCHHEntry['severity'], string> = {
+  major:    'bg-red-900/40 border-red-700 text-red-300',
+  moderate: 'bg-orange-900/40 border-orange-700 text-orange-300',
+  minor:    'bg-yellow-900/30 border-yellow-800 text-yellow-400',
+};
+
+const XCHH_TYPE_LABELS: Record<string, string> = {
+  '六沖': '六沖 (-30%/-60%)',
+  '三刑': '三刑 (-35%)',
+  '子卯刑': '子卯刑 (-30%)',
+  '六合(絆住)': '六合 絆住 (×0.8)',
+  '六合(化)': '六合 化 (+注入化神)',
+  '六害': '六害 (-25%藏干)',
+};
+
 // ---- Tab: 計量引擎 ----
 
-function EngineTab({ chart, apiData }: { chart: BaziChart; apiData: JiLiangApiData }) {
-  const { scores, breakdown } = useMemo(() => getCalculationBreakdown(chart), [chart]);
-  const maxScore = Math.max(...Object.values(scores), 1);
+function EngineTab({
+  chart, apiData, xchhResult,
+}: {
+  chart: BaziChart;
+  apiData: JiLiangApiData;
+  xchhResult: { scores: Record<Element, number>; entries: XCHHEntry[] };
+}) {
+  const { scores: baseScores, breakdown } = useMemo(() => getCalculationBreakdown(chart), [chart]);
+  const modifiedScores = xchhResult.scores;
+  const xchhEntries = xchhResult.entries;
+  const maxScore = Math.max(...Object.values(modifiedScores), 1);
 
   const radarData = ALL_ELEMENTS.map(el => ({
     subject: ELEMENT_NAMES[el],
-    score: scores[el],
+    score: modifiedScores[el],
     fullMark: 120,
   }));
 
   const dayMaster = chart.heavenlyStems[2];
   const tenGods = getTenGodsElements(dayMaster);
-  const selfScore = scores[tenGods.self] || 0;
-  const resourceScore = scores[tenGods.resource] || 0;
+  const selfScore = modifiedScores[tenGods.self] || 0;
+  const resourceScore = modifiedScores[tenGods.resource] || 0;
   const supportScore = selfScore + resourceScore;
-  const totalScore = Object.values(scores).reduce((a, b) => a + b, 0);
+  const totalScore = Object.values(modifiedScores).reduce((a, b) => a + b, 0);
   const supportRatio = totalScore > 0 ? supportScore / totalScore : 0.5;
   const bodyLabel = supportRatio >= 0.65 ? '極旺' : supportRatio >= 0.5 ? '偏旺' : supportRatio >= 0.42 ? '中和' : supportRatio >= 0.2 ? '偏弱' : '極弱';
 
@@ -150,16 +177,27 @@ function EngineTab({ chart, apiData }: { chart: BaziChart; apiData: JiLiangApiDa
 
           {/* 五行總分條 */}
           <div className="space-y-2">
-            <div className="text-xs text-stone-400 mb-2">原局五行總分</div>
-            {ALL_ELEMENTS.map(el => (
-              <ScoreBar
-                key={el}
-                label={ELEMENT_NAMES[el]}
-                score={scores[el]}
-                maxScore={maxScore}
-                color={ELEMENT_COLORS[el].badge.split(' ')[0]}
-              />
-            ))}
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-stone-400">五行能量總分（刑沖合害修正{xchhEntries.length > 0 ? `後，${xchhEntries.length}組` : '：無'}）</span>
+            </div>
+            {ALL_ELEMENTS.map(el => {
+              const base = baseScores[el];
+              const mod  = modifiedScores[el];
+              const delta = mod - base;
+              return (
+                <div key={el}>
+                  <ScoreBar label={ELEMENT_NAMES[el]} score={mod} maxScore={maxScore} color={ELEMENT_COLORS[el].badge.split(' ')[0]} />
+                  {Math.abs(delta) > 0.01 && (
+                    <div className="text-[10px] text-stone-500 pl-8 -mt-0.5">
+                      原 {base.toFixed(1)} → 修正後 {mod.toFixed(1)}
+                      <span className={delta > 0 ? 'text-green-500 ml-1' : 'text-red-500 ml-1'}>
+                        ({delta > 0 ? '+' : ''}{delta.toFixed(1)})
+                      </span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           {/* 階梯一 */}
@@ -216,6 +254,35 @@ function EngineTab({ chart, apiData }: { chart: BaziChart; apiData: JiLiangApiDa
               </span>
             </div>
           </div>
+
+          {/* Step 5: 刑沖合害修正 */}
+          <div>
+            <div className="text-xs text-amber-300 font-bold mb-2">
+              Step 5：刑沖合害動態修正
+              {xchhEntries.length === 0 && <span className="text-stone-500 font-normal ml-2">（原局無刑沖合害）</span>}
+            </div>
+            {xchhEntries.length > 0 && (
+              <div className="space-y-2">
+                {xchhEntries.map((entry, i) => (
+                  <div key={i} className={`border rounded-lg px-3 py-2 text-xs space-y-1 ${XCHH_SEVERITY_COLORS[entry.severity]}`}>
+                    <div className="flex items-center gap-2 font-bold">
+                      <span className="bg-black/20 px-1.5 py-0.5 rounded text-[10px]">{XCHH_TYPE_LABELS[entry.type] || entry.type}</span>
+                      <span>{entry.branches.join(' + ')}</span>
+                      <span className="text-stone-400 font-normal">（{entry.pillarLabels.join('/')}）</span>
+                    </div>
+                    <div className="text-stone-300">{entry.description}</div>
+                    <div className="flex flex-wrap gap-2">
+                      {(Object.entries(entry.deltas) as [Element, number][]).map(([el, d]) => (
+                        <span key={el} className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${d >= 0 ? 'bg-green-900/50 text-green-300' : 'bg-red-900/50 text-red-300'}`}>
+                          {ELEMENT_NAMES[el]} {d > 0 ? '+' : ''}{d.toFixed(1)}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* 五行雷達圖 */}
@@ -239,9 +306,9 @@ function EngineTab({ chart, apiData }: { chart: BaziChart; apiData: JiLiangApiDa
                 <span className={`w-2 h-2 rounded-full inline-block`} style={{ background: ELEMENT_COLORS[el].hex }} />
                 <span className="text-stone-400 w-4">{ELEMENT_NAMES[el]}</span>
                 <div className="flex-1 bg-stone-700 rounded-full h-1.5">
-                  <div className="h-1.5 rounded-full" style={{ width: `${Math.min(100, (scores[el] / maxScore) * 100)}%`, background: ELEMENT_COLORS[el].hex }} />
+                  <div className="h-1.5 rounded-full" style={{ width: `${Math.min(100, (modifiedScores[el] / maxScore) * 100)}%`, background: ELEMENT_COLORS[el].hex }} />
                 </div>
-                <span className="text-stone-300 w-12 text-right">{scores[el].toFixed(1)}</span>
+                <span className="text-stone-300 w-12 text-right">{modifiedScores[el].toFixed(1)}</span>
               </div>
             ))}
           </div>
@@ -655,6 +722,11 @@ export default function JiLiangPage() {
     return calculateScores(chart);
   }, [chart]);
 
+  const xchhResult = useMemo(() => {
+    if (!chart || !scores) return null;
+    return applyXingChongHeHai(chart, scores);
+  }, [chart, scores]);
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-stone-950 flex items-center justify-center text-stone-400">
@@ -732,7 +804,7 @@ export default function JiLiangPage() {
         </div>
 
         {/* Analysis result */}
-        {chart && scores && apiData && (
+        {chart && scores && xchhResult && apiData && (
           <>
             {/* Tab buttons */}
             <div className="flex gap-2">
@@ -751,11 +823,14 @@ export default function JiLiangPage() {
               <div className="flex-1" />
               <div className="text-xs text-stone-500 self-center">
                 {apiData.name} · {apiData.birthYear}年 · {apiData.gender === 2 ? '女' : '男'}
+                {xchhResult.entries.length > 0 && (
+                  <span className="ml-2 text-orange-400">刑沖合害 {xchhResult.entries.length}組</span>
+                )}
               </div>
             </div>
 
-            {activeTab === 'engine'  && <EngineTab  chart={chart} apiData={apiData} />}
-            {activeTab === 'fortune' && <FortuneTab chart={chart} scores={scores} apiData={apiData} />}
+            {activeTab === 'engine'  && <EngineTab  chart={chart} apiData={apiData} xchhResult={xchhResult} />}
+            {activeTab === 'fortune' && <FortuneTab chart={chart} scores={xchhResult.scores} apiData={apiData} />}
             {activeTab === 'dynamic' && <DynamicTab chart={chart} birthYear={apiData.birthYear} apiData={apiData} />}
           </>
         )}
