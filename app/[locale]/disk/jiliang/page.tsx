@@ -27,7 +27,7 @@ import {
   XCHHEntry,
 } from './calculator';
 
-const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 const ALL_ELEMENTS: Element[] = ['Wood', 'Fire', 'Earth', 'Metal', 'Water'];
 
 interface CustomerItem {
