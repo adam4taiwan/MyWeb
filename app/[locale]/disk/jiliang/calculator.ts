@@ -145,8 +145,8 @@ export const BRANCH_YIN_YANG: Record<string, '陽' | '陰'> = {
   '午': '陽', '未': '陰', '申': '陽', '酉': '陰', '戌': '陽', '亥': '陰',
 };
 
-export function getStemTenGodLabel(stem: string, dayStem: string): string {
-  if (stem === dayStem) return '日元(自身)';
+export function getStemTenGodLabel(stem: string, dayStem: string, isHidden = false): string {
+  if (!isHidden && stem === dayStem) return '日元(自身)';
   const stemEl = mapStemToElement(stem);
   const dayEl = mapStemToElement(dayStem);
   const samePolarity = STEM_YIN_YANG[stem] === STEM_YIN_YANG[dayStem];
@@ -213,7 +213,8 @@ export function getCalculationBreakdown(chart: BaziChart): { scores: Record<Elem
     const hiddenList: { stem: string; element: Element; points: number }[] = [];
     br.hiddenElements.forEach((hEl, hIdx) => {
       scores[hEl] += 5;
-      hiddenList.push({ stem: br.hiddenStems[hIdx] || '', element: hEl, points: 5 });
+      // hiddenStems[0] = main element stem; hiddenStems[1+] = yu-qi (residual) stems
+      hiddenList.push({ stem: br.hiddenStems[hIdx + 1] || '', element: hEl, points: 5 });
     });
     tier2Branches.push({ branch: br.name, pillar: pillarNames[idx], main: { element: br.mainElement, points: 15 }, hidden: hiddenList });
   });

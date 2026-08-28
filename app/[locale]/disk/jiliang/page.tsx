@@ -77,7 +77,7 @@ function PillarCard({ pillarIndex, stem, branchInfo, dayMaster, branchBreakdown 
 
   // 本氣 stem (hiddenStems[0] = main element stem)
   const mainStem    = branchInfo.hiddenStems[0] || '';
-  const mainTenGod  = getStemTenGodLabel(mainStem, dayMaster);
+  const mainTenGod  = getStemTenGodLabel(mainStem, dayMaster, true);
 
   const borderCls = isDay
     ? 'border-2 border-stone-400'
@@ -140,12 +140,12 @@ function PillarCard({ pillarIndex, stem, branchInfo, dayMaster, branchBreakdown 
             <span className="text-[8px] text-stone-400 flex-1 ml-0.5">{mainTenGod}</span>
             <span className="text-[8px] text-stone-500">本氣(+15)</span>
           </div>
-          {/* 餘氣 */}
-          {branchBreakdown.hidden.map((h, j) => (
+          {/* 餘氣 - filter out empty stems (pure branches like 子卯酉) */}
+          {branchBreakdown.hidden.filter(h => h.stem).map((h, j) => (
             <div key={j} className="flex items-center gap-1 rounded px-1 py-0.5">
               <span className={`text-[10px] font-bold w-3 ${ELEMENT_COLORS[h.element].text}`}>{h.stem}</span>
               <ElementBadge el={h.element} />
-              <span className="text-[8px] text-stone-400 flex-1 ml-0.5">{getStemTenGodLabel(h.stem, dayMaster)}</span>
+              <span className="text-[8px] text-stone-400 flex-1 ml-0.5">{getStemTenGodLabel(h.stem, dayMaster, true)}</span>
               <span className="text-[8px] text-stone-500">餘氣(+5)</span>
             </div>
           ))}
