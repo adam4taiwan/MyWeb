@@ -954,6 +954,12 @@ export default function DiskPage() {
               chartImageBase64: imgBase64,
               chartJson: exportChartJsonRef.current,
               personName: formData.name,
+              birthYear: formData.year,
+              birthMonth: formData.month,
+              birthDay: formData.day,
+              birthHour: formData.hour,
+              birthMinute: formData.minute,
+              gender: parseInt(formData.gender),
             }),
           });
           if (!res.ok) { const d = await res.json().catch(() => ({})); alert(d.error || t('alertDocxFailed')); return; }
