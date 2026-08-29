@@ -111,7 +111,7 @@ export default function DiskPage() {
   const ziweiGridRef = useRef<HTMLDivElement>(null);
   const exportChartJsonRef = useRef<string>('');
   const pendingGenericDocxRef = useRef<{ reportText: string; personName: string; bookTitle: string; skipTitle: string; fileName: string } | null>(null);
-  const pendingBaziJingDocxRef = useRef<{ personName: string; fileName: string } | null>(null);
+  const pendingBaziJingDocxRef = useRef<{ personName: string; fileName: string; chartJson: string; birthYear: number; birthMonth: number; birthDay: number; birthHour: number; birthMinute: number; gender: number } | null>(null);
 
   // === 客戶管理（Admin Only）===
   interface CustomerItem {
@@ -837,7 +837,13 @@ export default function DiskPage() {
         const chartData = await calcRes.json();
         if (generatedReportType === '八字真經') {
           // 八字真經：走 export-bazijing-docx（Server 端重新生成，確保跳頁正確）
-          pendingBaziJingDocxRef.current = { personName: formData.name, fileName };
+          pendingBaziJingDocxRef.current = {
+            personName: formData.name, fileName,
+            chartJson: JSON.stringify(chartData),
+            birthYear: formData.year, birthMonth: formData.month, birthDay: formData.day,
+            birthHour: formData.hour, birthMinute: formData.minute,
+            gender: parseInt(formData.gender),
+          };
         } else {
           pendingGenericDocxRef.current = { reportText: report, personName: formData.name, bookTitle, skipTitle, fileName };
         }
@@ -915,6 +921,13 @@ export default function DiskPage() {
             body: JSON.stringify({
               personName: pendingBaziJing.personName,
               chartImageBase64: imgBase64,
+              chartJson: pendingBaziJing.chartJson,
+              birthYear: pendingBaziJing.birthYear,
+              birthMonth: pendingBaziJing.birthMonth,
+              birthDay: pendingBaziJing.birthDay,
+              birthHour: pendingBaziJing.birthHour,
+              birthMinute: pendingBaziJing.birthMinute,
+              gender: pendingBaziJing.gender,
             }),
           });
           if (!res.ok) { const d = await res.json().catch(() => ({})); alert(d.error || t('alertDocxFailed')); return; }
