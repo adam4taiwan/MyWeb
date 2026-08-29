@@ -212,7 +212,7 @@ function EngineTab({
   const supportScore = selfScore + resourceScore;
   const totalScore = Object.values(modifiedScores).reduce((a, b) => a + b, 0);
   const supportRatio = totalScore > 0 ? supportScore / totalScore : 0.5;
-  const bodyLabel = supportRatio >= 0.65 ? '極旺' : supportRatio >= 0.5 ? '偏旺' : supportRatio >= 0.42 ? '中和' : supportRatio >= 0.2 ? '偏弱' : '極弱';
+  const bodyLabel = supportRatio >= 0.65 ? '身強（極強）' : supportRatio >= 0.50 ? '偏強' : supportRatio >= 0.35 ? '偏弱' : '身弱';
 
   return (
     <div className="space-y-6">

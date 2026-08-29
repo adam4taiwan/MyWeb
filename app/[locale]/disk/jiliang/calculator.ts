@@ -454,45 +454,54 @@ export function applyXingChongHeHai(
     const el2 = EARTHLY_BRANCH_DATA[c2]?.mainElement;
     if (!el1 || !el2) continue;
 
+    // 隔柱距離係數: 相鄰(0) x1.35/80%; 隔1柱(1) x1.00/50%; 隔2柱(2) x0.70/30%
+    const dist = Math.abs(i1 - i2) - 1;
+    const injectMult   = dist === 0 ? 1.35 : dist === 1 ? 1.00 : 0.70;
+    const reducePct    = dist === 0 ? 0.80 : dist === 1 ? 0.50 : 0.30;
+    const noHuaDisc    = dist === 0 ? 0.80 : dist === 1 ? 0.90 : 0.95;
+
     // Check if 合化 succeeds: month branch supports 化神
     const canHua = COMBO_SUPPORT_BRANCHES[huaEl]?.includes(monthBranch) ?? false;
 
     const deltas: Partial<Record<Element, number>> = {};
 
     if (canHua) {
-      // 合化成功: 原五行分數各扣減後注入化神
+      // 合化成功: 原五行分數扣減後注入化神（依距離調整強度）
       const contrib1 = 15;
       const contrib2 = 15;
-      const inject = (contrib1 + contrib2) * 1.35;  // 1.2~1.5 → take 1.35
-      if (el1 !== huaEl) { scores[el1] -= contrib1 * 0.8; deltas[el1] = (deltas[el1] || 0) - contrib1 * 0.8; }
-      if (el2 !== huaEl) { scores[el2] -= contrib2 * 0.8; deltas[el2] = (deltas[el2] || 0) - contrib2 * 0.8; }
+      const inject = (contrib1 + contrib2) * injectMult;
+      if (el1 !== huaEl) { scores[el1] -= contrib1 * reducePct; deltas[el1] = (deltas[el1] || 0) - contrib1 * reducePct; }
+      if (el2 !== huaEl) { scores[el2] -= contrib2 * reducePct; deltas[el2] = (deltas[el2] || 0) - contrib2 * reducePct; }
       scores[huaEl] += inject;
       deltas[huaEl] = (deltas[huaEl] || 0) + inject;
       clamp();
 
+      const distLabel = dist === 0 ? '相鄰' : dist === 1 ? '隔1柱' : '隔2柱';
       entries.push({
         type: '\u516d\u5408(\u5316)',
         branches: [c1, c2],
         pillarLabels: [PILLAR_LABELS[i1], PILLAR_LABELS[i2]],
-        description: `\u3010${c1}${c2}\u5408\u5316${ELEMENT_NAMES[huaEl]}\u3011\u6708\u4ee4\u652f\u6301\u5316\u795e\uff0c\u5408\u5316\u6210\u529f\uff01\u539f\u4e94\u884c\u8f49\u5316\u6ce8\u5165${ELEMENT_NAMES[huaEl]}\u5927\u8ecd(+${inject.toFixed(1)})`,
+        description: `\u3010${c1}${c2}\u5408\u5316${ELEMENT_NAMES[huaEl]}\u3011${distLabel}\uff0c\u6708\u4ee4\u652f\u6301\u5316\u795e\uff0c\u5408\u5316\u6210\u529f\uff01\u6ce8\u5165${ELEMENT_NAMES[huaEl]}\u5927\u8ecd(+${inject.toFixed(1)})`,
         severity: 'major',
         deltas,
       });
     } else {
-      // 合而不化: 兩字能量各打 8 折
-      const d1 = scores[el1] * (1 - 0.8);  // reduction amount
-      const d2 = el1 !== el2 ? scores[el2] * (1 - 0.8) : 0;
-      scores[el1] *= 0.8;
-      if (el1 !== el2) scores[el2] *= 0.8;
+      // 合而不化: 互相牽絆，依距離折扣
+      const keepRatio = noHuaDisc;
+      const d1 = scores[el1] * (1 - keepRatio);
+      const d2 = el1 !== el2 ? scores[el2] * (1 - keepRatio) : 0;
+      scores[el1] *= keepRatio;
+      if (el1 !== el2) scores[el2] *= keepRatio;
       deltas[el1] = (deltas[el1] || 0) - d1;
       if (el1 !== el2) deltas[el2] = (deltas[el2] || 0) - d2;
       clamp();
 
+      const distLabel = dist === 0 ? '相鄰' : dist === 1 ? '隔1柱' : '隔2柱';
       entries.push({
         type: '六合(絆住)',
         branches: [c1, c2],
         pillarLabels: [PILLAR_LABELS[i1], PILLAR_LABELS[i2]],
-        description: `\u3010${c1}${c2}\u5408\u800c\u4e0d\u5316\u3011\u6708\u4ee4\u4e0d\u652f\u6301\uff0c\u4e92\u76f8\u7275\u7d55\u8d8a\u52e2\u5404\u62538\u6298`,
+        description: `\u3010${c1}${c2}\u5408\u800c\u4e0d\u5316\u3011${distLabel}\uff0c\u6708\u4ee4\u4e0d\u652f\u6301\uff0c\u4e92\u76f8\u7275\u7d55\u8d8a\u52e2\u5404\u6253${Math.round((1-keepRatio)*100)}%\u6298`,
         severity: 'moderate',
         deltas,
       });
