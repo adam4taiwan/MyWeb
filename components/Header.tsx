@@ -13,6 +13,7 @@ const locales = [
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showApptMenu, setShowApptMenu] = useState(false);
   const { isAuthenticated, logout } = useAuth();
   const t = useTranslations('Header');
   const currentLocale = useLocale();
@@ -44,7 +45,22 @@ export default function Header() {
             )}
             <Link href="/divination" className="text-amber-600 hover:text-amber-500 transition-colors cursor-pointer font-medium whitespace-nowrap">{t('divination')}</Link>
             <Link href="/blessing" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer whitespace-nowrap">{t('blessing')}</Link>
-            <Link href="/appointment" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer whitespace-nowrap">{t('appointment')}</Link>
+            <div className="relative" onMouseEnter={() => setShowApptMenu(true)} onMouseLeave={() => setShowApptMenu(false)}>
+              <button className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer whitespace-nowrap flex items-center gap-0.5">
+                {t('appointment')}
+                <i className="ri-arrow-down-s-line text-xs"></i>
+              </button>
+              {showApptMenu && (
+                <div className="absolute top-full left-0 mt-1 bg-white border border-amber-200 rounded-lg shadow-lg py-1 min-w-[7rem] z-50">
+                  <Link href="/appointment" className="block px-4 py-2 text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-600 whitespace-nowrap" onClick={() => setShowApptMenu(false)}>
+                    預約服務
+                  </Link>
+                  <Link href="/consultation/online" className="block px-4 py-2 text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-600 whitespace-nowrap" onClick={() => setShowApptMenu(false)}>
+                    線上問事
+                  </Link>
+                </div>
+              )}
+            </div>
           </nav>
 
           <div className="hidden md:flex items-center space-x-2 ml-4">
@@ -113,7 +129,8 @@ export default function Header() {
               )}
               <Link href="/divination" className="text-amber-600 hover:text-amber-500 transition-colors cursor-pointer font-medium" onClick={() => setIsMenuOpen(false)}>{t('divination')}</Link>
               <Link href="/blessing" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>{t('blessing')}</Link>
-              <Link href="/appointment" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>{t('appointment')}</Link>
+              <Link href="/appointment" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer pl-1" onClick={() => setIsMenuOpen(false)}>預約服務</Link>
+              <Link href="/consultation/online" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer pl-1" onClick={() => setIsMenuOpen(false)}>線上問事</Link>
               {isAuthenticated && (
                 <Link href="/member" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>{t('member')}</Link>
               )}
