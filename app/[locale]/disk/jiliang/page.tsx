@@ -538,7 +538,7 @@ function DynamicTab({
   const currentYear = new Date().getFullYear();
   const defaultIdx = Math.max(0, Math.min(79, currentYear - birthYear));
   const [selectedIdx, setSelectedIdx] = useState(defaultIdx);
-  const [filterType, setFilterType] = useState<'ALL' | 'BOOM' | 'DEBT' | 'TEACHING'>('ALL');
+  const [filterType, setFilterType] = useState<'ALL' | 'SURGE' | 'GUARD'>('ALL');
 
   const { timeline, boomYearsWealth, boomYearsGov, debtYears, daYunList } = useMemo(() => {
     return generateDynamicTimeline(
@@ -547,14 +547,14 @@ function DynamicTab({
     );
   }, [chart, birthYear, apiData]);
 
-  const teachingYears = useMemo(() => timeline.filter(t => t.cycleNature === 'TEACHING_LEISURE'), [timeline]);
+  const surgeYears  = useMemo(() => timeline.filter(t => t.cycleNature === 'BOOM' || t.cycleNature === 'FAVORABLE'), [timeline]);
+  const guardYears  = useMemo(() => timeline.filter(t => t.cycleNature === 'DEBT_HARDSHIP' || t.cycleNature === 'PRESSURE'), [timeline]);
 
   const displayedList = useMemo(() => {
-    if (filterType === 'BOOM')     return boomYearsWealth;
-    if (filterType === 'DEBT')     return debtYears;
-    if (filterType === 'TEACHING') return teachingYears;
+    if (filterType === 'SURGE') return surgeYears;
+    if (filterType === 'GUARD') return guardYears;
     return timeline;
-  }, [filterType, timeline, boomYearsWealth, debtYears, teachingYears]);
+  }, [filterType, timeline, surgeYears, guardYears]);
 
   const currentYearData: DynamicYearScore = timeline[selectedIdx] || timeline[0];
 
@@ -585,6 +585,16 @@ function DynamicTab({
   const ceilG = natalGovAnalysis.levelId;
   const natalDayBranch   = chart.earthlyBranches[2].name;
 
+  // 人生階段 helper
+  function getLifeStage(midAge: number) {
+    if (midAge < 15) return { label: '成長奠基期', focus: ['學習啟蒙', '天賦培育'], canAnalyze: false };
+    if (midAge < 20) return { label: '奠基期',     focus: ['學業方向', '才能開發', '貴人扶持'], canAnalyze: false };
+    if (midAge < 40) return { label: '決策期',     focus: ['事業起步', '感情婚姻', '財富方向'], canAnalyze: true };
+    if (midAge < 55) return { label: '收成守成期', focus: ['事業突破', '置產投資', '健康關卡'], canAnalyze: true };
+    if (midAge < 70) return { label: '交棒期',     focus: ['退場時機', '財庫守護', '身體關卡'], canAnalyze: true };
+    return              { label: '安樂期',         focus: ['壽元健康', '子孫陪伴', '財產傳承'], canAnalyze: false };
+  }
+
   // 逐大運統計：兌現值 = min(動態等級, 先天上限) - 刑沖害懲罰
   type DaYunStat = {
     dy: DaYunPeriod; yrs: number;
@@ -592,6 +602,9 @@ function DynamicTab({
     peakAdjW: number; peakAdjG: number;
     realPctW: number; realPctG: number;
     dyInteract: 'chong' | 'xing' | 'hai' | null;
+    lifeStage: ReturnType<typeof getLifeStage>;
+    decadeRating: '旺運' | '平運' | '逆運';
+    effortLabel: string; effortSymbol: string; effortColor: string;
   };
   const daYunStats = useMemo(() => daYunList.map(dy => {
     const yrs = timeline.filter(y => y.age >= dy.startAge && y.age <= dy.endAge);
@@ -617,7 +630,25 @@ function DynamicTab({
     const peakAdjG = Math.max(...adjG);
     const realPctW = ceilW > 0 ? Math.round(avgAdjW / ceilW * 100) : 0;
     const realPctG = ceilG > 0 ? Math.round(avgAdjG / ceilG * 100) : 0;
-    return { dy, yrs: yrs.length, avgAdjW, avgAdjG, peakAdjW, peakAdjG, realPctW, realPctG, dyInteract } as DaYunStat;
+
+    const midAge = (dy.startAge + dy.endAge) / 2;
+    const lifeStage = getLifeStage(midAge);
+    const avgRealPct = lifeStage.canAnalyze ? (realPctW + realPctG) / 2 : -1;
+    const hasChong = dyInteract === 'chong';
+
+    let decadeRating: '旺運' | '平運' | '逆運';
+    if (!lifeStage.canAnalyze)               decadeRating = '平運';
+    else if (avgRealPct >= 65 && !hasChong)  decadeRating = '旺運';
+    else if (avgRealPct >= 35)               decadeRating = '平運';
+    else                                     decadeRating = '逆運';
+
+    let effortLabel: string; let effortSymbol: string; let effortColor: string;
+    if (decadeRating === '旺運')      { effortLabel = '努力有用'; effortSymbol = '▲'; effortColor = 'text-green-400'; }
+    else if (decadeRating === '逆運') { effortLabel = '守成待時'; effortSymbol = '▼'; effortColor = 'text-red-400'; }
+    else if (hasChong)                { effortLabel = '謹慎行事'; effortSymbol = '→'; effortColor = 'text-orange-400'; }
+    else                              { effortLabel = '慢工出細活'; effortSymbol = '→'; effortColor = 'text-amber-300'; }
+
+    return { dy, yrs: yrs.length, avgAdjW, avgAdjG, peakAdjW, peakAdjG, realPctW, realPctG, dyInteract, lifeStage, decadeRating, effortLabel, effortSymbol, effortColor } as DaYunStat;
   }).filter(Boolean) as DaYunStat[], [daYunList, timeline, ceilW, ceilG, natalDayBranch]);
 
   // 生涯匯總：以大運兌現值計算
@@ -638,120 +669,49 @@ function DynamicTab({
   return (
     <div className="space-y-5">
 
-      {/* ── 大運財官兌現分析 ── */}
+      {/* ── 大運人生階段總覽 ── */}
       <div className="bg-stone-900 border border-amber-800/50 rounded-xl p-5 space-y-4">
         <div className="text-xs text-amber-400 uppercase tracking-widest font-bold">
-          大運財官兌現分析
+          大運人生階段總覽
           <span className="ml-2 text-stone-500 normal-case tracking-normal font-normal">
-            （先天格局為天花板，兌現值 = 扣除大運、流年刑沖害後可實現之等級）
+            （依年齡階段判斷關注重點，運勢評等已扣除刑沖害影響）
           </span>
         </div>
 
-        {/* 先天上限 + 生涯最高兌現 + 生涯兌現率 */}
-        <div className="grid grid-cols-2 gap-3">
-          {[
-            {
-              label: '財富格局', natal: ceilW, natalName: natalWealthAnalysis.levelName,
-              maxReal: lifeMaxRealW, avgPct: lifeAvgPctW,
-            },
-            {
-              label: '官貴格局', natal: ceilG, natalName: natalGovAnalysis.levelName,
-              maxReal: lifeMaxRealG, avgPct: lifeAvgPctG,
-            },
-          ].map(item => (
-            <div key={item.label} className="bg-stone-800/60 rounded-lg p-3 space-y-2">
-              <div className="text-xs text-stone-400 font-bold">{item.label}</div>
-              <div className="grid grid-cols-3 gap-1 text-center">
-                <div className="bg-stone-700/60 rounded p-2">
-                  <div className="text-[9px] text-stone-500">先天上限</div>
-                  <div className="text-lg font-bold text-stone-200">{item.natal}<span className="text-xs">級</span></div>
-                  <div className="text-[9px] text-stone-400">{item.natalName}</div>
-                </div>
-                <div className="bg-amber-900/30 border border-amber-800/50 rounded p-2">
-                  <div className="text-[9px] text-amber-500">生涯最高兌現</div>
-                  <div className="text-lg font-bold text-amber-400">
-                    {item.maxReal.toFixed(1)}<span className="text-xs">級</span>
+        {/* 大運人生階段卡片列 */}
+        <div className="space-y-2">
+          {daYunStats.map(s => {
+            const ratingColor = s.decadeRating === '旺運' ? 'text-green-400' : s.decadeRating === '逆運' ? 'text-red-400' : 'text-amber-300';
+            const ratingBg    = s.decadeRating === '旺運' ? 'border-green-800/50 bg-green-900/10' : s.decadeRating === '逆運' ? 'border-red-800/50 bg-red-900/10' : 'border-stone-700 bg-stone-800/40';
+            const interactTip = s.dyInteract === 'chong' ? '大運沖日支' : s.dyInteract === 'xing' ? '大運刑日支' : s.dyInteract === 'hai' ? '大運害日支' : '';
+            const isCurrent = timeline.some(y => y.daYunName === s.dy.name && y.calYear === new Date().getFullYear());
+            return (
+              <div key={s.dy.index} className={`rounded-lg border px-4 py-2.5 ${ratingBg} ${isCurrent ? 'ring-1 ring-amber-500/50' : ''}`}>
+                <div className="flex items-center gap-3 flex-wrap">
+                  {/* 大運名 + 年齡 */}
+                  <div className="min-w-[4rem]">
+                    <span className="font-bold text-amber-300 text-sm">{s.dy.name}</span>
+                    <span className="text-[10px] text-stone-500 ml-1">{s.dy.startAge}-{s.dy.endAge}歲</span>
+                    {isCurrent && <span className="ml-1 text-[9px] bg-amber-700 text-amber-100 px-1 rounded">現在</span>}
                   </div>
-                  <div className="text-[9px] text-stone-400">含刑沖害扣減後</div>
-                </div>
-                <div className="bg-stone-700/40 rounded p-2">
-                  <div className="text-[9px] text-stone-500">生涯兌現率</div>
-                  <div className={`text-lg font-bold ${item.avgPct >= 70 ? 'text-green-400' : item.avgPct >= 40 ? 'text-amber-300' : 'text-red-400'}`}>
-                    {item.avgPct}<span className="text-xs">%</span>
+                  {/* 人生階段 */}
+                  <span className="text-[10px] bg-stone-700 text-stone-300 px-2 py-0.5 rounded whitespace-nowrap">{s.lifeStage.label}</span>
+                  {/* 運勢評等 */}
+                  <span className={`text-xs font-bold ${ratingColor} whitespace-nowrap`}>{s.decadeRating}</span>
+                  {/* 效能 */}
+                  <span className={`text-xs font-bold ${s.effortColor} whitespace-nowrap`}>{s.effortSymbol} {s.effortLabel}</span>
+                  {/* 刑沖警示 */}
+                  {interactTip && <span className="text-[10px] text-red-400 bg-red-900/20 px-1.5 py-0.5 rounded">{interactTip}</span>}
+                  {/* 關注重點 */}
+                  <div className="ml-auto flex gap-1 flex-wrap">
+                    {s.lifeStage.focus.map(f => (
+                      <span key={f} className="text-[10px] text-stone-400 bg-stone-800 px-1.5 py-0.5 rounded">{f}</span>
+                    ))}
                   </div>
-                  <div className="text-[9px] text-stone-400">各大運平均</div>
                 </div>
               </div>
-              {/* Verdict */}
-              <div className={`text-[10px] rounded px-2 py-1 ${
-                item.avgPct >= 70 ? 'bg-green-900/30 text-green-300'
-                : item.avgPct >= 40 ? 'bg-amber-900/30 text-amber-300'
-                : 'bg-red-900/30 text-red-300'}`}>
-                {item.avgPct >= 70
-                  ? `大運整體配合良好，先天${item.natal}級格局兌現充分，生涯最高可達${item.maxReal.toFixed(1)}級`
-                  : item.avgPct >= 40
-                  ? `大運中度配合，走喜用時可部分兌現先天${item.natal}級格局，生涯最高${item.maxReal.toFixed(1)}級`
-                  : `大運配合不足或刑沖害偏多，先天${item.natal}級格局難以充分兌現，生涯最高${item.maxReal.toFixed(1)}級`}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* 逐大運兌現表 */}
-        <div>
-          <div className="text-xs text-stone-400 mb-2">各大運兌現一覽（已扣大運、流年刑沖害）</div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="text-[10px] text-stone-500 border-b border-stone-700">
-                  <th className="text-left py-1 pr-3">大運</th>
-                  <th className="text-center py-1 pr-3">年齡</th>
-                  <th className="text-center py-1 pr-3">大運刑沖</th>
-                  <th className="text-center py-1 pr-3">財兌現率</th>
-                  <th className="text-center py-1 pr-3">財平均</th>
-                  <th className="text-center py-1 pr-3">財峰值</th>
-                  <th className="text-center py-1 pr-3">官兌現率</th>
-                  <th className="text-center py-1 pr-3">官平均</th>
-                  <th className="text-center py-1">官峰值</th>
-                </tr>
-              </thead>
-              <tbody>
-                {daYunStats.map(s => {
-                  const interactLabel = s.dyInteract === 'chong' ? '沖日支' : s.dyInteract === 'xing' ? '刑日支' : s.dyInteract === 'hai' ? '害日支' : '';
-                  const wGood = s.realPctW >= 70;
-                  const gGood = s.realPctG >= 70;
-                  return (
-                    <tr key={s.dy.index} className="border-b border-stone-800/50 hover:bg-stone-800/30">
-                      <td className="py-1 pr-3 font-bold text-amber-300">{s.dy.name}</td>
-                      <td className="py-1 pr-3 text-center text-stone-400">{s.dy.startAge}-{s.dy.endAge}</td>
-                      <td className="py-1 pr-3 text-center">
-                        {interactLabel
-                          ? <span className="text-red-400 font-bold text-[10px]">{interactLabel}</span>
-                          : <span className="text-stone-600">-</span>}
-                      </td>
-                      <td className={`py-1 pr-3 text-center font-bold ${wGood ? 'text-green-400' : s.realPctW >= 40 ? 'text-amber-300' : 'text-red-400'}`}>
-                        {s.realPctW}%
-                      </td>
-                      <td className="py-1 pr-3 text-center text-stone-400">{s.avgAdjW.toFixed(1)}</td>
-                      <td className={`py-1 pr-3 text-center ${s.peakAdjW >= ceilW ? 'text-green-400 font-bold' : 'text-stone-400'}`}>
-                        {s.peakAdjW.toFixed(1)}
-                      </td>
-                      <td className={`py-1 pr-3 text-center font-bold ${gGood ? 'text-green-400' : s.realPctG >= 40 ? 'text-amber-300' : 'text-red-400'}`}>
-                        {s.realPctG}%
-                      </td>
-                      <td className="py-1 pr-3 text-center text-stone-400">{s.avgAdjG.toFixed(1)}</td>
-                      <td className={`py-1 text-center ${s.peakAdjG >= ceilG ? 'text-green-400 font-bold' : 'text-stone-400'}`}>
-                        {s.peakAdjG.toFixed(1)}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-          <div className="mt-2 text-[10px] text-stone-600">
-            兌現率 = 該大運平均兌現值 / 先天上限 × 100%　刑沖害 = 大運地支對日支的負面交涉（流年刑沖害已計入每年扣減）
-          </div>
+            );
+          })}
         </div>
       </div>
 
@@ -759,10 +719,9 @@ function DynamicTab({
       <div className="flex flex-wrap gap-2 items-center">
         <span className="text-xs text-stone-400">篩選：</span>
         {([
-          { key: 'ALL',      label: '全部' },
-          { key: 'BOOM',     label: `黃金大爆發（${boomYearsWealth.length}年）` },
-          { key: 'DEBT',     label: `磨礪沉潛（${debtYears.length}年）` },
-          { key: 'TEACHING', label: `講學清福（${teachingYears.length}年）` },
+          { key: 'ALL',   label: `全部（${timeline.length}年）` },
+          { key: 'SURGE', label: `宜衝刺年（${surgeYears.length}年）` },
+          { key: 'GUARD', label: `宜守成年（${guardYears.length}年）` },
         ] as const).map(f => (
           <button key={f.key} onClick={() => setFilterType(f.key)}
             className={`text-xs px-3 py-1 rounded-lg border transition-all ${filterType === f.key ? 'bg-amber-800 border-amber-600 text-amber-100' : 'border-stone-600 text-stone-400 hover:border-stone-500'}`}>
@@ -784,15 +743,18 @@ function DynamicTab({
                   <th className="px-3 py-2 text-left">流年</th>
                   <th className="px-3 py-2 text-center">歲</th>
                   <th className="px-3 py-2 text-left">大運</th>
-                  <th className="px-3 py-2 text-center">財</th>
-                  <th className="px-3 py-2 text-center">官</th>
-                  <th className="px-3 py-2 text-left">性質</th>
+                  <th className="px-3 py-2 text-center">效能</th>
+                  <th className="px-3 py-2 text-left">本年性質</th>
                 </tr>
               </thead>
               <tbody>
                 {displayedList.map((y, i) => {
                   const isSelected = filterType === 'ALL' ? selectedIdx === y.age : false;
                   const rowBg = isSelected ? 'bg-amber-900/30' : i % 2 === 0 ? '' : 'bg-stone-800/30';
+                  const isSurge = y.cycleNature === 'BOOM' || y.cycleNature === 'FAVORABLE';
+                  const isGuard = y.cycleNature === 'DEBT_HARDSHIP' || y.cycleNature === 'PRESSURE';
+                  const effortSymbol = isSurge ? '▲' : isGuard ? '▼' : '→';
+                  const effortColor  = isSurge ? 'text-green-400 font-bold' : isGuard ? 'text-red-400 font-bold' : 'text-stone-500';
                   return (
                     <tr key={y.calYear}
                       className={`cursor-pointer hover:bg-amber-900/20 transition-colors ${rowBg}`}
@@ -802,12 +764,7 @@ function DynamicTab({
                       </td>
                       <td className="px-3 py-1.5 text-center text-stone-400">{y.age}</td>
                       <td className="px-3 py-1.5 text-amber-300">{y.daYunName}</td>
-                      <td className="px-3 py-1.5 text-center">
-                        <span className={y.isBoomYearWealth ? 'font-bold text-amber-400' : 'text-stone-400'}>{y.wealthLevel.levelId}</span>
-                      </td>
-                      <td className="px-3 py-1.5 text-center">
-                        <span className={y.isBoomYearGov ? 'font-bold text-amber-400' : 'text-stone-400'}>{y.govLevel.levelId}</span>
-                      </td>
+                      <td className={`px-3 py-1.5 text-center ${effortColor}`}>{effortSymbol}</td>
                       <td className="px-3 py-1.5">
                         <NatureTag nature={y.cycleNature} tag={y.cycleNatureTag} />
                       </td>
@@ -835,19 +792,41 @@ function DynamicTab({
             </div>
 
             <div className="bg-stone-900 border border-stone-700 rounded-xl p-4 space-y-3">
-              <div className="text-xs text-amber-400 font-bold">財官格局得分</div>
+              <div className="text-xs text-amber-400 font-bold">本年財官實力（已調整至先天上限）</div>
               <div className="grid grid-cols-2 gap-2">
-                <div className={`rounded-lg p-3 text-center border ${currentYearData.isBoomYearWealth ? 'bg-amber-800/30 border-amber-700' : 'bg-stone-800 border-stone-700'}`}>
-                  <div className="text-[10px] text-stone-400">財富格局</div>
-                  <div className={`text-xl font-bold ${currentYearData.isBoomYearWealth ? 'text-amber-400' : 'text-stone-300'}`}>{currentYearData.wealthLevel.levelId}級</div>
-                  <div className="text-xs text-stone-400">{currentYearData.wealthScore} 分</div>
-                </div>
-                <div className={`rounded-lg p-3 text-center border ${currentYearData.isBoomYearGov ? 'bg-amber-800/30 border-amber-700' : 'bg-stone-800 border-stone-700'}`}>
-                  <div className="text-[10px] text-stone-400">官貴格局</div>
-                  <div className={`text-xl font-bold ${currentYearData.isBoomYearGov ? 'text-amber-400' : 'text-stone-300'}`}>{currentYearData.govLevel.levelId}級</div>
-                  <div className="text-xs text-stone-400">{currentYearData.govScore} 分</div>
-                </div>
+                {(() => {
+                  const adjW = Math.min(currentYearData.wealthLevel.levelId, ceilW);
+                  const adjG = Math.min(currentYearData.govLevel.levelId, ceilG);
+                  const wBoom = adjW >= ceilW && currentYearData.isBoomYearWealth;
+                  const gBoom = adjG >= ceilG && currentYearData.isBoomYearGov;
+                  return (<>
+                    <div className={`rounded-lg p-3 text-center border ${wBoom ? 'bg-amber-800/30 border-amber-700' : 'bg-stone-800 border-stone-700'}`}>
+                      <div className="text-[10px] text-stone-400">財富</div>
+                      <div className={`text-xl font-bold ${wBoom ? 'text-amber-400' : 'text-stone-300'}`}>{adjW}<span className="text-xs">級</span></div>
+                      <div className="text-[9px] text-stone-500">上限 {ceilW} 級</div>
+                    </div>
+                    <div className={`rounded-lg p-3 text-center border ${gBoom ? 'bg-amber-800/30 border-amber-700' : 'bg-stone-800 border-stone-700'}`}>
+                      <div className="text-[10px] text-stone-400">官貴</div>
+                      <div className={`text-xl font-bold ${gBoom ? 'text-amber-400' : 'text-stone-300'}`}>{adjG}<span className="text-xs">級</span></div>
+                      <div className="text-[9px] text-stone-500">上限 {ceilG} 級</div>
+                    </div>
+                  </>);
+                })()}
               </div>
+              {/* 人生階段關注重點 */}
+              {(() => {
+                const stage = getLifeStage(currentYearData.age);
+                return (
+                  <div className="mt-1 pt-2 border-t border-stone-700">
+                    <div className="text-[10px] text-stone-500 mb-1">{stage.label} · 此階段關注</div>
+                    <div className="flex flex-wrap gap-1">
+                      {stage.focus.map(f => (
+                        <span key={f} className="text-[10px] text-stone-300 bg-stone-700 px-2 py-0.5 rounded">{f}</span>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
             {currentYearData.dynamicGongHuiList.length > 0 && (
