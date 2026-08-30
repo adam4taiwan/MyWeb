@@ -452,8 +452,11 @@ function FortuneTab({ chart, scores, apiData }: { chart: BaziChart; scores: Reco
           </div>
         </div>
         <div className="flex items-center justify-between bg-stone-800/60 rounded px-3 py-2">
-          <span className="text-xs text-stone-400">命中格局：</span>
+          <span className="text-xs text-stone-400">先天格局上限：</span>
           <span className={`font-bold text-lg ${levelColor}`}>{analysis.levelName}</span>
+        </div>
+        <div className="text-[10px] text-stone-500 leading-relaxed">
+          此為命局先天潛力天花板，實際兌現需大運走到喜用方能顯現；大運走忌神則格局折損難兌現。詳見「動態歲運」頁面的大運調整分析。
         </div>
         <div className="space-y-1">
           <div className="text-xs text-stone-400">社會階層定位：</div>
@@ -524,11 +527,12 @@ function FortuneTab({ chart, scores, apiData }: { chart: BaziChart; scores: Reco
 // ---- Tab: 動態歲運 ----
 
 function DynamicTab({
-  chart, birthYear, apiData,
+  chart, birthYear, apiData, natalScores,
 }: {
   chart: BaziChart;
   birthYear: number;
   apiData: JiLiangApiData;
+  natalScores: Record<Element, number>;
 }) {
   const currentYear = new Date().getFullYear();
   const defaultIdx = Math.max(0, Math.min(79, currentYear - birthYear));
@@ -553,6 +557,51 @@ function DynamicTab({
 
   const currentYearData: DynamicYearScore = timeline[selectedIdx] || timeline[0];
 
+  // ── 大運財官調整分析 ──
+  const dayMasterDyn = chart.heavenlyStems[2];
+  const tenGodsDyn = getTenGodsElements(dayMasterDyn);
+
+  // 先天格局得分（複製 FortuneTab 的計算，使用 natalScores）
+  const natalSelf     = natalScores[tenGodsDyn.self]     || 0;
+  const natalResource = natalScores[tenGodsDyn.resource] || 0;
+  const natalTotal    = Object.values(natalScores).reduce((a, b) => a + b, 0);
+  const natalSupport  = natalTotal > 0 ? (natalSelf + natalResource) / natalTotal : 0.5;
+  const natalIsStrong = natalSupport >= 0.5;
+  let natalW = natalScores[tenGodsDyn.wealth]  || 0;
+  let natalG = natalScores[tenGodsDyn.officer] || 0;
+  if (natalIsStrong) {
+    natalW = natalW * 0.75 + (natalScores[tenGodsDyn.output] || 0) * 0.25;
+    natalG = natalG * 0.75 + (natalScores[tenGodsDyn.wealth] || 0) * 0.25;
+  } else {
+    natalW = natalW * 0.6 + natalResource * 0.25 + natalSelf * 0.15;
+    natalG = natalG * 0.6 + natalResource * 0.4;
+  }
+  const natalWealthAnalysis = getFortuneAnalysis(natalW, 'WEALTH', tenGodsDyn.wealth);
+  const natalGovAnalysis    = getFortuneAnalysis(natalG, 'GOV',    tenGodsDyn.officer);
+
+  // 逐大運統計
+  const daYunStats = useMemo(() => daYunList.map(dy => {
+    const yrs = timeline.filter(y => y.age >= dy.startAge && y.age <= dy.endAge);
+    if (yrs.length === 0) return null;
+    const boomW  = yrs.filter(y => y.isBoomYearWealth).length;
+    const boomG  = yrs.filter(y => y.isBoomYearGov).length;
+    const avgW   = yrs.reduce((s, y) => s + y.wealthLevel.levelId, 0) / yrs.length;
+    const avgG   = yrs.reduce((s, y) => s + y.govLevel.levelId,    0) / yrs.length;
+    const peakW  = Math.max(...yrs.map(y => y.wealthLevel.levelId));
+    const peakG  = Math.max(...yrs.map(y => y.govLevel.levelId));
+    const wRatio = boomW / yrs.length;
+    const gRatio = boomG / yrs.length;
+    const supportLabel = wRatio >= 0.7 ? '極高' : wRatio >= 0.4 ? '中等' : '偏低';
+    return { dy, yrs: yrs.length, boomW, boomG, avgW, avgG, peakW, peakG, wRatio, gRatio, supportLabel };
+  }).filter(Boolean) as Array<{ dy: DaYunPeriod; yrs: number; boomW: number; boomG: number; avgW: number; avgG: number; peakW: number; peakG: number; wRatio: number; gRatio: number; supportLabel: string }>, [daYunList, timeline]);
+
+  const lifepeakW  = timeline.length > 0 ? Math.max(...timeline.map(y => y.wealthLevel.levelId)) : 0;
+  const lifepeakG  = timeline.length > 0 ? Math.max(...timeline.map(y => y.govLevel.levelId))    : 0;
+  const lifeavgW   = timeline.length > 0 ? timeline.reduce((s, y) => s + y.wealthLevel.levelId, 0) / timeline.length : 0;
+  const lifeavgG   = timeline.length > 0 ? timeline.reduce((s, y) => s + y.govLevel.levelId,    0) / timeline.length : 0;
+  const boomWPct   = timeline.length > 0 ? Math.round(boomYearsWealth.length / timeline.length * 100) : 0;
+  const boomGPct   = timeline.length > 0 ? Math.round(boomYearsGov.length    / timeline.length * 100) : 0;
+
   function NatureTag({ nature, tag }: { nature: DynamicYearScore['cycleNature']; tag: string }) {
     const cls = nature === 'BOOM' ? 'bg-amber-800/50 text-amber-300 border-amber-700'
       : nature === 'DEBT_HARDSHIP' || nature === 'PRESSURE' ? 'bg-red-900/50 text-red-300 border-red-800'
@@ -564,6 +613,123 @@ function DynamicTab({
 
   return (
     <div className="space-y-5">
+
+      {/* ── 大運財官格局調整分析 ── */}
+      <div className="bg-stone-900 border border-amber-800/50 rounded-xl p-5 space-y-4">
+        <div className="text-xs text-amber-400 uppercase tracking-widest font-bold">
+          大運財官格局調整分析
+          <span className="ml-2 text-stone-500 normal-case tracking-normal font-normal">
+            （先天格局為天花板，大運走喜用才能兌現）
+          </span>
+        </div>
+
+        {/* 先天 vs 大運峰值 vs 生涯平均 */}
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            {
+              label: '財富格局', natal: natalWealthAnalysis.levelId, natalName: natalWealthAnalysis.levelName,
+              peak: lifepeakW, avg: lifeavgW, boomPct: boomWPct, boomYrs: boomYearsWealth.length,
+            },
+            {
+              label: '官貴格局', natal: natalGovAnalysis.levelId, natalName: natalGovAnalysis.levelName,
+              peak: lifepeakG, avg: lifeavgG, boomPct: boomGPct, boomYrs: boomYearsGov.length,
+            },
+          ].map(item => (
+            <div key={item.label} className="bg-stone-800/60 rounded-lg p-3 space-y-2">
+              <div className="text-xs text-stone-400 font-bold">{item.label}</div>
+              <div className="grid grid-cols-3 gap-1 text-center">
+                <div className="bg-stone-700/60 rounded p-2">
+                  <div className="text-[9px] text-stone-500">先天上限</div>
+                  <div className="text-lg font-bold text-stone-200">{item.natal}<span className="text-xs">級</span></div>
+                  <div className="text-[9px] text-stone-400">{item.natalName}</div>
+                </div>
+                <div className="bg-amber-900/30 border border-amber-800/50 rounded p-2">
+                  <div className="text-[9px] text-amber-500">大運峰值</div>
+                  <div className={`text-lg font-bold ${item.peak >= item.natal ? 'text-amber-400' : 'text-stone-300'}`}>
+                    {item.peak}<span className="text-xs">級</span>
+                  </div>
+                  <div className="text-[9px] text-stone-400">最高可達</div>
+                </div>
+                <div className="bg-stone-700/40 rounded p-2">
+                  <div className="text-[9px] text-stone-500">生涯平均</div>
+                  <div className="text-lg font-bold text-stone-300">{item.avg.toFixed(1)}<span className="text-xs">級</span></div>
+                  <div className="text-[9px] text-stone-400">爆發{item.boomPct}%（{item.boomYrs}年）</div>
+                </div>
+              </div>
+              {/* Verdict */}
+              <div className={`text-[10px] rounded px-2 py-1 ${
+                item.boomPct >= 40 ? 'bg-amber-900/30 text-amber-300'
+                : item.boomPct >= 20 ? 'bg-green-900/30 text-green-300'
+                : 'bg-red-900/30 text-red-300'}`}>
+                {item.boomPct >= 40
+                  ? `大運高度支持，先天${item.natal}級格局有機會在多個大運兌現，實際成就可達${item.peak}級`
+                  : item.boomPct >= 20
+                  ? `大運中度支持，部分大運可兌現先天格局，生涯約達${Math.round(item.avg)}至${item.peak}級`
+                  : `大運支持度偏低（${item.boomPct}%），先天格局難以充分兌現，實際多維持在${Math.round(item.avg)}級左右`}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* 逐大運統計表 */}
+        <div>
+          <div className="text-xs text-stone-400 mb-2">各大運財官支持一覽</div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="text-[10px] text-stone-500 border-b border-stone-700">
+                  <th className="text-left py-1 pr-3">大運</th>
+                  <th className="text-center py-1 pr-3">年齡</th>
+                  <th className="text-center py-1 pr-3">財爆發</th>
+                  <th className="text-center py-1 pr-3">財平均</th>
+                  <th className="text-center py-1 pr-3">財峰值</th>
+                  <th className="text-center py-1 pr-3">官爆發</th>
+                  <th className="text-center py-1 pr-3">官平均</th>
+                  <th className="text-center py-1">官峰值</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(daYunStats as Array<{
+                  dy: DaYunPeriod; yrs: number; boomW: number; boomG: number;
+                  avgW: number; avgG: number; peakW: number; peakG: number;
+                  wRatio: number; gRatio: number; supportLabel: string;
+                }>).map(s => {
+                  const wHigh = s.wRatio >= 0.5;
+                  const gHigh = s.gRatio >= 0.5;
+                  return (
+                    <tr key={s.dy.index} className="border-b border-stone-800/50 hover:bg-stone-800/30">
+                      <td className="py-1 pr-3 font-bold text-amber-300">{s.dy.name}</td>
+                      <td className="py-1 pr-3 text-center text-stone-400">{s.dy.startAge}-{s.dy.endAge}</td>
+                      <td className={`py-1 pr-3 text-center ${wHigh ? 'text-amber-400 font-bold' : 'text-stone-400'}`}>
+                        {s.boomW}/{s.yrs}
+                      </td>
+                      <td className={`py-1 pr-3 text-center ${wHigh ? 'text-amber-300' : 'text-stone-400'}`}>
+                        {s.avgW.toFixed(1)}
+                      </td>
+                      <td className={`py-1 pr-3 text-center ${s.peakW >= natalWealthAnalysis.levelId ? 'text-green-400 font-bold' : 'text-stone-400'}`}>
+                        {s.peakW}
+                      </td>
+                      <td className={`py-1 pr-3 text-center ${gHigh ? 'text-amber-400 font-bold' : 'text-stone-400'}`}>
+                        {s.boomG}/{s.yrs}
+                      </td>
+                      <td className={`py-1 pr-3 text-center ${gHigh ? 'text-amber-300' : 'text-stone-400'}`}>
+                        {s.avgG.toFixed(1)}
+                      </td>
+                      <td className={`py-1 text-center ${s.peakG >= natalGovAnalysis.levelId ? 'text-green-400 font-bold' : 'text-stone-400'}`}>
+                        {s.peakG}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <div className="mt-2 text-[10px] text-stone-600">
+            財爆發=該大運中財富為黃金爆發年之數 / 總年數　 官爆發同理　 峰值=該大運最高等級
+          </div>
+        </div>
+      </div>
+
       {/* Filters */}
       <div className="flex flex-wrap gap-2 items-center">
         <span className="text-xs text-stone-400">篩選：</span>
@@ -923,7 +1089,7 @@ export default function JiLiangPage() {
 
             {activeTab === 'engine'  && <EngineTab  chart={chart} apiData={apiData} xchhResult={xchhResult} />}
             {activeTab === 'fortune' && <FortuneTab chart={chart} scores={xchhResult.scores} apiData={apiData} />}
-            {activeTab === 'dynamic' && <DynamicTab chart={chart} birthYear={apiData.birthYear} apiData={apiData} />}
+            {activeTab === 'dynamic' && <DynamicTab chart={chart} birthYear={apiData.birthYear} apiData={apiData} natalScores={xchhResult.scores} />}
           </>
         )}
 
