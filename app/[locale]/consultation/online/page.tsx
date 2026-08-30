@@ -210,7 +210,7 @@ const LUCK_BADGE: Record<string, string> = {
 
 const POSITION_LABELS = ['過去（起因）', '現在（現狀）', '未來（結局）'];
 
-// ─── Bird SVG ─────────────────────────────────────────────────────────────────
+// ─── Bird image ───────────────────────────────────────────────────────────────
 
 function BirdSVG({ flying, onClick, disabled }: { flying: boolean; onClick: () => void; disabled: boolean }) {
   return (
@@ -220,52 +220,33 @@ function BirdSVG({ flying, onClick, disabled }: { flying: boolean; onClick: () =
         cursor: disabled ? 'default' : 'pointer',
         display: 'inline-block',
         transform: flying
-          ? 'translateY(-60px) rotate(-25deg) scale(1.25)'
+          ? 'translateY(-70px) rotate(-20deg) scale(1.2)'
           : 'translateY(0px) rotate(0deg) scale(1)',
         transition: 'transform 0.5s cubic-bezier(0.34,1.56,0.64,1)',
-        filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.6))',
+        filter: flying
+          ? 'drop-shadow(0 20px 30px rgba(0,0,0,0.7)) brightness(1.1)'
+          : 'drop-shadow(0 8px 16px rgba(0,0,0,0.6))',
         opacity: disabled ? 0.35 : 1,
       }}
     >
-      <svg viewBox="0 0 160 130" width="160" height="130" xmlns="http://www.w3.org/2000/svg">
-        {/* Ground shadow */}
-        <ellipse cx="78" cy="122" rx="38" ry="7" fill="rgba(0,0,0,0.25)" />
-        {/* Tail feathers */}
-        <path d="M 32 80 Q 8 105 2 118 L 24 92 Q 10 108 14 115 L 34 90 Q 22 104 28 112 L 42 85 Z" fill="#b8860b" />
-        {/* Body */}
-        <ellipse cx="72" cy="70" rx="36" ry="22" fill="#d4af37" />
-        {/* Wing highlight */}
-        <ellipse cx="60" cy="62" rx="20" ry="10" fill="#f0c040" opacity="0.5" />
-        {/* Left wing */}
-        <path d="M 48 65 Q 22 32 6 50 Q 30 60 48 65 Z" fill="#c8960a" />
-        {/* Right wing (back) */}
-        <path d="M 90 65 Q 118 32 132 46 Q 108 58 90 65 Z" fill="#c8960a" />
-        {/* Neck */}
-        <ellipse cx="103" cy="55" rx="16" ry="12" fill="#d4af37" />
-        {/* Head */}
-        <circle cx="114" cy="40" r="18" fill="#d4af37" />
-        {/* Head highlight */}
-        <circle cx="110" cy="34" r="7" fill="#f0d060" opacity="0.4" />
-        {/* Crest feathers */}
-        <path d="M 108 22 Q 115 8 118 18" stroke="#c8960a" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-        <path d="M 113 19 Q 122 5 125 16" stroke="#b87000" strokeWidth="2" fill="none" strokeLinecap="round" />
-        <path d="M 119 21 Q 130 10 130 20" stroke="#c8960a" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-        {/* Eye */}
-        <circle cx="120" cy="36" r="5.5" fill="#1a0000" />
-        <circle cx="122" cy="34" r="2" fill="white" />
-        {/* Beak */}
-        <path d="M 131 39 L 152 33 L 148 42 Z" fill="#ff8c00" />
-        <path d="M 131 39 L 148 42 L 145 46 Z" fill="#e07000" />
-        {/* Feet */}
-        <line x1="60" y1="92" x2="50" y2="108" stroke="#c8960a" strokeWidth="2.5" strokeLinecap="round" />
-        <line x1="50" y1="108" x2="40" y2="115" stroke="#c8960a" strokeWidth="2" strokeLinecap="round" />
-        <line x1="50" y1="108" x2="49" y2="118" stroke="#c8960a" strokeWidth="2" strokeLinecap="round" />
-        <line x1="50" y1="108" x2="60" y2="116" stroke="#c8960a" strokeWidth="2" strokeLinecap="round" />
-        <line x1="82" y1="92" x2="92" y2="108" stroke="#c8960a" strokeWidth="2.5" strokeLinecap="round" />
-        <line x1="92" y1="108" x2="82" y2="115" stroke="#c8960a" strokeWidth="2" strokeLinecap="round" />
-        <line x1="92" y1="108" x2="92" y2="118" stroke="#c8960a" strokeWidth="2" strokeLinecap="round" />
-        <line x1="92" y1="108" x2="102" y2="114" stroke="#c8960a" strokeWidth="2" strokeLinecap="round" />
-      </svg>
+      {/* Ground shadow */}
+      <div style={{ position: 'relative', width: '180px' }}>
+        <img
+          src="/images/niao-gua-bird.png"
+          alt="靈鳥"
+          style={{ width: '180px', height: 'auto', display: 'block' }}
+        />
+        {!flying && (
+          <div style={{
+            position: 'absolute', bottom: '-6px', left: '50%',
+            transform: 'translateX(-50%)',
+            width: '80px', height: '10px',
+            background: 'rgba(0,0,0,0.3)',
+            borderRadius: '50%',
+            filter: 'blur(4px)',
+          }} />
+        )}
+      </div>
     </div>
   );
 }
