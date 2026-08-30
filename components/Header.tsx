@@ -51,7 +51,7 @@ export default function Header() {
                 <i className="ri-arrow-down-s-line text-xs"></i>
               </button>
               {showApptMenu && (
-                <div className="absolute top-full left-0 mt-1 bg-white border border-amber-200 rounded-lg shadow-lg py-1 min-w-[7rem] z-50">
+                <div className="absolute top-full left-0 bg-white border border-amber-200 rounded-lg shadow-lg py-1 min-w-[7rem] z-50">
                   <Link href="/appointment" className="block px-4 py-2 text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-600 whitespace-nowrap" onClick={() => setShowApptMenu(false)}>
                     預約服務
                   </Link>
