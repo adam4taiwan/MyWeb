@@ -52,6 +52,7 @@ export interface DynamicYearScore {
   daYunName: string;
   daYunStem: string;
   daYunBranch: string;
+  liuNianBranch: string;
   scores: Record<Element, number>;
   wealthScore: number;
   govScore: number;
@@ -840,6 +841,7 @@ export function generateDynamicTimeline(
     timeline.push({
       calYear, age, yearName: liuNianInfo.name,
       daYunName: activeDaYun.name, daYunStem: activeDaYun.stem, daYunBranch: activeDaYun.branch,
+      liuNianBranch: liuNianInfo.branch,
       scores: { ...dynScores }, wealthScore: wealthBaseScore, govScore: govBaseScore,
       wealthLevel: wealthLevelInfo, govLevel: govLevelInfo,
       isBoomYearWealth, isBoomYearGov, isDebtStruggleYear,
@@ -855,4 +857,28 @@ export function generateDynamicTimeline(
     debtYears:       timeline.filter(y => y.isDebtStruggleYear),
     daYunList,
   };
+}
+
+// Returns the type of negative branch interaction, used for realized-level penalty
+export function getBranchXingChongHaiPenalty(b1: string, b2: string): 'chong' | 'xing' | 'hai' | null {
+  const SIX_CHONG: Record<string, string> = {
+    '\u5b50':'\u5348','\u5348':'\u5b50','\u4e11':'\u672a','\u672a':'\u4e11',
+    '\u5bc5':'\u7533','\u7533':'\u5bc5','\u536f':'\u9149','\u9149':'\u536f',
+    '\u8fb0':'\u620c','\u620c':'\u8fb0','\u5df3':'\u4ea5','\u4ea5':'\u5df3',
+  };
+  const SIX_HAI: Record<string, string> = {
+    '\u5b50':'\u672a','\u672a':'\u5b50','\u4e11':'\u5348','\u5348':'\u4e11',
+    '\u5bc5':'\u5df3','\u5df3':'\u5bc5','\u536f':'\u8fb0','\u8fb0':'\u536f',
+    '\u7533':'\u4ea5','\u4ea5':'\u7533','\u9149':'\u620c','\u620c':'\u9149',
+  };
+  // San Xing pairs (directional): 寅巳申 / 丑戌未 / 子卯
+  const SAN_XING = new Set([
+    '\u5bc5\u5df3','\u5df3\u7533','\u7533\u5bc5',
+    '\u4e11\u620c','\u620c\u672a','\u672a\u4e11',
+    '\u5b50\u536f','\u536f\u5b50',
+  ]);
+  if (SIX_CHONG[b1] === b2) return 'chong';
+  if (SIX_HAI[b1] === b2) return 'hai';
+  if (SAN_XING.has(b1 + b2)) return 'xing';
+  return null;
 }
