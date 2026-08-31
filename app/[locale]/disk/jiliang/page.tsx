@@ -720,14 +720,23 @@ function DynamicTab({
 
     const midAge = (dy.startAge + dy.endAge) / 2;
     const lifeStage = getLifeStage(midAge);
-    const avgRealPct = lifeStage.canAnalyze ? (realPctW + realPctG) / 2 : -1;
     const hasChong = dyInteract === 'chong';
 
+    // 以大運天干/地支五行的喜忌評分判斷旺/平/逆（主要依據）
+    // 天干權重2，地支權重1；用神+2/喜神+1/忌神-2/-1
+    const dyStemEl = mapStemToElement(dy.stem);
+    const dyBrEl   = EARTHLY_BRANCH_DATA[dy.branch]?.mainElement ?? 'Earth';
+    const yong = apiData.yongShenElem; const fuyi = apiData.fuYiElem; const ji = apiData.jiShenElem;
+    let dyScore = 0;
+    dyScore += ELEMENT_NAMES[dyStemEl] === yong ? 2 : ELEMENT_NAMES[dyStemEl] === fuyi ? 1 : ELEMENT_NAMES[dyStemEl] === ji ? -2 : 0;
+    dyScore += ELEMENT_NAMES[dyBrEl]   === yong ? 1 : ELEMENT_NAMES[dyBrEl]   === fuyi ? 0.5 : ELEMENT_NAMES[dyBrEl] === ji ? -1 : 0;
+    if (hasChong) dyScore -= 0.5;
+
     let decadeRating: '旺運' | '平運' | '逆運';
-    if (!lifeStage.canAnalyze)               decadeRating = '平運';
-    else if (avgRealPct >= 65 && !hasChong)  decadeRating = '旺運';
-    else if (avgRealPct >= 35)               decadeRating = '平運';
-    else                                     decadeRating = '逆運';
+    if (!lifeStage.canAnalyze)  decadeRating = '平運';
+    else if (dyScore >= 1.5)    decadeRating = '旺運';
+    else if (dyScore <= -0.5)   decadeRating = '逆運';
+    else                        decadeRating = '平運';
 
     let effortLabel: string; let effortSymbol: string; let effortColor: string;
     if (decadeRating === '旺運')      { effortLabel = '努力有用'; effortSymbol = '▲'; effortColor = 'text-green-400'; }
@@ -741,7 +750,7 @@ function DynamicTab({
     const gPeakYear = birthYear + yrs[gPeakIdx].age;
 
     return { dy, yrs: yrs.length, avgAdjW, avgAdjG, peakAdjW, peakAdjG, realPctW, realPctG, dyInteract, lifeStage, decadeRating, effortLabel, effortSymbol, effortColor, wPeakYear, gPeakYear } as DaYunStat;
-  }).filter(Boolean) as DaYunStat[], [daYunList, timeline, ceilW, ceilG, natalDayBranch]);
+  }).filter(Boolean) as DaYunStat[], [daYunList, timeline, ceilW, ceilG, natalDayBranch, apiData.yongShenElem, apiData.fuYiElem, apiData.jiShenElem]);
 
   // 生涯匯總：以大運兌現值計算
   const lifeMaxRealW = daYunStats.length > 0 ? Math.max(...daYunStats.map(s => s.peakAdjW)) : 0;
