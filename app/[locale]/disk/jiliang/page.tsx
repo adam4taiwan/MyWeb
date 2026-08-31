@@ -595,6 +595,15 @@ function DynamicTab({
     return              { label: '安樂期',         focus: ['壽元健康', '子孫陪伴', '財產傳承'], canAnalyze: false };
   }
 
+  // 流年天干/地支喜忌標記
+  function getShenLabel(elem: Element): { label: string; color: string } {
+    const cn = ELEMENT_NAMES[elem];
+    if (cn === apiData.yongShenElem) return { label: '用', color: 'text-green-400 bg-green-900/30' };
+    if (cn === apiData.fuYiElem)     return { label: '喜', color: 'text-blue-400 bg-blue-900/30' };
+    if (cn === apiData.jiShenElem)   return { label: '忌', color: 'text-red-400 bg-red-900/30' };
+    return { label: '中', color: 'text-stone-500 bg-stone-800' };
+  }
+
   // 逐大運統計：兌現值 = min(動態等級, 先天上限) - 刑沖害懲罰
   type DaYunStat = {
     dy: DaYunPeriod; yrs: number;
@@ -605,6 +614,7 @@ function DynamicTab({
     lifeStage: ReturnType<typeof getLifeStage>;
     decadeRating: '旺運' | '平運' | '逆運';
     effortLabel: string; effortSymbol: string; effortColor: string;
+    wPeakYear: number; gPeakYear: number;
   };
   const daYunStats = useMemo(() => daYunList.map(dy => {
     const yrs = timeline.filter(y => y.age >= dy.startAge && y.age <= dy.endAge);
@@ -648,7 +658,12 @@ function DynamicTab({
     else if (hasChong)                { effortLabel = '謹慎行事'; effortSymbol = '→'; effortColor = 'text-orange-400'; }
     else                              { effortLabel = '慢工出細活'; effortSymbol = '→'; effortColor = 'text-amber-300'; }
 
-    return { dy, yrs: yrs.length, avgAdjW, avgAdjG, peakAdjW, peakAdjG, realPctW, realPctG, dyInteract, lifeStage, decadeRating, effortLabel, effortSymbol, effortColor } as DaYunStat;
+    const wPeakIdx = adjW.indexOf(Math.max(...adjW));
+    const gPeakIdx = adjG.indexOf(Math.max(...adjG));
+    const wPeakYear = birthYear + yrs[wPeakIdx].age;
+    const gPeakYear = birthYear + yrs[gPeakIdx].age;
+
+    return { dy, yrs: yrs.length, avgAdjW, avgAdjG, peakAdjW, peakAdjG, realPctW, realPctG, dyInteract, lifeStage, decadeRating, effortLabel, effortSymbol, effortColor, wPeakYear, gPeakYear } as DaYunStat;
   }).filter(Boolean) as DaYunStat[], [daYunList, timeline, ceilW, ceilG, natalDayBranch]);
 
   // 生涯匯總：以大運兌現值計算
@@ -700,6 +715,14 @@ function DynamicTab({
                   <span className={`text-xs font-bold ${ratingColor} whitespace-nowrap`}>{s.decadeRating}</span>
                   {/* 效能 */}
                   <span className={`text-xs font-bold ${s.effortColor} whitespace-nowrap`}>{s.effortSymbol} {s.effortLabel}</span>
+                  {/* 財官兌現率 + 峰值年 */}
+                  {s.lifeStage.canAnalyze && (
+                    <>
+                      <span className="text-[10px] text-stone-400 whitespace-nowrap">財{s.realPctW}%</span>
+                      <span className="text-[10px] text-stone-400 whitespace-nowrap">官{s.realPctG}%</span>
+                      <span className="text-[9px] text-stone-500 whitespace-nowrap">峰{s.wPeakYear}</span>
+                    </>
+                  )}
                   {/* 刑沖警示 */}
                   {interactTip && <span className="text-[10px] text-red-400 bg-red-900/20 px-1.5 py-0.5 rounded">{interactTip}</span>}
                   {/* 關注重點 */}
@@ -743,6 +766,8 @@ function DynamicTab({
                   <th className="px-3 py-2 text-left">流年</th>
                   <th className="px-3 py-2 text-center">歲</th>
                   <th className="px-3 py-2 text-left">大運</th>
+                  <th className="px-2 py-2 text-center">天干</th>
+                  <th className="px-2 py-2 text-center">地支</th>
                   <th className="px-3 py-2 text-center">效能</th>
                   <th className="px-3 py-2 text-left">本年性質</th>
                 </tr>
@@ -764,6 +789,12 @@ function DynamicTab({
                       </td>
                       <td className="px-3 py-1.5 text-center text-stone-400">{y.age}</td>
                       <td className="px-3 py-1.5 text-amber-300">{y.daYunName}</td>
+                      <td className="px-2 py-1.5 text-center">
+                        {(() => { const s2 = getShenLabel(mapStemToElement(y.yearName[0])); return <span className={`text-[9px] px-1 py-0.5 rounded font-bold ${s2.color}`}>{s2.label}</span>; })()}
+                      </td>
+                      <td className="px-2 py-1.5 text-center">
+                        {(() => { const s2 = getShenLabel(EARTHLY_BRANCH_DATA[y.liuNianBranch]?.mainElement ?? 'Earth'); return <span className={`text-[9px] px-1 py-0.5 rounded font-bold ${s2.color}`}>{s2.label}</span>; })()}
+                      </td>
                       <td className={`px-3 py-1.5 text-center ${effortColor}`}>{effortSymbol}</td>
                       <td className="px-3 py-1.5">
                         <NatureTag nature={y.cycleNature} tag={y.cycleNatureTag} />
@@ -863,18 +894,24 @@ function DynamicTab({
       <div className="bg-stone-900 border border-stone-700 rounded-xl p-5">
         <div className="text-xs text-amber-400 uppercase tracking-widest font-bold mb-3">大運一覽</div>
         <div className="flex flex-wrap gap-2">
-          {daYunList.map(dy => {
-            const dyBoomCount = boomYearsWealth.filter(y => y.daYunName === dy.name).length;
-            const dyDebtCount = debtYears.filter(y => y.daYunName === dy.name).length;
-            const qual = dyBoomCount >= 3 ? 'text-amber-400 border-amber-700 bg-amber-900/20'
-              : dyDebtCount >= 3 ? 'text-red-400 border-red-800 bg-red-900/10'
-              : 'text-stone-300 border-stone-700 bg-stone-800';
+          {daYunStats.map(s => {
+            const ratingBorder = s.decadeRating === '旺運' ? 'border-green-800 bg-green-900/10'
+              : s.decadeRating === '逆運' ? 'border-red-800 bg-red-900/10'
+              : 'border-stone-700 bg-stone-800';
+            const ratingColor = s.decadeRating === '旺運' ? 'text-green-400'
+              : s.decadeRating === '逆運' ? 'text-red-400'
+              : 'text-amber-300';
             return (
-              <div key={dy.name} className={`text-xs border rounded-lg px-3 py-2 text-center min-w-20 ${qual}`}>
-                <div className="font-bold text-sm">{dy.name}</div>
-                <div className="text-[10px] text-stone-500">{birthYear + dy.startAge}–{birthYear + dy.endAge}</div>
-                {dyBoomCount > 0 && <div className="text-[10px] text-amber-400">黃金 {dyBoomCount}年</div>}
-                {dyDebtCount > 0 && <div className="text-[10px] text-red-400">磨礪 {dyDebtCount}年</div>}
+              <div key={s.dy.name} className={`text-xs border rounded-lg px-3 py-2 text-center min-w-24 ${ratingBorder}`}>
+                <div className="font-bold text-sm text-stone-100">{s.dy.name}</div>
+                <div className="text-[10px] text-stone-500">{birthYear + s.dy.startAge}–{birthYear + s.dy.endAge}</div>
+                <div className={`text-xs font-bold mt-1 ${ratingColor}`}>{s.decadeRating}</div>
+                {s.lifeStage.canAnalyze && (
+                  <>
+                    <div className="text-[10px] text-stone-400 mt-0.5">財{s.realPctW}%·官{s.realPctG}%</div>
+                    <div className="text-[9px] text-stone-500">峰{s.wPeakYear}</div>
+                  </>
+                )}
               </div>
             );
           })}
