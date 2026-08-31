@@ -604,6 +604,97 @@ function DynamicTab({
     return { label: '中', color: 'text-stone-500 bg-stone-800' };
   }
 
+  // 六合查表
+  const SIX_HE_MAP: Record<string, string> = {
+    '子': '丑', '丑': '子', '寅': '亥', '亥': '寅',
+    '卯': '戌', '戌': '卯', '辰': '酉', '酉': '辰',
+    '巳': '申', '申': '巳', '午': '未', '未': '午',
+  };
+
+  // 流年觸發事件（依簡報四張領域查表：事業/婚姻/學業/疾病）
+  // 合 = 計畫性有預兆；衝 = 突發意外被動
+  function getLiuNianEventHint(lnStem: string, lnBranch: string, age: number): string | null {
+    const dayMaster   = chart.heavenlyStems[2];
+    const dayBranch   = chart.earthlyBranches[2].name;
+    const monthBranch = chart.earthlyBranches[1].name;
+
+    const lnTenGod = getStemTenGodLabel(lnStem, dayMaster, true);
+    const lnStemEl = mapStemToElement(lnStem);
+    const lnBrEl   = EARTHLY_BRANCH_DATA[lnBranch]?.mainElement ?? 'Earth';
+
+    const stemFavor = ELEMENT_NAMES[lnStemEl] === apiData.yongShenElem || ELEMENT_NAMES[lnStemEl] === apiData.fuYiElem;
+    const stemJi    = ELEMENT_NAMES[lnStemEl] === apiData.jiShenElem;
+
+    const brVsDay   = getBranchXingChongHaiPenalty(lnBranch, dayBranch);
+    const brVsMonth = getBranchXingChongHaiPenalty(lnBranch, monthBranch);
+    const brHeDay   = SIX_HE_MAP[lnBranch] === dayBranch;
+
+    const isMale    = apiData.gender === 1;
+    const lifeStage = getLifeStage(age);
+
+    // 命局天干十神（判斷官殺/財是否透干，供傷官見官/官印相生判斷）
+    const natalTenGods    = chart.heavenlyStems.map((s, i) => i === 2 ? '' : getStemTenGodLabel(s, dayMaster, false));
+    const hasNatalOfficer = natalTenGods.some(t => t === '正官' || t === '七殺');
+    const hasNatalWealth  = natalTenGods.some(t => t === '正財' || t === '偏財');
+
+    // 衝（突發）優先處理
+    if (brVsDay === 'chong') {
+      if (!lifeStage.canAnalyze) return '地支衝日支，環境動盪';
+      if (age <= 55) return '地支衝日支，婚姻/居所突變';
+      return '地支衝日支，健康留意';
+    }
+    if (brVsMonth === 'chong' && age >= 18) return '月令受衝，工作/家庭突變';
+
+    // 地支合日支（計畫性，感情/合夥）
+    if (brHeDay && lifeStage.canAnalyze && age >= 20 && age <= 50) {
+      if (isMale && (lnTenGod === '正財' || lnTenGod === '偏財')) return '財星合日支，感情婚姻機會';
+      if (!isMale && (lnTenGod === '正官' || lnTenGod === '七殺')) return '官星合日支，婚緣成熟';
+      return '日支逢合，合夥或感情有緣';
+    }
+
+    // 官殺年
+    if (lnTenGod === '正官' || lnTenGod === '七殺') {
+      if (stemFavor && age >= 20 && age <= 60) return '官星+喜，升遷貴人機會';
+      if (stemJi && age >= 20 && age <= 60) return '官殺+忌，壓力增大防官非';
+      if (stemJi && age > 60) return '官殺+忌，健康留意';
+    }
+
+    // 傷官年（傷官見官 最危險）
+    if (lnTenGod === '傷官') {
+      if (hasNatalOfficer && stemJi) return '傷官見官，職場衝突官非';
+      if (stemFavor) return '傷官+喜，才藝突出口才佳';
+      if (stemJi) return '傷官+忌，口舌是非';
+    }
+
+    // 財星年
+    if (lnTenGod === '正財' || lnTenGod === '偏財') {
+      if (stemFavor && age >= 20) return isMale ? '財星+喜，財運/感情雙動' : '財星+喜，財運主動';
+      if (stemJi) return '財星+忌，財來財去防破財';
+    }
+
+    // 印星年
+    if (lnTenGod === '正印' || lnTenGod === '偏印') {
+      if (age >= 14 && age <= 25) return '印星年，利升學考試';
+      if (stemFavor && hasNatalOfficer) return '官印相生，升遷文書佳';
+      if (stemFavor) return '印星+喜，貴人相助';
+      if (stemJi) return '印星+忌，資源受阻';
+    }
+
+    // 比劫年
+    if (lnTenGod === '比肩' || lnTenGod === '劫財') {
+      if (stemJi && hasNatalWealth) return '比劫+忌，防破財合夥糾紛';
+      if (stemFavor) return '比劫+喜，社交活躍貴人助力';
+    }
+
+    // 食神年
+    if (lnTenGod === '食神') {
+      if (stemFavor) return '食神+喜，口才事業口碑佳';
+      if (stemJi) return '食神+忌，才能發揮受阻';
+    }
+
+    return null;
+  }
+
   // 大運生活事件提示（喜忌+財官%+年齡段 → 具體生活預測）
   function getDaYunEventHints(s: DaYunStat): string[] {
     const hints: string[] = [];
@@ -892,6 +983,10 @@ function DynamicTab({
                       <td className={`px-3 py-1.5 text-center ${effortColor}`}>{effortSymbol}</td>
                       <td className="px-3 py-1.5">
                         <NatureTag nature={y.cycleNature} tag={y.cycleNatureTag} />
+                        {(() => {
+                          const hint = getLiuNianEventHint(y.yearName[0], y.liuNianBranch, y.age);
+                          return hint ? <div className="text-[9px] text-stone-400 mt-0.5 leading-tight">{hint}</div> : null;
+                        })()}
                       </td>
                     </tr>
                   );
@@ -914,6 +1009,14 @@ function DynamicTab({
               </div>
               <div className="text-xs text-stone-400 mb-2">大運：<span className="text-amber-300 font-bold">{currentYearData.daYunName}</span></div>
               <div className="text-xs text-stone-300 leading-relaxed">{currentYearData.cycleExplanation}</div>
+              {(() => {
+                const hint = getLiuNianEventHint(currentYearData.yearName[0], currentYearData.liuNianBranch, currentYearData.age);
+                return hint ? (
+                  <div className="mt-2 text-xs bg-amber-900/20 border border-amber-800/40 rounded px-3 py-2 text-amber-200">
+                    <span className="text-amber-500 font-bold mr-1">本年觸發：</span>{hint}
+                  </div>
+                ) : null;
+              })()}
             </div>
 
             <div className="bg-stone-900 border border-stone-700 rounded-xl p-4 space-y-3">
