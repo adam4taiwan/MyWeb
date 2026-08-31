@@ -568,11 +568,17 @@ export interface JiLiangApiData {
   fuYiElem: string;
   jiShenElem: string;
   pattern: string;
+  patternType?: string;       // 吉神格 / 凶神格 / 中性
   bodyPct: number;
   gender: number;
   birthYear: number;
   name: string;
-  luckCycles: { stem: string; branch: string; startAge: number; endAge: number }[];
+  yangRenBranch?: string;     // 羊刃位地支
+  peachBranch?: string;       // 桃花位地支
+  yiMaBranch?: string;        // 驛馬位地支
+  natalStems?: string[];      // [年干, 月干, 日干, 時干]
+  natalBranches?: string[];   // [年支, 月支, 日支, 時支]
+  luckCycles: { stem: string; branch: string; startAge: number; endAge: number; rating?: string }[];
 }
 
 export function buildChartFromApi(data: JiLiangApiData): BaziChart {

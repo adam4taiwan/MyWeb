@@ -611,8 +611,30 @@ function DynamicTab({
     '巳': '申', '申': '巳', '午': '未', '未': '午',
   };
 
-  // 流年觸發事件（依簡報四張領域查表：事業/婚姻/學業/疾病）
+  // 流年觸發事件（四大領域查表：事業/婚姻/學業/疾病）
   // 合 = 計畫性有預兆；衝 = 突發意外被動
+  // 優先使用 API 回傳的 yangRenBranch/peachBranch/yiMaBranch；API 未回傳時前端自算
+  const yangRenBranch = apiData.yangRenBranch ?? (() => {
+    const m: Record<string, string> = { '甲':'卯','乙':'寅','丙':'午','丁':'巳','戊':'午','己':'巳','庚':'酉','辛':'申','壬':'子','癸':'亥' };
+    return m[chart.heavenlyStems[2]] ?? '';
+  })();
+  const peachBranch = apiData.peachBranch ?? (() => {
+    const db = chart.earthlyBranches[2].name;
+    if (['申','子','辰'].includes(db)) return '酉';
+    if (['寅','午','戌'].includes(db)) return '卯';
+    if (['亥','卯','未'].includes(db)) return '子';
+    if (['巳','酉','丑'].includes(db)) return '午';
+    return '';
+  })();
+  const yiMaBranch = apiData.yiMaBranch ?? (() => {
+    const db = chart.earthlyBranches[2].name;
+    if (['申','子','辰'].includes(db)) return '寅';
+    if (['寅','午','戌'].includes(db)) return '申';
+    if (['亥','卯','未'].includes(db)) return '巳';
+    if (['巳','酉','丑'].includes(db)) return '亥';
+    return '';
+  })();
+
   function getLiuNianEventHint(lnStem: string, lnBranch: string, age: number): string | null {
     const dayMaster   = chart.heavenlyStems[2];
     const dayBranch   = chart.earthlyBranches[2].name;
@@ -624,70 +646,91 @@ function DynamicTab({
 
     const stemFavor = ELEMENT_NAMES[lnStemEl] === apiData.yongShenElem || ELEMENT_NAMES[lnStemEl] === apiData.fuYiElem;
     const stemJi    = ELEMENT_NAMES[lnStemEl] === apiData.jiShenElem;
+    const brJi      = ELEMENT_NAMES[lnBrEl] === apiData.jiShenElem;
 
     const brVsDay   = getBranchXingChongHaiPenalty(lnBranch, dayBranch);
     const brVsMonth = getBranchXingChongHaiPenalty(lnBranch, monthBranch);
     const brHeDay   = SIX_HE_MAP[lnBranch] === dayBranch;
 
     const isMale    = apiData.gender === 1;
-    const lifeStage = getLifeStage(age);
 
-    // 命局天干十神（判斷官殺/財是否透干，供傷官見官/官印相生判斷）
+    // 命局天干十神
     const natalTenGods    = chart.heavenlyStems.map((s, i) => i === 2 ? '' : getStemTenGodLabel(s, dayMaster, false));
     const hasNatalOfficer = natalTenGods.some(t => t === '正官' || t === '七殺');
     const hasNatalWealth  = natalTenGods.some(t => t === '正財' || t === '偏財');
+    const hasNatalPrint   = natalTenGods.some(t => t === '正印' || t === '偏印');
+    const hasNatalFood    = natalTenGods.some(t => t === '食神');
 
-    // 衝（突發）優先處理
+    // ── 衝（突發，最高優先）──
     if (brVsDay === 'chong') {
-      if (!lifeStage.canAnalyze) return '地支衝日支，環境動盪';
       if (age <= 55) return '地支衝日支，婚姻/居所突變';
       return '地支衝日支，健康留意';
     }
     if (brVsMonth === 'chong' && age >= 18) return '月令受衝，工作/家庭突變';
 
-    // 地支合日支（計畫性，感情/合夥）
-    if (brHeDay && lifeStage.canAnalyze && age >= 20 && age <= 50) {
+    // 羊刃逢衝
+    if (yangRenBranch && getBranchXingChongHaiPenalty(lnBranch, yangRenBranch) === 'chong')
+      return '羊刃逢衝，突發血光/手術留意';
+
+    // 桃花逢衝
+    if (peachBranch && getBranchXingChongHaiPenalty(lnBranch, peachBranch) === 'chong')
+      return '桃花受衝，感情驟變/外遇/奔波';
+
+    // ── 合（計畫性）──
+    if (brHeDay && age >= 20 && age <= 55) {
       if (isMale && (lnTenGod === '正財' || lnTenGod === '偏財')) return '財星合日支，感情婚姻機會';
       if (!isMale && (lnTenGod === '正官' || lnTenGod === '七殺')) return '官星合日支，婚緣成熟';
       return '日支逢合，合夥或感情有緣';
     }
 
-    // 官殺年
+    // 驛馬逢合（計畫移動/留學）
+    if (yiMaBranch && lnBranch === yiMaBranch
+      && [...chart.earthlyBranches.map(b => b.name)].some(b => SIX_HE_MAP[lnBranch] === b))
+      return '驛馬逢合，計畫遷移/出境/留學';
+
+    // ── 官殺年 ──
     if (lnTenGod === '正官' || lnTenGod === '七殺') {
+      if (stemJi && hasNatalOfficer && age >= 40) return '官殺交戰+忌，重病/官司風險';
+      if (stemFavor && hasNatalPrint && age >= 20) return '官印相生，職務升遷機會';
       if (stemFavor && age >= 20 && age <= 60) return '官星+喜，升遷貴人機會';
-      if (stemJi && age >= 20 && age <= 60) return '官殺+忌，壓力增大防官非';
-      if (stemJi && age > 60) return '官殺+忌，健康留意';
+      if (stemJi && age > 55) return '官殺+忌，健康優先留意';
+      if (stemJi) return '官殺+忌，壓力增大防官非';
     }
 
-    // 傷官年（傷官見官 最危險）
+    // ── 傷官年 ──
     if (lnTenGod === '傷官') {
       if (hasNatalOfficer && stemJi) return '傷官見官，職場衝突官非';
+      if (!isMale && hasNatalOfficer && SIX_HE_MAP[lnBranch] && age >= 20) return '傷官+夫星被合，婚姻挑剔冷戰';
       if (stemFavor) return '傷官+喜，才藝突出口才佳';
       if (stemJi) return '傷官+忌，口舌是非';
     }
 
-    // 財星年
+    // ── 財星年 ──
     if (lnTenGod === '正財' || lnTenGod === '偏財') {
+      if (stemJi && hasNatalPrint) return '財破印，因錢財/異性引發糾紛';
+      if (isMale && lnTenGod === '偏財' && brHeDay && age >= 25) return '偏財合身，異性糾纏風險';
       if (stemFavor && age >= 20) return isMale ? '財星+喜，財運/感情雙動' : '財星+喜，財運主動';
       if (stemJi) return '財星+忌，財來財去防破財';
     }
 
-    // 印星年
+    // ── 印星年 ──
     if (lnTenGod === '正印' || lnTenGod === '偏印') {
+      if (lnTenGod === '偏印' && stemJi && hasNatalPrint) return '梟神逢重，身體重創留意';
       if (age >= 14 && age <= 25) return '印星年，利升學考試';
       if (stemFavor && hasNatalOfficer) return '官印相生，升遷文書佳';
       if (stemFavor) return '印星+喜，貴人相助';
       if (stemJi) return '印星+忌，資源受阻';
     }
 
-    // 比劫年
+    // ── 比劫年 ──
     if (lnTenGod === '比肩' || lnTenGod === '劫財') {
-      if (stemJi && hasNatalWealth) return '比劫+忌，防破財合夥糾紛';
+      if (stemJi && hasNatalWealth) return '比劫奪財+忌，防破財合夥糾紛';
       if (stemFavor) return '比劫+喜，社交活躍貴人助力';
     }
 
-    // 食神年
+    // ── 食神年 ──
     if (lnTenGod === '食神') {
+      if (stemJi && hasNatalOfficer) return '煞神奪食，精神壓力/神經耗損';
       if (stemFavor) return '食神+喜，口才事業口碑佳';
       if (stemJi) return '食神+忌，才能發揮受阻';
     }
@@ -868,6 +911,22 @@ function DynamicTab({
           <span className="ml-2 text-stone-500 normal-case tracking-normal font-normal">
             （依年齡階段判斷關注重點，運勢評等已扣除刑沖害影響）
           </span>
+          {/* 格局成就曲線類型 */}
+          {(() => {
+            const pt = apiData.patternType;
+            if (!pt) return null;
+            const cls = pt === '吉神格' ? 'bg-green-900/40 text-green-300 border-green-700'
+              : pt === '凶神格' ? 'bg-red-900/40 text-red-300 border-red-700'
+              : 'bg-stone-800 text-stone-400 border-stone-600';
+            const desc = pt === '吉神格' ? '穩健型：旺運踏實，逆運小波'
+              : pt === '凶神格' ? '震盪型：旺運爆發，逆運大落'
+              : '中性格局';
+            return (
+              <span className={`ml-3 text-[10px] px-2 py-0.5 rounded border font-normal ${cls}`}>
+                {apiData.pattern} · {pt} · {desc}
+              </span>
+            );
+          })()}
         </div>
 
         {/* 大運人生階段卡片列 */}
@@ -978,7 +1037,28 @@ function DynamicTab({
                         {(() => { const s2 = getShenLabel(mapStemToElement(y.yearName[0])); return <span className={`text-[9px] px-1 py-0.5 rounded font-bold ${s2.color}`}>{s2.label}</span>; })()}
                       </td>
                       <td className="px-2 py-1.5 text-center">
-                        {(() => { const s2 = getShenLabel(EARTHLY_BRANCH_DATA[y.liuNianBranch]?.mainElement ?? 'Earth'); return <span className={`text-[9px] px-1 py-0.5 rounded font-bold ${s2.color}`}>{s2.label}</span>; })()}
+                        {(() => {
+                          const s2 = getShenLabel(EARTHLY_BRANCH_DATA[y.liuNianBranch]?.mainElement ?? 'Earth');
+                          const dayBr = chart.earthlyBranches[2].name;
+                          const moBr  = chart.earthlyBranches[1].name;
+                          const isChongDay   = getBranchXingChongHaiPenalty(y.liuNianBranch, dayBr) === 'chong';
+                          const isChongMonth = getBranchXingChongHaiPenalty(y.liuNianBranch, moBr) === 'chong';
+                          const isHeDay      = SIX_HE_MAP[y.liuNianBranch] === dayBr;
+                          const isPeach      = y.liuNianBranch === peachBranch;
+                          const isYiMa       = y.liuNianBranch === yiMaBranch;
+                          const isYangRenChong = yangRenBranch ? getBranchXingChongHaiPenalty(y.liuNianBranch, yangRenBranch) === 'chong' : false;
+                          return (
+                            <div className="flex flex-col items-center gap-0.5">
+                              <span className={`text-[9px] px-1 py-0.5 rounded font-bold ${s2.color}`}>{s2.label}</span>
+                              {isChongDay   && <span className="text-[8px] px-1 rounded bg-red-900/50 text-red-300">衝配</span>}
+                              {isChongMonth && <span className="text-[8px] px-1 rounded bg-orange-900/50 text-orange-300">衝格</span>}
+                              {isYangRenChong && <span className="text-[8px] px-1 rounded bg-red-950/70 text-red-400">刃衝</span>}
+                              {isHeDay      && <span className="text-[8px] px-1 rounded bg-blue-900/50 text-blue-300">合配</span>}
+                              {isPeach      && <span className="text-[8px] px-1 rounded bg-pink-900/50 text-pink-300">桃花</span>}
+                              {isYiMa       && <span className="text-[8px] px-1 rounded bg-purple-900/50 text-purple-300">驛馬</span>}
+                            </div>
+                          );
+                        })()}
                       </td>
                       <td className={`px-3 py-1.5 text-center ${effortColor}`}>{effortSymbol}</td>
                       <td className="px-3 py-1.5">
