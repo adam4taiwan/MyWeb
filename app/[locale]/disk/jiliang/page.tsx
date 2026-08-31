@@ -604,6 +604,83 @@ function DynamicTab({
     return { label: '中', color: 'text-stone-500 bg-stone-800' };
   }
 
+  // 大運生活事件提示（喜忌+財官%+年齡段 → 具體生活預測）
+  function getDaYunEventHints(s: DaYunStat): string[] {
+    const hints: string[] = [];
+    const wH = s.realPctW >= 70;
+    const wL = s.realPctW < 40;
+    const gH = s.realPctG >= 70;
+    const gL = s.realPctG < 40;
+    const isMale = apiData.gender === 1;
+    const dyBrEl = EARTHLY_BRANCH_DATA[s.dy.branch]?.mainElement ?? 'Earth';
+    const dyBrElCn = ELEMENT_NAMES[dyBrEl];
+    const isFavor = dyBrElCn === apiData.yongShenElem || dyBrElCn === apiData.fuYiElem;
+    const isJi    = dyBrElCn === apiData.jiShenElem;
+    const stage   = s.lifeStage.label;
+
+    if (stage === '成長奠基期') {
+      hints.push(wH ? '家庭財力尚可，成長環境資源充足' : '家庭財力有限，從小養成自立性格');
+      hints.push(gH ? '學業基礎佳，讀書有競爭力' : '學業普通，才藝/運動等實作面向更有潛力');
+
+    } else if (stage === '奠基期') {
+      hints.push(gH ? '考試競爭力強，宜拼學業（高中/大學/研究所）' : '不以考試見長，技職/才藝/實作方向更適合');
+      hints.push(isFavor ? '有貴人師長引導，此段奠定日後方向，方向選對事半功倍' : '少貴人，靠自己摸索方向，需花時間確立目標');
+      hints.push(wH ? '家境支援升學無礙' : '家庭資源有限，宜爭取獎學金或半工半讀');
+
+    } else if (stage === '決策期') {
+      if (wH && gL) {
+        hints.push('財高官低，適合業務/自雇/創業，靠業績賺錢，不宜長期在大機構等升遷');
+      } else if (gH && wL) {
+        hints.push('官高財低，薪水型命格，大機構/公家機關求穩，此段升遷機會有望');
+      } else if (wH && gH) {
+        hints.push(isFavor ? '財官俱旺，創業升遷雙軌均可，全力把握' : '財官數字可但運逆，機遇打折，穩中求進即可');
+      } else if (isJi) {
+        hints.push('逆風期，職場少躁進，守穩現有技能平台，靜待時機');
+      } else {
+        hints.push('財官均普通，靠技能積累實力，不宜大賭大押');
+      }
+      if (isMale) {
+        hints.push(wH && s.decadeRating !== '逆運'
+          ? `財星旺，桃花有機，${s.wPeakYear}年前後是感情/婚姻關鍵時機`
+          : wL ? '財星弱，感情需主動出擊，不會自動送上門'
+          : `感情平穩推進，${s.wPeakYear}年留意感情重要節點`);
+      } else {
+        hints.push(gH && s.decadeRating !== '逆運'
+          ? `官星旺，緣分易成，${s.gPeakYear}年前後婚緣成熟`
+          : gL ? '官星弱，感情需主動把握，不宜被動等待'
+          : `感情平穩，${s.gPeakYear}年留意重要感情節點`);
+      }
+      if (s.dyInteract === 'chong') hints.push('大運沖日支，此段感情婚姻波折大，婚前務必審慎');
+
+    } else if (stage === '收成守成期') {
+      hints.push(wH
+        ? `財運收成期，${s.wPeakYear}年是置產/投資最佳時機，宜主動出手`
+        : wL ? '財運弱，守成為主，嚴防借貸大投資失血'
+        : `財運普通，${s.wPeakYear}年小幅理財出手尚可`);
+      hints.push(gH
+        ? `官運仍旺，${s.gPeakYear}年前後可爭取升遷或轉更大平台`
+        : gL ? '升遷機會到頂，轉向資產收入或二線發展'
+        : '職場進入穩定期，守住現有成果為主');
+      if (s.dyInteract === 'chong') hints.push('大運沖日支，婚姻穩定性是此段最大隱患，健康也需注意');
+
+    } else if (stage === '交棒期') {
+      hints.push(wH
+        ? '財庫仍有餘裕，保守理財為主，不宜追高風險投資'
+        : wL ? '財庫緊縮，需提前規劃退休金，評估子女能否接手'
+        : '財務穩健，保守理財即可，不需大動作');
+      hints.push(gH
+        ? '仍具社會影響力，可轉顧問/授課/傳承角色延伸價值'
+        : '退場時機成熟，交棒比堅守更明智，享清福');
+      if (s.dyInteract === 'chong') hints.push('大運沖日支，身體健康是此段最大關卡，定期健檢不可少');
+
+    } else if (stage === '安樂期') {
+      hints.push(wH ? '晚年財庫充足，生活自在無憂' : wL ? '晚年財力有限，傳承安排需提前做好' : '晚年生活尚可，細水長流');
+      hints.push(isFavor ? '此段運勢仍順，晚年有福享，保持生活規律' : '晚年少折騰，養生靜心第一');
+    }
+
+    return hints.filter(h => h.length > 0);
+  }
+
   // 逐大運統計：兌現值 = min(動態等級, 先天上限) - 刑沖害懲罰
   type DaYunStat = {
     dy: DaYunPeriod; yrs: number;
@@ -702,6 +779,7 @@ function DynamicTab({
             const isCurrent = timeline.some(y => y.daYunName === s.dy.name && y.calYear === new Date().getFullYear());
             return (
               <div key={s.dy.index} className={`rounded-lg border px-4 py-2.5 ${ratingBg} ${isCurrent ? 'ring-1 ring-amber-500/50' : ''}`}>
+                {/* 第一行：基本資訊 */}
                 <div className="flex items-center gap-3 flex-wrap">
                   {/* 大運名 + 年齡 */}
                   <div className="min-w-[4rem]">
@@ -725,13 +803,20 @@ function DynamicTab({
                   )}
                   {/* 刑沖警示 */}
                   {interactTip && <span className="text-[10px] text-red-400 bg-red-900/20 px-1.5 py-0.5 rounded">{interactTip}</span>}
-                  {/* 關注重點 */}
-                  <div className="ml-auto flex gap-1 flex-wrap">
-                    {s.lifeStage.focus.map(f => (
-                      <span key={f} className="text-[10px] text-stone-400 bg-stone-800 px-1.5 py-0.5 rounded">{f}</span>
-                    ))}
-                  </div>
                 </div>
+                {/* 第二行：生活事件提示 */}
+                {(() => {
+                  const hints = getDaYunEventHints(s);
+                  return hints.length > 0 ? (
+                    <div className="mt-1.5 pt-1.5 border-t border-stone-700/40 space-y-0.5">
+                      {hints.map((h, i) => (
+                        <div key={i} className="text-[10px] text-stone-300 leading-relaxed">
+                          <span className="text-stone-500 mr-1">▸</span>{h}
+                        </div>
+                      ))}
+                    </div>
+                  ) : null;
+                })()}
               </div>
             );
           })}
