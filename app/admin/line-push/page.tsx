@@ -8,6 +8,23 @@ interface LinePushStats {
   notifyEnabled: number;
   notifyDisabled: number;
   subscribersBound: number;
+  recentByCategory?: { category: string; count: number; success: number }[];
+  shenShaHitCount?: number;
+  lastPushDate?: string;
+}
+
+interface PushLogEntry {
+  id: number;
+  pushDate: string;
+  pushType: string;
+  contentCategory: string | null;
+  userEmail: string | null;
+  natalStar: number;
+  shiShen: string | null;
+  isShun: boolean | null;
+  shenShaHit: string | null;
+  status: string;
+  errorMessage: string | null;
 }
 
 interface PushResult {
@@ -26,6 +43,8 @@ export default function AdminLinePushPage() {
   const [hasLineLinked, setHasLineLinked] = useState(false);
   const [notifyEnabled, setNotifyEnabled] = useState(false);
   const [notifyLoading, setNotifyLoading] = useState(false);
+  const [recentLogs, setRecentLogs] = useState<PushLogEntry[]>([]);
+  const [showLogs, setShowLogs] = useState(false);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL
     ? process.env.NEXT_PUBLIC_API_URL
@@ -53,6 +72,18 @@ export default function AdminLinePushPage() {
       .then(data => { if (data) setNotifyEnabled(data.notifyEnabled === true); })
       .catch(() => {});
   }, [token, API_URL]);
+
+  const loadRecentLogs = async () => {
+    if (!token) return;
+    const res = await fetch(`${API_URL}/Admin/line-push/logs?days=7`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setRecentLogs(data);
+      setShowLogs(true);
+    }
+  };
 
   const handleToggleNotify = async () => {
     if (!token || !hasLineLinked) return;
@@ -147,6 +178,92 @@ export default function AdminLinePushPage() {
           </div>
         ))}
       </div>
+
+      {/* Recent 7-day breakdown */}
+      {stats && (stats.recentByCategory?.length || stats.lastPushDate) && (
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-bold text-gray-700">近 7 日推播分類</h2>
+            {stats.lastPushDate && <span className="text-xs text-gray-400">最近推播：{stats.lastPushDate}</span>}
+          </div>
+          {stats.recentByCategory && stats.recentByCategory.length > 0 ? (
+            <div className="space-y-2">
+              {stats.recentByCategory.map(c => (
+                <div key={c.category} className="flex items-center gap-3 text-sm">
+                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                    c.category === 'bazi-enhanced' ? 'bg-amber-100 text-amber-700' :
+                    c.category === 'ninestar-only' ? 'bg-blue-100 text-blue-700' :
+                    'bg-gray-100 text-gray-600'
+                  }`}>{c.category === 'bazi-enhanced' ? '八字流日' : c.category === 'ninestar-only' ? '九星基礎' : c.category}</span>
+                  <span className="text-gray-600">{c.count} 筆（成功 {c.success}）</span>
+                </div>
+              ))}
+              {(stats.shenShaHitCount ?? 0) > 0 && (
+                <p className="text-xs text-amber-600 mt-1">神煞命中推播：{stats.shenShaHitCount} 筆</p>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-400">近 7 日無推播記錄</p>
+          )}
+          <button
+            onClick={loadRecentLogs}
+            className="mt-3 text-xs text-indigo-600 hover:underline"
+          >
+            查看推播明細
+          </button>
+        </div>
+      )}
+
+      {/* Recent logs table */}
+      {showLogs && recentLogs.length > 0 && (
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-bold text-gray-700">近 7 日推播明細（最多 100 筆）</h2>
+            <button onClick={() => setShowLogs(false)} className="text-xs text-gray-400 hover:text-gray-600">收起</button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs text-left">
+              <thead>
+                <tr className="text-gray-400 border-b">
+                  <th className="pb-1 pr-3">日期</th>
+                  <th className="pb-1 pr-3">分類</th>
+                  <th className="pb-1 pr-3">Email</th>
+                  <th className="pb-1 pr-3">十神</th>
+                  <th className="pb-1 pr-3">喜忌</th>
+                  <th className="pb-1 pr-3">神煞</th>
+                  <th className="pb-1">狀態</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {recentLogs.map(log => (
+                  <tr key={log.id} className="text-gray-600">
+                    <td className="py-1 pr-3">{log.pushDate}</td>
+                    <td className="py-1 pr-3">
+                      <span className={`px-1.5 py-0.5 rounded ${
+                        log.contentCategory === 'bazi-enhanced' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'
+                      }`}>
+                        {log.contentCategory === 'bazi-enhanced' ? '八字' : '九星'}
+                      </span>
+                    </td>
+                    <td className="py-1 pr-3">{log.userEmail ?? '—'}</td>
+                    <td className="py-1 pr-3">{log.shiShen ?? '—'}</td>
+                    <td className="py-1 pr-3">
+                      {log.isShun === true ? <span className="text-green-600">順</span> :
+                       log.isShun === false ? <span className="text-red-500">逆</span> : '—'}
+                    </td>
+                    <td className="py-1 pr-3">{log.shenShaHit ?? '—'}</td>
+                    <td className="py-1">
+                      <span className={log.status === 'success' ? 'text-green-600' : 'text-red-500'}>
+                        {log.status === 'success' ? '成功' : '失敗'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Manual push */}
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-6">
