@@ -1,9 +1,12 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/components/AuthContext';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
 interface Palace {
   gong: number;
@@ -125,6 +128,9 @@ function PalaceCell({ palace }: { palace: Palace }) {
 }
 
 export default function QiMenPage() {
+  const router = useRouter();
+  const { token } = useAuth();
+
   const today = new Date();
   const defaultDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   const defaultHour = today.getHours();
@@ -134,6 +140,18 @@ export default function QiMenPage() {
   const [result, setResult] = useState<PaiPanResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (!token) { router.replace('/login'); return; }
+    fetch(`${API_URL}/Auth/profile`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(d => {
+        if (d.isAdmin !== true) router.replace('/disk');
+        else setIsAdmin(true);
+      })
+      .catch(() => router.replace('/disk'));
+  }, [token, router]);
 
   async function handleSubmit() {
     setError('');
@@ -170,11 +188,19 @@ export default function QiMenPage() {
     '酉(17)', '酉(18)', '戌(19)', '戌(20)', '亥(21)', '亥(22)',
   ];
 
+  if (isAdmin === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-950">
+        <div className="w-8 h-8 border-4 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-950 text-gray-100">
       <Header />
       <main className="flex-1 container mx-auto px-4 py-8 max-w-3xl">
-        <h1 className="text-2xl font-bold text-amber-400 mb-6">奇門遁甲排盤（妙派）</h1>
+        <h1 className="text-2xl font-bold text-amber-400 mb-6">奇門遁甲排盤（玉洞子）</h1>
 
         {/* Input */}
         <div className="flex flex-wrap gap-4 mb-6 items-end">
