@@ -250,7 +250,7 @@ export default function LiuRenPage() {
             </div>
 
             {/* 四課：第一課最右，從右至左排列 */}
-            <div className="mb-2">
+            <div className="mb-4">
               <div className="text-sm text-gray-400 mb-2">四課（第一課在右，從右至左）</div>
               <div className="grid grid-cols-4 gap-2">
                 {[...result.siKe].reverse().map((k, i) => (
@@ -261,6 +261,23 @@ export default function LiuRenPage() {
                       <span className="text-white font-medium">{k.di}</span>
                       {k.diNote && <span className="text-gray-500 text-[10px] ml-1">({k.diNote})</span>}
                     </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 三傳大字展示 */}
+            <div>
+              <div className="text-sm text-gray-400 mb-2">三傳（{result.sanChuan.fa}）</div>
+              <div className="flex gap-3">
+                {[
+                  { label:'末傳', val: result.sanChuan.mo,    color:'text-purple-300', border:'border-purple-400' },
+                  { label:'中傳', val: result.sanChuan.zhong, color:'text-blue-300',   border:'border-blue-400'   },
+                  { label:'初傳', val: result.sanChuan.chu,   color:'text-amber-300',  border:'border-amber-400'  },
+                ].map(({ label, val, color, border }) => (
+                  <div key={label} className={`flex-1 border-2 rounded p-3 text-center bg-gray-800/40 ${border}`}>
+                    <div className="text-xs text-gray-400 mb-1">{label}</div>
+                    <div className={`text-3xl font-bold ${color}`}>{val}</div>
                   </div>
                 ))}
               </div>
