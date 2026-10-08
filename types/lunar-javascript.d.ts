@@ -31,6 +31,9 @@ declare module 'lunar-javascript' {
     getDayPositionYinGuiDesc(): string;
     getPengZuGan(): string;
     getPengZuZhi(): string;
+    getDayTianShen(): string;
+    getDayTianShenLuck(): string;
+    getDayTianShenType(): string;
     getTimes(): LunarTime[];
   }
 
