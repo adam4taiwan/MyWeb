@@ -58,6 +58,10 @@ export default function Header() {
                   <Link href="/consultation/online" className="block px-4 py-2 text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-600 whitespace-nowrap" onClick={() => setShowApptMenu(false)}>
                     線上問事
                   </Link>
+                  <div className="border-t border-amber-100 my-1"></div>
+                  <Link href="/almanac" className="block px-4 py-2 text-sm text-amber-600 hover:bg-amber-50 hover:text-amber-700 whitespace-nowrap font-medium" onClick={() => setShowApptMenu(false)}>
+                    {t('almanac')}
+                  </Link>
                 </div>
               )}
             </div>
@@ -131,6 +135,7 @@ export default function Header() {
               <Link href="/blessing" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>{t('blessing')}</Link>
               <Link href="/appointment" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer pl-1" onClick={() => setIsMenuOpen(false)}>預約服務</Link>
               <Link href="/consultation/online" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer pl-1" onClick={() => setIsMenuOpen(false)}>線上問事</Link>
+              <Link href="/almanac" className="text-amber-600 hover:text-amber-500 transition-colors cursor-pointer pl-1 font-medium" onClick={() => setIsMenuOpen(false)}>{t('almanac')}</Link>
               {isAuthenticated && (
                 <Link href="/member" className="text-gray-700 hover:text-amber-600 transition-colors cursor-pointer" onClick={() => setIsMenuOpen(false)}>{t('member')}</Link>
               )}
