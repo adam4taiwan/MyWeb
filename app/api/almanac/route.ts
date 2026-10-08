@@ -55,7 +55,6 @@ export async function GET(request: NextRequest) {
     const jieQi = lunar.getJieQi() || null;
     const lunarMonthStr = lunar.getMonthInChinese() + '月';
     const lunarDayStr = lunar.getDayInChinese();
-    const isLeap = lunar.getMonth() < 0;
 
     // --- Yi / Ji (Trad) ---
     const dayYi = lunar.getDayYi().map(toTrad);
@@ -105,7 +104,7 @@ export async function GET(request: NextRequest) {
         year: lunar.getYear(),
         month: lunarMonthStr,
         day: lunarDayStr,
-        isLeap: lunar.getMonth() < 0,
+        isLeap: lunar.getMonth() < 0, // negative month = leap month in lunar-javascript
         yearGanZhi,
         monthGanZhi,
         dayGanZhi,
