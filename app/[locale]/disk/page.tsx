@@ -562,7 +562,7 @@ export default function DiskPage() {
       let res: Response;
       if (reportType === '八字命書' && profileLoaded) {
         const endpoint = isVip ? 'analyze-yudongzi' : 'analyze-bazi-ziwei';
-        const ydUrl = isVip && formData.name
+        const ydUrl = formData.name
           ? `${API_URL}/Consultation/${endpoint}?personName=${encodeURIComponent(formData.name)}`
           : `${API_URL}/Consultation/${endpoint}`;
         res = await fetch(ydUrl, {
