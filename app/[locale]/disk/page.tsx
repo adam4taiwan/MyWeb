@@ -810,6 +810,45 @@ export default function DiskPage() {
     }
   };
 
+  const triggerJsonDownload = (fileName: string) => {
+    const jsonData = {
+      meta: {
+        personName: formData.name,
+        reportType: generatedReportType,
+        reportTitle,
+        generatedAt: new Date().toISOString(),
+        birthInfo: {
+          year: formData.year,
+          month: formData.month,
+          day: formData.day,
+          hour: formData.hour,
+          minute: formData.minute,
+          gender: parseInt(formData.gender),
+          dateType: formData.dateType,
+        },
+      },
+      report,
+      baziTable: baziTable ?? null,
+      lifelongCycles: lifelongCycles ?? null,
+      yongJiTable: yongJiTable ?? null,
+      annualForecasts: annualForecasts ?? null,
+      monthlyForecasts: monthlyForecasts ?? null,
+    };
+    const blob = new Blob([JSON.stringify(jsonData, null, 2)], { type: 'application/json' });
+    const jsonFileName = fileName.replace(/\.docx$/, '.json');
+    // Delay to avoid browser blocking simultaneous downloads
+    setTimeout(() => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = jsonFileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    }, 500);
+  };
+
   const handleExportDocx = async () => {
     if (!report) return;
     const isYudongziContent = reportTitle === t('reportTitleYudongzi');
@@ -871,6 +910,7 @@ export default function DiskPage() {
       const a = document.createElement('a');
       a.href = url; a.download = fileName;
       document.body.appendChild(a); a.click(); a.remove();
+      triggerJsonDownload(fileName);
     } catch (err) { alert(t('alertDocxFailedDetail', { err: String(err) })); }
     finally { setIsLoading(false); }
   };
@@ -936,6 +976,7 @@ export default function DiskPage() {
           const a = document.createElement('a');
           a.href = url; a.download = pendingBaziJing.fileName;
           document.body.appendChild(a); a.click(); a.remove();
+          triggerJsonDownload(pendingBaziJing.fileName);
         } else {
         const pending = pendingGenericDocxRef.current;
         if (pending) {
@@ -958,6 +999,7 @@ export default function DiskPage() {
           const a = document.createElement('a');
           a.href = url; a.download = pending.fileName;
           document.body.appendChild(a); a.click(); a.remove();
+          triggerJsonDownload(pending.fileName);
         } else {
           // 玉洞子傳家寶典：原有路徑
           const res = await fetch(`${API_URL}/Consultation/export-yudongzi-docx`, {
@@ -981,6 +1023,7 @@ export default function DiskPage() {
           const a = document.createElement('a');
           a.href = url; a.download = `${formData.name}_玉洞子命書.docx`;
           document.body.appendChild(a); a.click(); a.remove();
+          triggerJsonDownload(`${formData.name}_玉洞子命書.docx`);
         }
         } // end else (pendingBaziJing)
       } catch (err) { alert(t('alertDocxFailedDetail', { err: String(err) })); }
@@ -1515,6 +1558,17 @@ export default function DiskPage() {
             {report ? (
               <div className="space-y-4">
                 <div className="flex justify-end gap-2">
+                  {isAdmin && (
+                    <button
+                      onClick={() => {
+                        const safeTitle = reportTitle.replace(/[\s/\\:*?"<>|]/g, '_');
+                        triggerJsonDownload(`${formData.name}_${safeTitle}.docx`);
+                      }}
+                      className="bg-stone-600 text-white border border-stone-500 px-5 py-2 rounded-full text-xs font-bold hover:bg-stone-700 transition-all shadow-sm"
+                    >
+                      下載 JSON
+                    </button>
+                  )}
                   <button onClick={handleExportDocx} className="bg-amber-700 text-white border border-amber-600 px-5 py-2 rounded-full text-xs font-bold hover:bg-amber-800 transition-all shadow-sm">
                     {t('btnDownloadDocx')}
                   </button>
