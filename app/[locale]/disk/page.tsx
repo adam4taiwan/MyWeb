@@ -72,6 +72,7 @@ export default function DiskPage() {
     stems: Array<{stem:string;elem:string;shiShen:string;cls:string}>;
     branches: Array<{branch:string;elem:string;shiShen:string;cls:string;inChart:boolean}>;
   } | null>(null);
+  const [rawApiData, setRawApiData] = useState<Record<string, unknown> | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingText, setLoadingText] = useState('');
   const [profileSaving, setProfileSaving] = useState(false);
@@ -604,6 +605,7 @@ export default function DiskPage() {
       if (res.ok) {
         if (isAdmin) {
           // Admin: keep inline display behavior
+          setRawApiData(data);
           setReport(cleanReport(data.report || data.result || data.analysis || ''));
           setGeneratedReportType(reportType);
           setPreviewChartData(null);
@@ -827,12 +829,14 @@ export default function DiskPage() {
           dateType: formData.dateType,
         },
       },
-      report,
-      baziTable: baziTable ?? null,
-      lifelongCycles: lifelongCycles ?? null,
-      yongJiTable: yongJiTable ?? null,
-      annualForecasts: annualForecasts ?? null,
-      monthlyForecasts: monthlyForecasts ?? null,
+      ...(rawApiData ?? {
+        report,
+        baziTable: baziTable ?? null,
+        lifelongCycles: lifelongCycles ?? null,
+        yongJiTable: yongJiTable ?? null,
+        annualForecasts: annualForecasts ?? null,
+        monthlyForecasts: monthlyForecasts ?? null,
+      }),
     };
     const blob = new Blob([JSON.stringify(jsonData, null, 2)], { type: 'application/json' });
     const jsonFileName = fileName.replace(/\.docx$/, '.json');
