@@ -113,6 +113,7 @@ export default function DiskPage() {
   const exportChartJsonRef = useRef<string>('');
   const pendingGenericDocxRef = useRef<{ reportText: string; personName: string; bookTitle: string; skipTitle: string; fileName: string } | null>(null);
   const pendingBaziJingDocxRef = useRef<{ personName: string; fileName: string; chartJson: string; birthYear: number; birthMonth: number; birthDay: number; birthHour: number; birthMinute: number; gender: number } | null>(null);
+  const pendingJsonDataRef = useRef<Record<string, unknown> | null>(null);
 
   // === 客戶管理（Admin Only）===
   interface CustomerItem {
@@ -812,7 +813,8 @@ export default function DiskPage() {
     }
   };
 
-  const triggerJsonDownload = (fileName: string) => {
+  const triggerJsonDownload = (fileName: string, overrideData?: Record<string, unknown> | null) => {
+    const sourceData = overrideData ?? rawApiData;
     const jsonData = {
       meta: {
         personName: formData.name,
@@ -829,7 +831,7 @@ export default function DiskPage() {
           dateType: formData.dateType,
         },
       },
-      ...(rawApiData ?? {
+      ...(sourceData ?? {
         report,
         baziTable: baziTable ?? null,
         lifelongCycles: lifelongCycles ?? null,
@@ -932,6 +934,7 @@ export default function DiskPage() {
       if (!calcRes.ok) { alert(t('alertCalcFailed')); return; }
       const chartData = await calcRes.json();
       exportChartJsonRef.current = JSON.stringify(chartData);
+      pendingJsonDataRef.current = chartData;
       setExportChart(chartData);
       setCaptureMode(true);
     } catch (err) {
@@ -1027,7 +1030,9 @@ export default function DiskPage() {
           const a = document.createElement('a');
           a.href = url; a.download = `${formData.name}_玉洞子命書.docx`;
           document.body.appendChild(a); a.click(); a.remove();
-          triggerJsonDownload(`${formData.name}_玉洞子命書.docx`);
+          const ydJsonData = pendingJsonDataRef.current;
+          pendingJsonDataRef.current = null;
+          triggerJsonDownload(`${formData.name}_玉洞子命書.docx`, ydJsonData);
         }
         } // end else (pendingBaziJing)
       } catch (err) { alert(t('alertDocxFailedDetail', { err: String(err) })); }
