@@ -38,6 +38,7 @@ export default function AdminLinePushPage() {
   const { token } = useAuth();
   const [stats, setStats] = useState<LinePushStats | null>(null);
   const [pushing, setPushing] = useState(false);
+  const [pushingAlmanac, setPushingAlmanac] = useState(false);
   const [result, setResult] = useState<PushResult | null>(null);
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [hasLineLinked, setHasLineLinked] = useState(false);
@@ -97,6 +98,28 @@ export default function AdminLinePushPage() {
       if (res.ok) setNotifyEnabled(v => !v);
     } catch { /* ignore */ }
     finally { setNotifyLoading(false); }
+  };
+
+  const handlePushAlmanacNow = async () => {
+    if (!confirm('確定要立即推播今日農民曆給所有開通通知的 LINE 用戶？')) return;
+    setPushingAlmanac(true);
+    setResult(null);
+    try {
+      const res = await fetch(`${API_URL}/NineStar/push-almanac-now`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setResult(data);
+        setMsg({ text: `農民曆推播完成：成功 ${data.pushedCount} 人，失敗 ${data.errorCount} 人`, ok: true });
+      } else {
+        setMsg({ text: data.message || '農民曆推播失敗', ok: false });
+      }
+    } finally {
+      setPushingAlmanac(false);
+      setTimeout(() => setMsg(null), 6000);
+    }
   };
 
   const handlePushNow = async () => {
@@ -240,9 +263,12 @@ export default function AdminLinePushPage() {
                     <td className="py-1 pr-3">{log.pushDate}</td>
                     <td className="py-1 pr-3">
                       <span className={`px-1.5 py-0.5 rounded ${
-                        log.contentCategory === 'bazi-enhanced' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'
+                        log.contentCategory === 'bazi-enhanced' ? 'bg-amber-100 text-amber-700' :
+                        log.contentCategory === 'almanac-daily' ? 'bg-orange-100 text-orange-700' :
+                        'bg-blue-100 text-blue-700'
                       }`}>
-                        {log.contentCategory === 'bazi-enhanced' ? '八字' : '九星'}
+                        {log.contentCategory === 'bazi-enhanced' ? '八字' :
+                         log.contentCategory === 'almanac-daily' ? '農民曆' : '九星'}
                       </span>
                     </td>
                     <td className="py-1 pr-3">{log.userEmail ?? '—'}</td>
@@ -267,17 +293,31 @@ export default function AdminLinePushPage() {
 
       {/* Manual push */}
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-6">
-        <h2 className="font-bold text-gray-700 mb-2">手動推播</h2>
-        <p className="text-sm text-gray-500 mb-4">
-          立即推播今日九星運勢給所有開通通知的 LINE 用戶，以及有綁定 LINE 的有效訂閱會員（個人化版本）。
-        </p>
-        <button
-          onClick={handlePushNow}
-          disabled={pushing}
-          className="px-5 py-2.5 bg-green-500 text-white text-sm font-medium rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {pushing ? '推播中...' : '立即推播'}
-        </button>
+        <h2 className="font-bold text-gray-700 mb-4">手動推播</h2>
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1 border border-green-200 rounded-lg p-4">
+            <p className="text-sm font-medium text-gray-700 mb-1">今日農民曆</p>
+            <p className="text-xs text-gray-500 mb-3">推播農曆日期、干支、Gemini 生成宜忌給所有開通通知用戶</p>
+            <button
+              onClick={handlePushAlmanacNow}
+              disabled={pushingAlmanac}
+              className="px-4 py-2 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {pushingAlmanac ? '推播中...' : '推播農民曆'}
+            </button>
+          </div>
+          <div className="flex-1 border border-green-200 rounded-lg p-4">
+            <p className="text-sm font-medium text-gray-700 mb-1">今日九星運勢</p>
+            <p className="text-xs text-gray-500 mb-3">推播九星運勢給所有開通通知的 LINE 用戶及有效訂閱會員</p>
+            <button
+              onClick={handlePushNow}
+              disabled={pushing}
+              className="px-4 py-2 bg-green-500 text-white text-sm font-medium rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {pushing ? '推播中...' : '推播九星運勢'}
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Push result */}
